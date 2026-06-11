@@ -48,7 +48,7 @@ export function Selecoes() {
 function SquadCard({ squad }: { squad: Squad }) {
   return (
     <Link
-      to={`/selecoes/${squad.code.toLowerCase()}`}
+      to={`/teams/${squad.code.toLowerCase()}`}
       className="block rounded-lg border border-rule bg-paper p-4 hover:border-ink/40 hover:shadow-sm transition-all"
     >
       <div className="flex items-start justify-between mb-3">

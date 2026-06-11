@@ -7,6 +7,9 @@ dist
 .vite
 *.tsbuildinfo
 
+# claude code runtime state
+.claude/
+
 # dataset FIFA cru (10 MB, baixado por script — não comitar)
 data/eafc26-players.csv
 

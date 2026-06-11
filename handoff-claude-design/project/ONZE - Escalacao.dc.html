@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0b09}
+  a{text-decoration:none;color:inherit}
+  button{font-family:inherit}
+  @keyframes onzePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,255,61,.5)}50%{box-shadow:0 0 0 8px rgba(212,255,61,0)}}
+  @keyframes onzeSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  @keyframes sheetUp{from{transform:translateY(102%)}to{transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes popIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:#0a0b09}
+  ::-webkit-scrollbar-thumb{background:#2a2e26;border-radius:8px}
+  .az-nav::-webkit-scrollbar{height:0}
+  /* ===== RESPONSIVE (overrides only — base look stays inline) ===== */
+  @media (max-width:820px){
+    .az-appbar{flex-wrap:wrap !important;gap:12px !important;padding:12px 16px !important}
+    .az-nav{order:3 !important;flex-basis:100% !important;overflow-x:auto !important;justify-content:flex-start !important}
+    .az-navpill{flex:0 0 auto !important}
+    .az-strip{flex-wrap:wrap !important;gap:10px 12px !important;padding:14px 16px 0 !important}
+    .az-stripprog{flex-basis:100% !important;justify-content:space-between !important}
+    .az-bar{flex:1 !important;width:auto !important;max-width:none !important}
+    .az-wrap{padding:14px 16px 124px !important}
+    .az-fieldcard{padding:9px !important;border-radius:13px !important}
+    .az-pitch{height:64vh !important;min-height:430px !important}
+    .az-chipwrap{width:66px !important}
+    .az-chipcircle{width:46px !important;height:46px !important;font-size:19px !important}
+    .az-chipname{font-size:10px !important}
+    .az-plus{width:46px !important;height:46px !important;font-size:23px !important}
+    .az-simbar{padding:11px 16px !important}
+    .az-simtxt{font-size:11px !important}
+    .az-simbtn{padding:13px 20px !important;font-size:16px !important}
+    .az-sheet{padding:22px 18px 26px !important}
+    .az-sheettitle{font-size:30px !important}
+    .az-formbtn{font-size:19px !important;padding:14px 0 !important}
+  }
+  @media (max-width:480px){
+    .az-brandsub{display:none}
+    .az-navpill{font-size:11px !important;padding:8px 10px !important}
+    .az-strip-h{font-size:16px !important}
+    .az-chip-meta-sep{display:none}
+    .az-pitch{height:60vh !important;min-height:400px !important}
+    .az-sheettitle{font-size:26px !important}
+    .az-formbtn{font-size:17px !important}
+    .az-diffbtn-skips{font-size:9px !important}
+  }
+</style>
+</helmet>
+<div class="az-shell" style="--bg:#0a0b09;--surface:#141613;--surface2:#1b1e19;--line:#2a2e26;--ink:#f3f4ec;--mut:#888c80;--lime:#d4ff3d;background:#0a0b09;min-height:100vh;color:#f3f4ec;font-family:'Archivo',sans-serif;position:relative;overflow-x:hidden">
+
+  <!-- APP BAR -->
+  <div class="az-appbar" style="display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101310,#0a0b09)">
+    <div style="display:flex;align-items:center;gap:13px;flex:0 0 auto">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;padding:7px;flex:0 0 auto">
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+        <span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:center"></span><span></span>
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:7px"><span style="font-family:'Anton';font-size:23px;letter-spacing:.02em">DRAFT</span><span style="font-family:'Space Mono';font-size:11px;color:var(--lime);font-weight:700">26</span></div>
+    </div>
+    <div class="az-nav" style="display:flex;gap:4px;background:#0a0b09;border:1px solid var(--line);border-radius:11px;padding:5px">
+      <span class="az-navpill" style="font-family:'Space Mono';font-size:12px;font-weight:700;padding:8px 13px;border-radius:8px;background:var(--lime);color:#0a0b09;white-space:nowrap">ESCALAÇÃO</span>
+      <a class="az-navpill" href="ONZE%20-%20Grupos.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">GRUPOS</a>
+      <a class="az-navpill" href="ONZE%20-%20Chaveamento.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">CHAVEAMENTO</a>
+      <a class="az-navpill" href="ONZE%20-%20Partida.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">PARTIDA</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;flex:0 0 auto">
+      <div style="text-align:right"><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.12em;color:var(--mut)">OVR DO TIME</div><div style="font-family:'Anton';font-size:24px;line-height:.9;color:var(--lime)">{{ ovr }}</div></div>
+      <button onClick="{{ reset }}" style="background:var(--surface2);border:1px solid var(--line);color:var(--mut);border-radius:8px;width:34px;height:34px;font-size:15px;cursor:pointer;flex:0 0 auto" title="Recomeçar">↻</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS STRIP (build) -->
+  <sc-if value="{{ isBuild }}" hint-placeholder-val="{{ true }}">
+    <div class="az-strip" style="max-width:1280px;margin:0 auto;padding:16px 28px 0;display:flex;align-items:center;gap:18px">
+      <div class="az-strip-h" style="font-family:'Anton';font-size:18px">MONTANDO O TIME</div>
+      <span style="font-family:'Space Mono';font-size:11px;font-weight:700;padding:5px 11px;border-radius:7px;background:var(--surface2);border:1px solid var(--line);white-space:nowrap">{{ formation }}</span>
+      <span style="font-family:'Space Mono';font-size:11px;padding:5px 11px;border-radius:7px;background:var(--surface2);border:1px solid var(--line);color:var(--mut);white-space:nowrap">{{ style }}</span>
+      <span style="font-family:'Space Mono';font-size:11px;padding:5px 11px;border-radius:7px;background:rgba(212,255,61,.1);border:1px solid rgba(212,255,61,.3);color:var(--lime);white-space:nowrap">⚄ {{ skipsLeft }} pulos</span>
+      <div class="az-stripprog" style="flex:1;display:flex;align-items:center;gap:10px;justify-content:flex-end;min-width:0">
+        <span style="font-family:'Space Mono';font-size:11px;color:var(--mut);letter-spacing:.1em">XI</span>
+        <span style="font-family:'Anton';font-size:18px;color:var(--lime)">{{ filled }}</span><span style="font-family:'Anton';font-size:18px;color:var(--mut)">/11</span>
+        <div class="az-bar" style="width:200px;height:7px;border-radius:6px;background:var(--surface2);overflow:hidden"><div style="width:{{ pct }};height:100%;background:var(--lime);transition:width .4s"></div></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- FIELD -->
+  <div class="az-wrap" style="max-width:1280px;margin:0 auto;padding:16px 28px 120px">
+    <div class="az-fieldcard" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px">
+      <div class="az-pitch" style="position:relative;height:580px;border-radius:12px;border:1px solid var(--line);overflow:hidden;background:repeating-linear-gradient(0deg,#0f2014,#0f2014 46px,#0d1c12 46px,#0d1c12 92px)">
+        <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0%,transparent 38%,rgba(0,0,0,.5) 100%)"></div>
+        <div style="position:absolute;inset:16px;border:2px solid rgba(255,255,255,.12);border-radius:6px"></div>
+        <div style="position:absolute;left:16px;right:16px;top:50%;height:0;border-top:2px solid rgba(255,255,255,.1)"></div>
+        <div style="position:absolute;left:50%;top:50%;width:104px;height:104px;border:2px solid rgba(255,255,255,.1);border-radius:50%;transform:translate(-50%,-50%)"></div>
+        <div style="position:absolute;left:28%;right:28%;top:16px;height:62px;border:2px solid rgba(255,255,255,.09);border-top:none"></div>
+        <div style="position:absolute;left:28%;right:28%;bottom:16px;height:62px;border:2px solid rgba(255,255,255,.09);border-bottom:none"></div>
+
+        <sc-for list="{{ slots }}" as="slot" hint-placeholder-count="11">
+          <div class="az-chipwrap" style="position:absolute;left:{{ slot.left }};top:{{ slot.top }};transform:translate(-50%,-50%);text-align:center;width:112px">
+            <sc-if value="{{ slot.filled }}" hint-placeholder-val="{{ true }}">
+              <div style="animation:popIn .3s ease">
+                <div class="az-chipcircle" style="width:54px;height:54px;margin:0 auto;border-radius:50%;background:var(--surface);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;font-family:'Anton';font-size:23px;color:var(--lime);box-shadow:0 6px 18px -6px rgba(212,255,61,.45);position:relative">
+                  {{ slot.num }}
+                  <span style="position:absolute;top:-3px;right:-3px;width:17px;height:17px;border-radius:50%;background:var(--lime);color:#0a0b09;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800;border:2px solid var(--surface)" title="Travado">✓</span>
+                </div>
+                <div class="az-chipname" style="font-weight:800;font-size:12px;margin-top:6px;letter-spacing:-.01em;line-height:1.1;text-wrap:balance">{{ slot.name }}</div>
+                <div style="display:inline-flex;align-items:center;margin-top:3px"><span style="font-family:'Space Mono';font-size:9px;color:#0a0b09;background:var(--lime);padding:1px 6px;border-radius:4px;font-weight:700">{{ slot.ovr }} · {{ slot.code }}</span></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ slot.showPlus }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <button class="az-plus" onClick="{{ slot.onOpen }}" style="width:54px;height:54px;border-radius:50%;background:rgba(212,255,61,.07);border:2px dashed rgba(212,255,61,.55);color:var(--lime);font-size:26px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:transform .15s" style-hover="transform:scale(1.1);background:rgba(212,255,61,.16)">+</button>
+                <div style="font-family:'Space Mono';font-size:9px;color:var(--mut);margin-top:6px;letter-spacing:.06em">{{ slot.posLabel }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ slot.faint }}" hint-placeholder-val="{{ true }}">
+              <div style="opacity:.45">
+                <div style="width:46px;height:46px;border-radius:50%;border:1.5px dashed var(--mut);margin:0 auto"></div>
+                <div style="font-family:'Space Mono';font-size:9px;color:var(--mut);margin-top:6px;letter-spacing:.06em">{{ slot.posLabel }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM SIMULAR BAR (build) -->
+  <sc-if value="{{ isBuild }}" hint-placeholder-val="{{ true }}">
+    <div class="az-simbar" style="position:fixed;left:0;right:0;bottom:0;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(10,11,9,.6),#0a0b09);backdrop-filter:blur(8px);padding:14px 28px;z-index:15">
+      <div style="max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <div class="az-simtxt" style="font-family:'Space Mono';font-size:12px;color:var(--mut);letter-spacing:.06em;min-width:0">{{ statusLine }}</div>
+        <sc-if value="{{ complete }}" hint-placeholder-val="{{ true }}">
+          <a class="az-simbtn" href="ONZE%20-%20Grupos.dc.html" style="display:flex;align-items:center;gap:10px;background:var(--lime);color:#0a0b09;border:none;border-radius:11px;padding:15px 26px;font-family:'Anton';font-size:19px;letter-spacing:.02em;cursor:pointer;animation:onzePulse 2.4s infinite;white-space:nowrap;flex:0 0 auto">SIMULAR COPA <span style="font-size:16px">→</span></a>
+        </sc-if>
+        <sc-if value="{{ notComplete }}" hint-placeholder-val="{{ true }}">
+          <div class="az-simbtn" style="display:flex;align-items:center;gap:10px;background:var(--surface);color:var(--mut);border:1px solid var(--line);border-radius:11px;padding:15px 26px;font-family:'Anton';font-size:19px;letter-spacing:.02em;opacity:.6;white-space:nowrap;flex:0 0 auto">SIMULAR COPA <span style="font-size:16px">→</span></div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== SETUP SHEET ===== -->
+  <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed;inset:0;background:rgba(6,7,5,.72);backdrop-filter:blur(3px);z-index:30;animation:fadeIn .25s ease"></div>
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:31;display:flex;justify-content:center;animation:sheetUp .3s cubic-bezier(.2,.9,.3,1)">
+      <div class="az-sheet" style="width:100%;max-width:680px;background:var(--surface);border:1px solid var(--line);border-bottom:none;border-radius:22px 22px 0 0;padding:26px 30px 34px;box-shadow:0 -30px 60px -20px rgba(0,0,0,.6);max-height:92vh;overflow-y:auto">
+        <div style="width:44px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 22px"></div>
+        <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.18em;color:var(--lime);margin-bottom:8px">PASSO 1 · CONFIGURE</div>
+        <h2 class="az-sheettitle" style="font-family:'Anton';font-size:36px;margin:0 0 4px;line-height:.95">MONTE SEU TIME</h2>
+        <p style="color:var(--mut);font-size:14px;margin:0 0 26px;max-width:440px">Escolha a tática e o estilo. Depois, cada posição sorteia uma seleção e você escala 1 craque dela. Posição fechada não muda.</p>
+
+        <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut);margin-bottom:11px">TÁTICA</div>
+        <div style="display:flex;gap:10px;margin-bottom:24px">
+          <sc-for list="{{ formations }}" as="f" hint-placeholder-count="3">
+            <button class="az-formbtn" onClick="{{ f.onPick }}" style="flex:1;background:{{ f.bg }};border:1px solid {{ f.bd }};color:{{ f.fg }};border-radius:12px;padding:16px 0;font-family:'Anton';font-size:22px;letter-spacing:.02em;cursor:pointer">{{ f.id }}</button>
+          </sc-for>
+        </div>
+
+        <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut);margin-bottom:11px">ESTILO</div>
+        <div style="display:flex;gap:10px;margin-bottom:22px">
+          <sc-for list="{{ styles }}" as="s" hint-placeholder-count="3">
+            <button onClick="{{ s.onPick }}" style="flex:1;background:{{ s.bg }};border:1px solid {{ s.bd }};color:{{ s.fg }};border-radius:11px;padding:14px 0;font-weight:700;font-size:14px;cursor:pointer">{{ s.id }}</button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;gap:10px">
+          <span style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut)">DIFICULDADE</span>
+          <span style="font-family:'Space Mono';font-size:10px;color:var(--mut);text-align:right">define seus pulos de sorteio</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:28px">
+          <sc-for list="{{ diffs }}" as="d" hint-placeholder-count="3">
+            <button onClick="{{ d.onPick }}" style="flex:1;background:{{ d.bg }};border:1px solid {{ d.bd }};color:{{ d.fg }};border-radius:11px;padding:12px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px">
+              <span style="font-weight:800;font-size:14px">{{ d.id }}</span>
+              <span class="az-diffbtn-skips" style="font-family:'Space Mono';font-size:10px">⚄ {{ d.skips }} pulos</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <button onClick="{{ start }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--lime);color:#0a0b09;border:none;border-radius:13px;padding:18px;font-family:'Anton';font-size:21px;letter-spacing:.02em;cursor:pointer;animation:onzePulse 2.6s infinite">COMEÇAR A MONTAR <span style="font-size:18px">→</span></button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== POSITION DRAWER (roll/result) ===== -->
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ true }}">
+    <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(6,7,5,.72);backdrop-filter:blur(3px);z-index:30;animation:fadeIn .2s ease"></div>
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:31;display:flex;justify-content:center;animation:sheetUp .3s cubic-bezier(.2,.9,.3,1)">
+      <div class="az-sheet" style="width:100%;max-width:560px;background:var(--surface);border:1px solid var(--line);border-bottom:none;border-radius:22px 22px 0 0;padding:22px 26px 30px;box-shadow:0 -30px 60px -20px rgba(0,0,0,.6);max-height:92vh;overflow-y:auto">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.14em;color:var(--lime)">SORTEIO · {{ activeLabel }}</div>
+          <button onClick="{{ closeDrawer }}" style="background:var(--surface2);border:1px solid var(--line);color:var(--mut);border-radius:8px;width:30px;height:30px;font-size:15px;cursor:pointer;flex:0 0 auto">✕</button>
+        </div>
+
+        <!-- ROLL -->
+        <sc-if value="{{ isRoll }}" hint-placeholder-val="{{ true }}">
+          <div style="text-align:center;padding:18px 0 8px">
+            <div style="width:84px;height:84px;margin:0 auto 20px;border-radius:18px;background:var(--surface2);border:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:18px">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--lime)"></span><span></span><span style="width:8px;height:8px;border-radius:50%;background:var(--lime);justify-self:end"></span>
+              <span></span><span style="width:8px;height:8px;border-radius:50%;background:var(--lime);justify-self:center"></span><span></span>
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--lime)"></span><span></span><span style="width:8px;height:8px;border-radius:50%;background:var(--lime);justify-self:end"></span>
+            </div>
+            <div style="font-size:15px;color:var(--mut);max-width:340px;margin:0 auto 22px">Role o dado pra sortear uma seleção e ver seus jogadores de <b style="color:var(--ink)">{{ activeLabel }}</b>.</div>
+            <button onClick="{{ roll }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--lime);color:#0a0b09;border:none;border-radius:13px;padding:18px;font-family:'Anton';font-size:22px;letter-spacing:.02em;cursor:pointer;animation:onzePulse 2.4s infinite"><span style="font-size:22px">⚄</span> ROLAR O DADO</button>
+            <div style="font-family:'Space Mono';font-size:10px;color:var(--mut);margin-top:16px;letter-spacing:.06em">EM COOLDOWN (5 SORTEIOS): <span style="color:var(--ink)">{{ recentStr }}</span></div>
+          </div>
+        </sc-if>
+
+        <!-- ROLLING -->
+        <sc-if value="{{ isRolling }}" hint-placeholder-val="{{ true }}">
+          <div style="text-align:center;padding:34px 0 40px">
+            <div style="width:84px;height:84px;margin:0 auto 22px;border-radius:18px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:21px;animation:onzeSpin 1s linear infinite;box-shadow:0 0 32px -2px rgba(212,255,61,.6)">
+              <span style="width:9px;height:9px;border-radius:50%;background:#0a0b09"></span><span style="width:9px;height:9px;border-radius:50%;background:#0a0b09"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:#0a0b09"></span><span style="width:9px;height:9px;border-radius:50%;background:#0a0b09"></span>
+            </div>
+            <div style="font-family:'Anton';font-size:24px;color:var(--lime);letter-spacing:.04em">SORTEANDO…</div>
+          </div>
+        </sc-if>
+
+        <!-- RESULT -->
+        <sc-if value="{{ isResult }}" hint-placeholder-val="{{ true }}">
+          <div style="animation:fadeIn .3s ease">
+            <div style="display:flex;align-items:center;gap:14px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px 16px;margin:6px 0 16px">
+              <div style="width:52px;height:36px;border-radius:6px;background:linear-gradient(135deg,{{ drawnC1 }} 50%,{{ drawnC2 }} 50%);position:relative;border:1px solid rgba(255,255,255,.14);flex:0 0 auto"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:10px;font-weight:700;color:{{ drawnTextOn }}">{{ drawnCode }}</span></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:'Space Mono';font-size:10px;color:var(--lime);letter-spacing:.12em">SELEÇÃO SORTEADA</div>
+                <div style="font-family:'Anton';font-size:24px;line-height:1">{{ drawnName }}</div>
+              </div>
+              <sc-if value="{{ canSkip }}" hint-placeholder-val="{{ true }}"><button onClick="{{ skip }}" style="background:transparent;border:1px solid var(--lime);color:var(--lime);border-radius:8px;padding:9px 12px;font-family:'Space Mono';font-size:11px;font-weight:700;cursor:pointer;flex:0 0 auto;white-space:nowrap">⤳ {{ skipLabel }}</button></sc-if>
+              <sc-if value="{{ noSkip }}" hint-placeholder-val="{{ true }}"><span style="border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:9px 12px;font-family:'Space Mono';font-size:11px;font-weight:700;opacity:.5;flex:0 0 auto;white-space:nowrap">SEM PULOS</span></sc-if>
+            </div>
+            <div style="font-family:'Space Mono';font-size:11px;color:var(--mut);letter-spacing:.1em;margin-bottom:10px">ESCALE 1 PARA {{ activeLabel }}</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ candidates }}" as="c" hint-placeholder-count="2">
+                <button onClick="{{ c.onPick }}" style="display:flex;align-items:center;gap:13px;padding:12px 14px;border-radius:11px;background:var(--surface2);border:1px solid var(--line);cursor:pointer;text-align:left;transition:border-color .15s" style-hover="border-color:var(--lime)">
+                  <div style="width:30px;font-family:'Anton';font-size:19px;color:var(--mut);text-align:center;flex:0 0 auto">{{ c.n }}</div>
+                  <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:15px;color:var(--ink)">{{ c.name }}</div><div style="font-family:'Space Mono';font-size:9px;color:var(--mut);letter-spacing:.08em">{{ c.pos }}</div></div>
+                  <div style="font-family:'Anton';font-size:22px;color:var(--lime);flex:0 0 auto">{{ c.ovr }}</div>
+                  <div style="width:26px;height:26px;border-radius:7px;background:var(--lime);display:flex;align-items:center;justify-content:center;color:#0a0b09;font-weight:800;font-size:15px;flex:0 0 auto">→</div>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.NATIONS = [
+      {code:'BRA',name:'BRASIL',c1:'#1c9b4b',c2:'#f5d11e',textOn:'#0a0b09',players:[
+        {n:1,name:'Alisson',pos:'GOLEIRO',grp:'GOL',ovr:86},
+        {n:3,name:'Marquinhos',pos:'ZAGUEIRO',grp:'DEF',ovr:86},{n:14,name:'Militão',pos:'ZAGUEIRO',grp:'DEF',ovr:84},
+        {n:8,name:'Bruno Guimarães',pos:'MEIO-CENTRO',grp:'MEI',ovr:85},{n:10,name:'Paquetá',pos:'MEIA',grp:'MEI',ovr:83},
+        {n:7,name:'Vinícius Jr.',pos:'PONTA',grp:'ATA',ovr:90},{n:11,name:'Raphinha',pos:'PONTA',grp:'ATA',ovr:87}]},
+      {code:'ARG',name:'ARGENTINA',c1:'#6ea8ff',c2:'#ffffff',textOn:'#0a0b09',players:[
+        {n:23,name:'E. Martínez',pos:'GOLEIRO',grp:'GOL',ovr:85},
+        {n:13,name:'C. Romero',pos:'ZAGUEIRO',grp:'DEF',ovr:84},{n:19,name:'Otamendi',pos:'ZAGUEIRO',grp:'DEF',ovr:80},
+        {n:7,name:'De Paul',pos:'MEIO-CENTRO',grp:'MEI',ovr:84},{n:20,name:'Mac Allister',pos:'MEIA',grp:'MEI',ovr:85},
+        {n:10,name:'Messi',pos:'ATACANTE',grp:'ATA',ovr:88},{n:9,name:'J. Álvarez',pos:'CENTROAVANTE',grp:'ATA',ovr:86}]},
+      {code:'FRA',name:'FRANÇA',c1:'#1b3a8f',c2:'#e2483d',textOn:'#ffffff',players:[
+        {n:16,name:'Maignan',pos:'GOLEIRO',grp:'GOL',ovr:85},
+        {n:4,name:'Saliba',pos:'ZAGUEIRO',grp:'DEF',ovr:85},{n:5,name:'Koundé',pos:'LATERAL',grp:'DEF',ovr:83},
+        {n:8,name:'Tchouaméni',pos:'VOLANTE',grp:'MEI',ovr:85},{n:6,name:'Camavinga',pos:'MEIA',grp:'MEI',ovr:83},
+        {n:10,name:'Mbappé',pos:'ATACANTE',grp:'ATA',ovr:91},{n:11,name:'Dembélé',pos:'PONTA',grp:'ATA',ovr:85}]},
+      {code:'ESP',name:'ESPANHA',c1:'#e2483d',c2:'#f5d11e',textOn:'#ffffff',players:[
+        {n:23,name:'Unai Simón',pos:'GOLEIRO',grp:'GOL',ovr:83},
+        {n:14,name:'Le Normand',pos:'ZAGUEIRO',grp:'DEF',ovr:81},{n:2,name:'Cubarsí',pos:'ZAGUEIRO',grp:'DEF',ovr:82},
+        {n:8,name:'Pedri',pos:'MEIA',grp:'MEI',ovr:86},{n:16,name:'Rodri',pos:'VOLANTE',grp:'MEI',ovr:89},
+        {n:19,name:'Lamine Yamal',pos:'PONTA',grp:'ATA',ovr:87},{n:17,name:'Nico Williams',pos:'PONTA',grp:'ATA',ovr:84}]},
+      {code:'ENG',name:'INGLATERRA',c1:'#ffffff',c2:'#e2483d',textOn:'#0a0b09',players:[
+        {n:1,name:'Pickford',pos:'GOLEIRO',grp:'GOL',ovr:83},
+        {n:5,name:'Stones',pos:'ZAGUEIRO',grp:'DEF',ovr:84},{n:6,name:'Guéhi',pos:'ZAGUEIRO',grp:'DEF',ovr:80},
+        {n:10,name:'Bellingham',pos:'MEIA',grp:'MEI',ovr:88},{n:4,name:'Rice',pos:'VOLANTE',grp:'MEI',ovr:85},
+        {n:9,name:'Kane',pos:'CENTROAVANTE',grp:'ATA',ovr:88},{n:7,name:'Saka',pos:'PONTA',grp:'ATA',ovr:86}]},
+      {code:'POR',name:'PORTUGAL',c1:'#1c7a3c',c2:'#e2483d',textOn:'#ffffff',players:[
+        {n:22,name:'D. Costa',pos:'GOLEIRO',grp:'GOL',ovr:81},
+        {n:3,name:'Rúben Dias',pos:'ZAGUEIRO',grp:'DEF',ovr:86},{n:20,name:'Cancelo',pos:'LATERAL',grp:'DEF',ovr:83},
+        {n:8,name:'B. Fernandes',pos:'MEIA',grp:'MEI',ovr:86},{n:16,name:'Vitinha',pos:'VOLANTE',grp:'MEI',ovr:84},
+        {n:7,name:'C. Ronaldo',pos:'ATACANTE',grp:'ATA',ovr:84},{n:10,name:'Rafael Leão',pos:'PONTA',grp:'ATA',ovr:85}]},
+      {code:'GER',name:'ALEMANHA',c1:'#111111',c2:'#f5d11e',textOn:'#ffffff',players:[
+        {n:1,name:'Neuer',pos:'GOLEIRO',grp:'GOL',ovr:84},
+        {n:2,name:'Rüdiger',pos:'ZAGUEIRO',grp:'DEF',ovr:85},{n:4,name:'Tah',pos:'ZAGUEIRO',grp:'DEF',ovr:82},
+        {n:6,name:'Kimmich',pos:'VOLANTE',grp:'MEI',ovr:86},{n:10,name:'Wirtz',pos:'MEIA',grp:'MEI',ovr:87},
+        {n:14,name:'Musiala',pos:'MEIA-ATA',grp:'ATA',ovr:88},{n:7,name:'Havertz',pos:'CENTROAVANTE',grp:'ATA',ovr:84}]},
+      {code:'NED',name:'HOLANDA',c1:'#ff7a1a',c2:'#ffffff',textOn:'#0a0b09',players:[
+        {n:1,name:'Verbruggen',pos:'GOLEIRO',grp:'GOL',ovr:81},
+        {n:4,name:'Van Dijk',pos:'ZAGUEIRO',grp:'DEF',ovr:86},{n:22,name:'Dumfries',pos:'LATERAL',grp:'DEF',ovr:82},
+        {n:21,name:'F. de Jong',pos:'MEIA',grp:'MEI',ovr:86},{n:8,name:'Gravenberch',pos:'VOLANTE',grp:'MEI',ovr:83},
+        {n:11,name:'Gakpo',pos:'PONTA',grp:'ATA',ovr:84},{n:10,name:'Depay',pos:'CENTROAVANTE',grp:'ATA',ovr:82}]}
+    ];
+    this.FORMS = {
+      '4-3-3':[
+        {posLabel:'GOLEIRO',grp:'GOL',x:50,y:90},{posLabel:'LAT. ESQ',grp:'DEF',x:18,y:72},{posLabel:'ZAGUEIRO',grp:'DEF',x:39,y:75},
+        {posLabel:'ZAGUEIRO',grp:'DEF',x:61,y:75},{posLabel:'LAT. DIR',grp:'DEF',x:82,y:72},{posLabel:'VOLANTE',grp:'MEI',x:50,y:58},
+        {posLabel:'MEIA',grp:'MEI',x:30,y:50},{posLabel:'MEIA',grp:'MEI',x:70,y:50},{posLabel:'PONTA ESQ',grp:'ATA',x:20,y:26},
+        {posLabel:'CENTROAVANTE',grp:'ATA',x:50,y:21},{posLabel:'PONTA DIR',grp:'ATA',x:80,y:26}],
+      '4-4-2':[
+        {posLabel:'GOLEIRO',grp:'GOL',x:50,y:90},{posLabel:'LAT. ESQ',grp:'DEF',x:16,y:72},{posLabel:'ZAGUEIRO',grp:'DEF',x:38,y:75},
+        {posLabel:'ZAGUEIRO',grp:'DEF',x:62,y:75},{posLabel:'LAT. DIR',grp:'DEF',x:84,y:72},{posLabel:'MEIA ESQ',grp:'MEI',x:16,y:48},
+        {posLabel:'VOLANTE',grp:'MEI',x:38,y:52},{posLabel:'MEIA',grp:'MEI',x:62,y:52},{posLabel:'MEIA DIR',grp:'MEI',x:84,y:48},
+        {posLabel:'CENTROAVANTE',grp:'ATA',x:38,y:22},{posLabel:'CENTROAVANTE',grp:'ATA',x:62,y:22}],
+      '3-5-2':[
+        {posLabel:'GOLEIRO',grp:'GOL',x:50,y:90},{posLabel:'ZAGUEIRO',grp:'DEF',x:28,y:76},{posLabel:'ZAGUEIRO',grp:'DEF',x:50,y:78},
+        {posLabel:'ZAGUEIRO',grp:'DEF',x:72,y:76},{posLabel:'ALA ESQ',grp:'MEI',x:11,y:54},{posLabel:'VOLANTE',grp:'MEI',x:34,y:57},
+        {posLabel:'MEIA',grp:'MEI',x:50,y:49},{posLabel:'VOLANTE',grp:'MEI',x:66,y:57},{posLabel:'ALA DIR',grp:'MEI',x:89,y:54},
+        {posLabel:'CENTROAVANTE',grp:'ATA',x:38,y:24},{posLabel:'CENTROAVANTE',grp:'ATA',x:62,y:24}]
+    };
+    this.STYLES = ['Ofensivo','Equilibrado','Defensivo'];
+    this.DIFFS = [{id:'Fácil',skips:5},{id:'Médio',skips:3},{id:'Difícil',skips:1}];
+    this.state = { phase:'setup', formation:'4-3-3', style:'Equilibrado', diff:'Médio', skipsLeft:3, slots:[], active:null, drawer:'closed', drawn:null, candidates:[], recent:[] };
+  }
+  buildSlots(f){ return this.FORMS[f].map(p=>({...p, player:null})); }
+  start(){ const d=this.DIFFS.find(x=>x.id===this.state.diff)||this.DIFFS[1]; this.setState({phase:'build', skipsLeft:d.skips, slots:this.buildSlots(this.state.formation)}); }
+  setFormation(f){ this.setState({formation:f}); }
+  setStyle(s){ this.setState({style:s}); }
+  setDiff(d){ const o=this.DIFFS.find(x=>x.id===d); this.setState({diff:d, skipsLeft:o?o.skips:3}); }
+  skip(){ if(this.state.skipsLeft<=0) return; const d=this.state.drawn; const recent=d?[d.code, ...this.state.recent.filter(c=>c!==d.code)].slice(0,5):this.state.recent.slice(); this.setState({skipsLeft:this.state.skipsLeft-1, recent, drawn:null, candidates:[]}, ()=>this.roll()); }
+  reset(){ clearTimeout(this._t); const d=this.DIFFS.find(x=>x.id===this.state.diff)||this.DIFFS[1]; this.setState({phase:'setup', formation:this.state.formation, style:this.state.style, diff:this.state.diff, skipsLeft:d.skips, slots:[], active:null, drawer:'closed', drawn:null, candidates:[], recent:[]}); }
+  openSlot(i){ if(this.state.slots[i] && this.state.slots[i].player) return; this.setState({active:i, drawer:'roll', drawn:null, candidates:[]}); }
+  closeDrawer(){ clearTimeout(this._t); this.setState({drawer:'closed', active:null, drawn:null, candidates:[]}); }
+  roll(){
+    this.setState({drawer:'rolling', drawn:null, candidates:[]});
+    clearTimeout(this._t);
+    this._t = setTimeout(()=>{
+      const slot = this.state.slots[this.state.active];
+      let elig = this.NATIONS.filter(n=>!this.state.recent.includes(n.code) && n.players.some(p=>p.grp===slot.grp));
+      if(elig.length===0) elig = this.NATIONS.filter(n=>n.players.some(p=>p.grp===slot.grp));
+      const nation = elig[Math.floor(Math.random()*elig.length)];
+      const cands = nation.players.filter(p=>p.grp===slot.grp);
+      this.setState({drawer:'result', drawn:nation, candidates:cands});
+    }, 1050);
+  }
+  pick(p){
+    const i=this.state.active, d=this.state.drawn;
+    const slots=this.state.slots.slice();
+    slots[i]={...slots[i], player:{...p, code:d.code, c1:d.c1, c2:d.c2, textOn:d.textOn}};
+    const recent=[d.code, ...this.state.recent.filter(c=>c!==d.code)].slice(0,5);
+    this.setState({slots, recent, drawer:'closed', active:null, drawn:null, candidates:[]});
+  }
+  renderVals(){
+    const st=this.state;
+    const isSetup = st.phase==='setup';
+    const layout = isSetup ? this.FORMS[st.formation].map(p=>({...p,player:null})) : st.slots;
+    const slots = layout.map((s,i)=>({
+      left:s.x+'%', top:s.y+'%',
+      filled: !!s.player,
+      showPlus: !isSetup && !s.player,
+      faint: isSetup,
+      posLabel: s.posLabel,
+      num: s.player? s.player.n : '',
+      name: s.player? s.player.name : '',
+      ovr: s.player? s.player.ovr : '',
+      code: s.player? s.player.code : '',
+      onOpen: ()=>this.openSlot(i)
+    }));
+    const filled = st.slots.filter(s=>s.player).length;
+    const chosen = st.slots.filter(s=>s.player);
+    const ovr = chosen.length ? Math.round(chosen.reduce((a,s)=>a+s.player.ovr,0)/chosen.length) : '—';
+    const complete = filled===11;
+    const remaining = 11-filled;
+    const formations = Object.keys(this.FORMS).map(id=>{
+      const on = st.formation===id;
+      return { id, onPick:()=>this.setFormation(id),
+        bg: on?'var(--lime)':'var(--surface2)', bd: on?'var(--lime)':'var(--line)', fg: on?'#0a0b09':'var(--ink)' };
+    });
+    const styles = this.STYLES.map(id=>{
+      const on = st.style===id;
+      return { id, onPick:()=>this.setStyle(id),
+        bg: on?'rgba(212,255,61,.12)':'var(--surface2)', bd: on?'var(--lime)':'var(--line)', fg: on?'var(--lime)':'var(--mut)' };
+    });
+    const diffs = this.DIFFS.map(d=>{
+      const on = st.diff===d.id;
+      return { id:d.id, skips:d.skips, onPick:()=>this.setDiff(d.id),
+        bg: on?'rgba(212,255,61,.12)':'var(--surface2)', bd: on?'var(--lime)':'var(--line)', fg: on?'var(--lime)':'var(--mut)' };
+    });
+    const candidates = st.candidates.map(p=>({ n:p.n, name:p.name, pos:p.pos, ovr:p.ovr, onPick:()=>this.pick(p) }));
+    return {
+      isSetup, isBuild:!isSetup,
+      formation:st.formation, style:st.style,
+      slots, filled, ovr, complete, notComplete:!complete,
+      pct: (filled/11*100)+'%',
+      statusLine: complete ? 'XI COMPLETO — PRONTO PRA COPA' : ('FALTAM '+remaining+(remaining===1?' POSIÇÃO':' POSIÇÕES')),
+      drawerOpen: st.drawer!=='closed',
+      isRoll: st.drawer==='roll', isRolling: st.drawer==='rolling', isResult: st.drawer==='result',
+      activeLabel: st.active!=null && st.slots[st.active] ? st.slots[st.active].posLabel : '',
+      recentStr: st.recent.length ? st.recent.join(' · ') : 'NENHUMA',
+      drawnCode: st.drawn?st.drawn.code:'', drawnName: st.drawn?st.drawn.name:'',
+      drawnC1: st.drawn?st.drawn.c1:'#333', drawnC2: st.drawn?st.drawn.c2:'#333', drawnTextOn: st.drawn?st.drawn.textOn:'#fff',
+      candidates,
+      formations, styles, diffs,
+      skipsLeft: st.skipsLeft, canSkip: st.skipsLeft>0, noSkip: st.skipsLeft<=0, skipLabel: 'PULAR ('+st.skipsLeft+')',
+      start:()=>this.start(), setFormation:(f)=>this.setFormation(f), setStyle:(s)=>this.setStyle(s), setDiff:(d)=>this.setDiff(d), skip:()=>this.skip(),
+      openSlot:(i)=>this.openSlot(i), roll:()=>this.roll(), pick:(p)=>this.pick(p),
+      closeDrawer:()=>this.closeDrawer(), reset:()=>this.reset()
+    };
+  }
+}
+</script>
+</body>
+</html>

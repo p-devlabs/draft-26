@@ -6,11 +6,11 @@ export function AppLayout() {
       <header className="border-b border-rule">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
           <Link to="/" className="font-display text-lg tracking-tight text-ink">
-            Torneio de Verano
-            <span className="ml-2 text-ink-soft text-sm align-baseline">'26</span>
+            Draft
+            <span className="ml-2 text-ink-soft text-sm align-baseline">26</span>
           </Link>
           <nav className="text-sm text-ink-soft flex gap-6">
-            <Link to="/selecoes" className="hover:text-ink transition-colors">Seleções</Link>
+            <Link to="/teams" className="hover:text-ink transition-colors">Seleções</Link>
             <a href="/#como-funciona" className="hover:text-ink transition-colors">Como funciona</a>
           </nav>
         </div>

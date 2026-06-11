@@ -1,303 +1,965 @@
+import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { features } from '../lib/features'
-import { groupedSquads, squads } from '../data/squads'
-
-const TOTAL_PLAYERS = squads.reduce((s, q) => s + q.players.length, 0)
-const TOTAL_TEAMS = squads.length
-const TOTAL_GROUPS = groupedSquads.length
 
 export function Home() {
   return (
-    <div>
+    <div className="d26-scope">
+      <TopBar />
       <Hero />
-      <HowItWorks />
-      <DataIntegrity />
-      <Journey />
-      <ClosingCTA />
-      <Credits />
+      <Container>
+        <ComoFuncionaSection />
+        <RegrasSection />
+        <CaminhoSection />
+        <SelecoesSection />
+      </Container>
+      <CtaFinalSection />
+      <Footer />
     </div>
   )
 }
+
+// ============================================================
+// Top bar
+// ============================================================
+
+function TopBar() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 18,
+        padding: '16px clamp(20px, 5vw, 56px)',
+        borderBottom: '1px solid var(--color-d-line)',
+        background: 'rgba(10, 11, 9, 0.85)',
+        backdropFilter: 'blur(8px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+      }}
+    >
+      <Wordmark />
+      <Link
+        to="/draft"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 9,
+          background: 'var(--color-d-lime)',
+          color: 'var(--color-d-bg)',
+          borderRadius: 10,
+          padding: '11px 18px',
+          fontFamily: 'Anton',
+          fontSize: 15,
+          letterSpacing: '0.02em',
+          textDecoration: 'none',
+        }}
+      >
+        JOGAR <span style={{ fontFamily: 'Space Mono', fontSize: 11, fontWeight: 700 }}>→</span>
+      </Link>
+    </div>
+  )
+}
+
+function Wordmark({ small }: { small?: boolean } = {}) {
+  const wordSize = small ? 18 : 24
+  const tagSize = small ? 10 : 11
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+      {!small && <DiceMark size={36} dotSize={4} padding={7} />}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+        <span style={{ fontFamily: 'Anton', fontSize: wordSize, letterSpacing: '0.02em' }}>DRAFT</span>
+        <span style={{ fontFamily: 'Space Mono', fontSize: tagSize, color: 'var(--color-d-lime)', fontWeight: 700 }}>
+          26
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function DiceMark({
+  size = 36,
+  dotSize = 4,
+  padding = 7,
+  background = 'var(--color-d-lime)',
+  dotBg = 'var(--color-d-bg)',
+}: {
+  size?: number
+  dotSize?: number
+  padding?: number
+  background?: string
+  dotBg?: string
+}) {
+  const dot = (justify?: 'end' | 'center'): CSSProperties => {
+    const s: CSSProperties = { width: dotSize, height: dotSize, borderRadius: '50%', background: dotBg }
+    if (justify === 'end') s.justifySelf = 'end'
+    if (justify === 'center') s.justifySelf = 'center'
+    return s
+  }
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size / 4),
+        background,
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 3,
+        padding,
+        flex: '0 0 auto',
+      }}
+    >
+      <span style={dot()} />
+      <span />
+      <span style={dot('end')} />
+      <span />
+      <span style={dot('center')} />
+      <span />
+      <span style={dot()} />
+      <span />
+      <span style={dot('end')} />
+    </div>
+  )
+}
+
+// ============================================================
+// Hero
+// ============================================================
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="mx-auto max-w-6xl px-6 pt-20 pb-16">
-        <div className="max-w-3xl">
-          <p className="text-sm uppercase tracking-[0.18em] text-clay mb-6 flex items-center gap-2">
-            <span>Copa do Mundo 2026</span>
-            <span className="text-rule">·</span>
-            <span>EUA · México · Canadá</span>
-          </p>
-          <h1 className="font-display text-5xl md:text-7xl leading-[1.02] tracking-tight text-ink mb-6">
-            Pega uma seleção. <br />
-            Escala onze. <br />
-            <span className="text-clay">Levanta a taça.</span>
+    <div
+      style={{
+        borderBottom: '1px solid var(--color-d-line)',
+        background: 'linear-gradient(180deg, #101310, #0a0b09)',
+        padding: 'clamp(40px, 7vw, 84px) clamp(20px, 5vw, 56px)',
+      }}
+    >
+      <div
+        className="d26-hero-grid"
+        style={{
+          maxWidth: 1120,
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: '1.15fr 0.85fr',
+          gap: 'clamp(32px, 5vw, 64px)',
+          alignItems: 'center',
+        }}
+      >
+        <div>
+          <Kicker color="var(--color-d-lime)">COPA 2026 · UM JOGO NO DADO</Kicker>
+          <h1
+            style={{
+              fontFamily: 'Anton',
+              fontWeight: 400,
+              fontSize: 'clamp(40px, 8.5vw, 72px)',
+              lineHeight: 0.94,
+              margin: '0 0 20px',
+            }}
+          >
+            ROLE O DADO.
+            <br />
+            FAÇA O DRAFT.
+            <br />
+            <span style={{ color: 'var(--color-d-lime)' }}>CONQUISTE O MUNDO.</span>
           </h1>
-          <p className="text-lg md:text-xl text-ink-soft leading-relaxed mb-10 max-w-2xl">
-            48 seleções. {TOTAL_PLAYERS.toLocaleString('pt-BR')} convocados oficiais.
-            Um Dream XI montado posição por posição. O resto é cosido na Poisson —
-            grupos, mata-mata, prorrogação, pênaltis no MetLife.
+          <p
+            style={{
+              maxWidth: 480,
+              fontSize: 17,
+              lineHeight: 1.6,
+              color: 'var(--color-d-mut)',
+              margin: '0 0 30px',
+            }}
+          >
+            Sorteie seu time no dado entre os 26 convocados de cada uma das 48 seleções,
+            atravesse a fase de grupos e o mata-mata — e seja{' '}
+            <span style={{ color: 'var(--color-d-ink)', fontWeight: 700 }}>campeão do mundo</span>.
           </p>
-          <div className="flex gap-3 flex-wrap">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
             <Link
               to="/draft"
-              className="inline-flex items-center justify-center h-12 px-7 rounded-md bg-ink text-paper text-sm font-medium hover:bg-clay transition-colors"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 11,
+                background: 'var(--color-d-lime)',
+                color: 'var(--color-d-bg)',
+                borderRadius: 12,
+                padding: '16px 26px',
+                fontFamily: 'Anton',
+                fontSize: 19,
+                letterSpacing: '0.02em',
+                textDecoration: 'none',
+                animation: 'd26-pulse 2.6s ease-out infinite',
+              }}
             >
-              Começar draft
+              <SmallDice />
+              COMEÇAR A ESCALAR
             </Link>
-            <Link
-              to="/selecoes"
-              className="inline-flex items-center justify-center h-12 px-7 rounded-md border border-rule text-ink text-sm font-medium hover:bg-sand transition-colors"
+            <a
+              href="#como"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'transparent',
+                color: 'var(--color-d-ink)',
+                border: '1px solid var(--color-d-line)',
+                borderRadius: 12,
+                padding: '15px 22px',
+                fontWeight: 700,
+                fontSize: 14,
+                textDecoration: 'none',
+              }}
             >
-              Ver as 48 seleções
-            </Link>
+              Como funciona
+            </a>
           </div>
           {features.dev && (
-            <div className="mt-5 flex gap-2">
+            <div style={{ marginTop: 20 }}>
               <Link
-                to="/copa?demo=1"
-                className="text-xs text-clay border-b border-dashed border-clay/40 hover:border-clay"
+                to="/groups?demo=1"
+                style={{
+                  fontFamily: 'Space Mono',
+                  fontSize: 11,
+                  color: 'var(--color-d-lime)',
+                  letterSpacing: '0.06em',
+                  textDecoration: 'underline dashed',
+                }}
               >
-                ⚡ dev · pular pra Copa com XI demo
+                ⚡ dev · pular pra Grupos com XI demo
               </Link>
             </div>
           )}
+          <HeroStats />
         </div>
 
-        <FlagsTicker />
+        <div
+          className="d26-hero-art"
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}
+        >
+          <div
+            className="d26-hero-dice"
+            style={{
+              width: 128,
+              height: 128,
+              borderRadius: 26,
+              background: 'var(--color-d-lime)',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 14,
+              padding: 30,
+              animation: 'd26-spin 3.4s linear infinite',
+              boxShadow: '0 0 60px -6px rgba(212, 255, 61, 0.5)',
+            }}
+          >
+            {Array.from({ length: 4 }).map((_, i) => (
+              <span
+                key={i}
+                style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--color-d-bg)' }}
+              />
+            ))}
+          </div>
+          <div
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 12,
+              letterSpacing: '0.14em',
+              color: 'var(--color-d-mut)',
+              textAlign: 'center',
+            }}
+          >
+            O DADO ESCALA
+            <br />
+            <span style={{ color: 'var(--color-d-lime)' }}>VOCÊ COMANDA</span>
+          </div>
+        </div>
       </div>
-    </section>
-  )
-}
-
-function FlagsTicker() {
-  // Mostra as 48 bandeiras em fila, com um leve rolar visual
-  return (
-    <div className="mt-16 -mx-6 overflow-hidden border-y border-rule py-4 bg-sand/40">
-      <div className="flex gap-6 animate-[scroll_60s_linear_infinite] whitespace-nowrap">
-        {[...squads, ...squads].map((s, i) => (
-          <span key={`${s.code}-${i}`} className="inline-flex items-center gap-2 text-sm text-ink-soft">
-            <span className="text-2xl">{s.flag}</span>
-            <span className="font-mono text-[10px] uppercase tracking-wider">{s.code}</span>
-          </span>
-        ))}
-      </div>
-      <style>{`
-        @keyframes scroll {
-          from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
-        }
-      `}</style>
     </div>
   )
 }
 
-function HowItWorks() {
-  const steps = [
-    {
-      n: '01',
-      title: 'Sorteia uma seleção por posição',
-      body:
-        'A cada vaga, o dado entrega um país. Você escolhe um jogador dos 26 convocados que servem ali. Países sorteados ficam em cooldown de 5 lances.',
-    },
-    {
-      n: '02',
-      title: 'Monta o XI dos sonhos',
-      body:
-        'Vinícius de ponta, Bellingham no meio, Alisson no gol — só não tudo do mesmo país. Pulos limitados pela dificuldade: 5 / 3 / 1.',
-    },
-    {
-      n: '03',
-      title: 'Disputa a fase de grupos',
-      body:
-        'Seu XI substitui o time mais fraco de um grupo sorteado. Três jogos com narração minuto a minuto e tabela ge.com-style. Tiebreakers da FIFA 2026.',
-    },
-    {
-      n: '04',
-      title: 'Bate o chaveamento',
-      body:
-        'Top 2 vai pra eliminatória de 32. Prorrogação 15+15, pênaltis se persistir. Final no MetLife — ou drawer de eliminação com tudo o que aconteceu.',
-    },
-  ]
+function SmallDice() {
+  const dot: CSSProperties = { width: 3, height: 3, borderRadius: '50%', background: 'var(--color-d-bg)' }
   return (
-    <section id="como-funciona" className="border-t border-rule">
-      <div className="mx-auto max-w-6xl px-6 py-20">
-        <div className="mb-12 max-w-2xl">
-          <p className="text-sm uppercase tracking-[0.18em] text-clay mb-3">Como funciona</p>
-          <h2 className="font-display text-3xl md:text-4xl text-ink leading-tight">
-            Quatro telas. Uma decisão por vez.
-          </h2>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((s) => (
-            <div key={s.n}>
-              <div className="font-display text-clay text-sm mb-3 tabular-nums">{s.n}</div>
-              <h3 className="font-display text-xl text-ink mb-3 leading-snug">{s.title}</h3>
-              <p className="text-ink-soft text-sm leading-relaxed">{s.body}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+    <span
+      style={{
+        display: 'inline-grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 2,
+        width: 17,
+        height: 17,
+      }}
+    >
+      <i style={dot} />
+      <i />
+      <i style={{ ...dot, justifySelf: 'end' }} />
+      <i />
+      <i style={{ ...dot, justifySelf: 'center' }} />
+      <i />
+      <i style={dot} />
+      <i />
+      <i style={{ ...dot, justifySelf: 'end' }} />
+    </span>
   )
 }
 
-function DataIntegrity() {
+function HeroStats() {
   return (
-    <section className="border-t border-rule bg-sand/30">
-      <div className="mx-auto max-w-6xl px-6 py-20">
-        <div className="mb-12 max-w-2xl">
-          <p className="text-sm uppercase tracking-[0.18em] text-clay mb-3">Por baixo do capô</p>
-          <h2 className="font-display text-3xl md:text-4xl text-ink leading-tight">
-            Dados de verdade. Nada inventado.
-          </h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-10">
-          <SourceCard
-            label="Convocações"
-            source="Wikipedia"
-            description={`As ${TOTAL_TEAMS} listas oficiais de 26 convocados raspadas direto da página da Copa 2026.`}
-            href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_squads"
-            stat={`${TOTAL_PLAYERS.toLocaleString('pt-BR')} convocados`}
-          />
-          <SourceCard
-            label="Ratings e posições"
-            source="EA FC 26"
-            description="Overall, posição principal e alternativas vêm do dataset oficial do game — 18k+ jogadores."
-            href="https://www.ea.com/games/ea-sports-fc"
-            stat="~70% match rate"
-          />
-          <SourceCard
-            label="Valor de mercado"
-            source="Transfermarkt"
-            description="Cross-referência com o valor atual e pico histórico. Quando EA e TM divergem, os dois ficam visíveis."
-            href="https://www.transfermarkt.com/"
-            stat="47k jogadores"
-          />
-        </div>
-        <p className="mt-10 text-xs text-ink-soft max-w-3xl">
-          Desambiguação por bucket posicional + clube + idade resolve casos clássicos —
-          Alisson Becker (GK Liverpool, 89) deixou de ser confundido com Alisson Santana
-          (RW Shakhtar, 70). Jogadores fora dos datasets (Irã, Jordânia, ligas menores)
-          caem numa heurística marcada com <span className="text-clay">✦</span> na ficha.
-        </p>
-      </div>
-    </section>
+    <div
+      className="d26-hero-stats"
+      style={{ display: 'flex', gap: 26, marginTop: 34, flexWrap: 'wrap' }}
+    >
+      <StatPair value="48" label="SELEÇÕES" highlight />
+      <StatPair value="26" label="CONVOCADOS/SEL." />
+      <StatPair value="11" label="NO DADO" />
+      <StatPair value="1" label="TAÇA · O OBJETIVO" highlight />
+    </div>
   )
 }
 
-function SourceCard({
-  label,
-  source,
-  description,
-  href,
-  stat,
+function StatPair({ value, label, highlight }: { value: string; label: string; highlight?: boolean }) {
+  return (
+    <div>
+      <div
+        style={{
+          fontFamily: 'Anton',
+          fontSize: 30,
+          color: highlight ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.12em',
+          color: 'var(--color-d-mut)',
+          marginTop: 3,
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Container + section helpers
+// ============================================================
+
+function Container({ children }: { children: ReactNode }) {
+  return (
+    <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 clamp(20px, 5vw, 56px)' }}>
+      {children}
+    </div>
+  )
+}
+
+function SectionHeader({
+  id,
+  kicker,
+  title,
+  sub,
 }: {
-  label: string
-  source: string
-  description: string
-  href: string
-  stat: string
+  id?: string
+  kicker: string
+  title: string
+  sub?: string
 }) {
   return (
-    <a
-      href={href}
-      className="block p-6 rounded-lg border border-rule bg-paper hover:border-ink/40 hover:shadow-sm transition-all"
-    >
-      <div className="text-[10px] uppercase tracking-[0.18em] text-ink-soft mb-2">{label}</div>
-      <div className="font-display text-2xl text-ink mb-3">{source}</div>
-      <p className="text-sm text-ink-soft leading-relaxed mb-4">{description}</p>
-      <div className="text-xs text-clay tabular-nums font-medium">{stat}</div>
-    </a>
+    <header id={id} style={{ marginBottom: sub ? 38 : 28 }}>
+      <Kicker color="var(--color-d-lime)">{kicker}</Kicker>
+      <h2
+        style={{
+          fontFamily: 'Anton',
+          fontWeight: 400,
+          fontSize: 'clamp(28px, 5vw, 40px)',
+          lineHeight: 1,
+          margin: '0 0 8px',
+        }}
+      >
+        {title}
+      </h2>
+      {sub && (
+        <p style={{ color: 'var(--color-d-mut)', fontSize: 15, margin: 0, maxWidth: 520 }}>{sub}</p>
+      )}
+    </header>
   )
 }
 
-function Journey() {
-  const stages = [
-    { tag: 'Setup', title: 'Tática + estilo + dificuldade', detail: '4-3-3 ofensivo com 3 pulos. Ou 3-4-3 defensivo com 1 só.' },
-    { tag: 'Draft', title: '11 escolhas, uma por vez', detail: 'Sorteia. Escolhe. Cooldown. Repete onze vezes.' },
-    { tag: 'Grupos', title: '3 jogos no Grupo G (ou onde te sortear)', detail: 'Tabela ao vivo. Substitui a seleção mais fraca do grupo.' },
-    { tag: 'Mata-mata', title: '5 jogos pra levantar', detail: 'Bracket clássico no seu lado. Outro lado já tem finalista.' },
-  ]
+function Kicker({ children, color }: { children: ReactNode; color?: string }) {
   return (
-    <section className="border-t border-rule">
-      <div className="mx-auto max-w-6xl px-6 py-20">
-        <div className="mb-12 max-w-2xl">
-          <p className="text-sm uppercase tracking-[0.18em] text-clay mb-3">Sua jornada</p>
-          <h2 className="font-display text-3xl md:text-4xl text-ink leading-tight">
-            Do dado ao MetLife.
+    <div
+      style={{
+        fontFamily: 'Space Mono',
+        fontSize: 12,
+        letterSpacing: '0.18em',
+        color: color ?? 'var(--color-d-mut)',
+        marginBottom: 8,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function Section({ children, last }: { children: ReactNode; last?: boolean }) {
+  return (
+    <section
+      style={{
+        padding: 'clamp(48px, 7vw, 80px) 0',
+        borderBottom: last ? 'none' : '1px solid var(--color-d-line)',
+      }}
+    >
+      {children}
+    </section>
+  )
+}
+
+// ============================================================
+// Como funciona
+// ============================================================
+
+function ComoFuncionaSection() {
+  return (
+    <Section>
+      <SectionHeader
+        id="como"
+        kicker="COMO FUNCIONA"
+        title="Quatro passos até a glória"
+        sub="Nada de escolher seu time a dedo. Aqui é o dado que manda — e você joga com o que ele te der."
+      />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 16,
+        }}
+      >
+        <StepCard
+          num="01"
+          title="Sorteie o XI"
+          body="Cada posição rola o dado: ele sorteia uma seleção e escala um convocado dela pra aquela vaga. Onze rolagens, onze craques."
+          icon={<MiniDice />}
+        />
+        <StepCard
+          num="02"
+          title="Fase de grupos"
+          body="Seu time entra em um dos 12 grupos. Jogue os 3 jogos e brigue por uma vaga: top 2 de cada grupo, mais os 8 melhores terceiros."
+          icon={<MiniBadge label="12G" />}
+        />
+        <StepCard
+          num="03"
+          title="Mata-mata"
+          body="32 classificados, 5 fases sem volta: 32-avos, oitavas, quartas, semis e final. Uma derrota e acabou."
+          icon={<MiniBadge label="×5" />}
+        />
+        <StepCard
+          num="04"
+          title="Conquiste o mundo"
+          body="Vença as cinco fases do mata-mata, ganhe a final e erga o caneco. O time que o dado te deu, campeão do mundo."
+          icon={<span style={{ fontFamily: 'Anton', fontSize: 26, color: 'var(--color-d-lime)' }}>★</span>}
+          highlight
+        />
+      </div>
+    </Section>
+  )
+}
+
+function StepCard({
+  num,
+  title,
+  body,
+  icon,
+  highlight,
+}: {
+  num: string
+  title: string
+  body: string
+  icon: ReactNode
+  highlight?: boolean
+}) {
+  const baseBg = highlight
+    ? 'linear-gradient(160deg, rgba(212,255,61,0.12), rgba(212,255,61,0.02))'
+    : 'var(--color-d-surface)'
+  const baseBorder = highlight ? '1px solid rgba(212,255,61,0.35)' : '1px solid var(--color-d-line)'
+  return (
+    <div
+      style={{
+        background: baseBg,
+        border: baseBorder,
+        borderRadius: 16,
+        padding: 24,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+        }}
+      >
+        <span style={{ fontFamily: 'Anton', fontSize: 34, color: 'var(--color-d-lime)' }}>{num}</span>
+        {icon}
+      </div>
+      <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 7 }}>{title}</div>
+      <p style={{ color: 'var(--color-d-mut)', fontSize: 14, lineHeight: 1.55, margin: 0 }}>{body}</p>
+    </div>
+  )
+}
+
+function MiniDice() {
+  const dot: CSSProperties = { width: 4, height: 4, borderRadius: '50%', background: 'var(--color-d-lime)' }
+  return (
+    <span
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        background: 'var(--color-d-surface2)',
+        border: '1px solid var(--color-d-line)',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 3,
+        padding: 9,
+      }}
+    >
+      <i style={dot} />
+      <i />
+      <i style={{ ...dot, justifySelf: 'end' }} />
+      <i />
+      <i style={{ ...dot, justifySelf: 'center' }} />
+      <i />
+      <i style={dot} />
+      <i />
+      <i style={{ ...dot, justifySelf: 'end' }} />
+    </span>
+  )
+}
+
+function MiniBadge({ label }: { label: string }) {
+  return (
+    <span
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        background: 'var(--color-d-surface2)',
+        border: '1px solid var(--color-d-line)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Space Mono',
+        fontSize: 11,
+        fontWeight: 700,
+        color: 'var(--color-d-mut)',
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+// ============================================================
+// Regras do dado
+// ============================================================
+
+function RegrasSection() {
+  return (
+    <Section>
+      <SectionHeader
+        kicker="AS REGRAS DO DADO"
+        title="O acaso com método"
+        sub="Três regras impedem que você caia sempre na mesma seleção — e a dificuldade decide quanto controle você tem."
+      />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: 16,
+          marginBottom: 16,
+        }}
+      >
+        <RegraCard
+          num="01"
+          tag="TRAVA"
+          title="Posição preenchida não muda"
+          body="Sorteou e escalou? Aquela vaga está travada. Sem voltar atrás."
+        />
+        <RegraCard
+          num="02"
+          tag="COOLDOWN"
+          title="Seleção descansa 5 rolagens"
+          body="Uma seleção já sorteada fica de fora dos próximos 5 sorteios. Times variados garantidos."
+        />
+        <RegraCard
+          num="03"
+          tag="SKIP"
+          title="Não gostou? Re-sorteie"
+          body="Pular gasta 1 pulo e re-sorteia a seleção — que entra no cooldown. Os pulos são limitados."
+        />
+      </div>
+      <DifficultyBand />
+    </Section>
+  )
+}
+
+function RegraCard({
+  num,
+  tag,
+  title,
+  body,
+}: {
+  num: string
+  tag: string
+  title: string
+  body: string
+}) {
+  return (
+    <div
+      style={{
+        background: 'var(--color-d-surface)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 16,
+        padding: 22,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 11,
+          letterSpacing: '0.12em',
+          color: 'var(--color-d-lime)',
+          marginBottom: 12,
+        }}
+      >
+        {num} · {tag}
+      </div>
+      <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 6 }}>{title}</div>
+      <p style={{ color: 'var(--color-d-mut)', fontSize: 14, lineHeight: 1.55, margin: 0 }}>{body}</p>
+    </div>
+  )
+}
+
+function DifficultyBand() {
+  return (
+    <div
+      style={{
+        background: 'var(--color-d-surface)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 16,
+        padding: '22px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 24,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div style={{ flex: '1 1 200px' }}>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            letterSpacing: '0.12em',
+            color: 'var(--color-d-mut)',
+            marginBottom: 6,
+          }}
+        >
+          PULOS POR DIFICULDADE
+        </div>
+        <div style={{ color: 'var(--color-d-mut)', fontSize: 14, lineHeight: 1.5 }}>
+          Quanto mais difícil, menos vezes você pode recusar o que o dado mandou.
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <DifficultyChip value="5" label="FÁCIL" color="var(--color-d-lime)" />
+        <DifficultyChip value="3" label="MÉDIO" />
+        <DifficultyChip value="1" label="DIFÍCIL" color="var(--color-d-red)" />
+      </div>
+    </div>
+  )
+}
+
+function DifficultyChip({ value, label, color }: { value: string; label: string; color?: string }) {
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        background: 'var(--color-d-surface2)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 11,
+        padding: '12px 18px',
+        minWidth: 88,
+      }}
+    >
+      <div style={{ fontFamily: 'Anton', fontSize: 30, color: color ?? 'var(--color-d-ink)' }}>{value}</div>
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.1em',
+          color: 'var(--color-d-mut)',
+          marginTop: 2,
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// O caminho
+// ============================================================
+
+function CaminhoSection() {
+  return (
+    <Section>
+      <SectionHeader kicker="O CAMINHO" title="Da escalação à goleada" />
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 10, flexWrap: 'wrap' }}>
+        <PathCard num="01" title="ESCALAÇÃO" sub="Monte o XI no dado" to="/draft" />
+        <PathCard num="02" title="GRUPOS" sub="Jogue os 3 jogos" to="/groups" />
+        <PathCard num="03" title="CHAVEAMENTO" sub="5 fases de mata-mata" to="/bracket" />
+        <PathCard num="04" title="PARTIDA" sub="Simule e faça 7 a 0" to="/match" />
+      </div>
+    </Section>
+  )
+}
+
+function PathCard({ num, title, sub, to }: { num: string; title: string; sub: string; to: string }) {
+  return (
+    <Link
+      to={to}
+      className="d26-path-card"
+      style={{
+        flex: '1 1 150px',
+        background: 'var(--color-d-surface)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 14,
+        padding: 18,
+        color: 'var(--color-d-ink)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        textDecoration: 'none',
+      }}
+    >
+      <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-lime)' }}>{num}</span>
+      <span style={{ fontFamily: 'Anton', fontSize: 19 }}>{title}</span>
+      <span style={{ fontSize: 12, color: 'var(--color-d-mut)' }}>{sub}</span>
+    </Link>
+  )
+}
+
+// ============================================================
+// 48 seleções
+// ============================================================
+
+interface BadgeSample {
+  code: string
+  bg: string
+}
+
+const SAMPLE_TEAMS: BadgeSample[] = [
+  { code: 'BRA', bg: 'linear-gradient(135deg, #1c9b4b 50%, #f5d11e 50%)' },
+  { code: 'ARG', bg: 'linear-gradient(180deg, #6ea8ff 33%, #fff 33%, #fff 66%, #6ea8ff 66%)' },
+  { code: 'FRA', bg: 'linear-gradient(90deg, #1b3a8f 33%, #fff 33%, #fff 66%, #e2483d 66%)' },
+  { code: 'ESP', bg: '#e2483d' },
+  { code: 'GER', bg: 'linear-gradient(180deg, #111 50%, #e2483d 50%)' },
+  { code: 'POR', bg: 'linear-gradient(90deg, #0a7d3a 33%, #fff 33%, #fff 66%, #0a7d3a 66%)' },
+  { code: 'ENG', bg: 'linear-gradient(180deg, #e2483d 50%, #fff 50%)' },
+  { code: 'URU', bg: '#5aa0ff' },
+]
+
+function SelecoesSection() {
+  return (
+    <Section>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          gap: 24,
+          flexWrap: 'wrap',
+          marginBottom: 28,
+        }}
+      >
+        <div>
+          <Kicker color="var(--color-d-lime)">48 SELEÇÕES</Kicker>
+          <h2
+            style={{
+              fontFamily: 'Anton',
+              fontWeight: 400,
+              fontSize: 'clamp(28px, 5vw, 40px)',
+              lineHeight: 1,
+              margin: 0,
+            }}
+          >
+            Cor e código, sem bandeira
           </h2>
         </div>
-        <ol className="relative border-l-2 border-rule pl-8 space-y-10 md:space-y-12">
-          {stages.map((s, i) => (
-            <li key={s.tag} className="relative">
-              <span className="absolute -left-[37px] top-1 w-4 h-4 rounded-full bg-paper border-2 border-clay" />
-              <div className="text-[10px] uppercase tracking-[0.18em] text-clay mb-1 tabular-nums">
-                {String(i + 1).padStart(2, '0')} · {s.tag}
-              </div>
-              <h3 className="font-display text-xl md:text-2xl text-ink mb-2">{s.title}</h3>
-              <p className="text-ink-soft text-sm">{s.detail}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  )
-}
-
-function ClosingCTA() {
-  return (
-    <section className="border-t border-rule bg-ink text-paper">
-      <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-        <p className="text-sm uppercase tracking-[0.18em] text-clay mb-4">A bola rola</p>
-        <h2 className="font-display text-4xl md:text-5xl leading-tight mb-6">
-          11 vagas. {TOTAL_TEAMS} seleções. <br />
-          <span className="text-clay">Uma final em junho.</span>
-        </h2>
-        <p className="text-paper/70 mb-10 max-w-xl mx-auto">
-          Não precisa de cadastro, nem de download. Roda no navegador, salva no
-          localStorage, dura uma sessão de café.
-        </p>
-        <Link
-          to="/draft"
-          className="inline-flex items-center justify-center h-12 px-8 rounded-md bg-clay text-paper text-sm font-medium hover:bg-paper hover:text-ink transition-colors"
+        <p
+          style={{
+            color: 'var(--color-d-mut)',
+            fontSize: 14,
+            lineHeight: 1.55,
+            margin: 0,
+            maxWidth: 340,
+          }}
         >
-          Começar agora →
+          Cada seleção é um par de cores e um código de três letras. Limpo, rápido de ler e funciona pras 48.
+        </p>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        {SAMPLE_TEAMS.map((t) => (
+          <TeamBadge key={t.code} sample={t} />
+        ))}
+        <Link
+          to="/teams"
+          style={{
+            width: 64,
+            height: 44,
+            borderRadius: 8,
+            background: 'var(--color-d-surface2)',
+            border: '1px dashed var(--color-d-line)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'Space Mono',
+            fontSize: 12,
+            fontWeight: 700,
+            color: 'var(--color-d-mut)',
+            textDecoration: 'none',
+          }}
+        >
+          +40
         </Link>
       </div>
-    </section>
+    </Section>
   )
 }
 
-function Credits() {
+function TeamBadge({ sample }: { sample: BadgeSample }) {
   return (
-    <section className="border-t border-rule">
-      <div className="mx-auto max-w-6xl px-6 py-10 grid sm:grid-cols-3 gap-6 text-xs text-ink-soft">
-        <div>
-          <div className="font-display text-ink text-sm mb-2">Stack</div>
-          <p>Vite · React 19 · TypeScript · Tailwind v4 · Supabase · Cloudflare Pages</p>
-        </div>
-        <div>
-          <div className="font-display text-ink text-sm mb-2">Fontes</div>
-          <p>
-            Wikipedia · <a className="underline hover:text-ink" href="https://github.com/ismailoksuz/EAFC26-DataHub">EAFC26-DataHub</a> ·{' '}
-            <a className="underline hover:text-ink" href="https://github.com/dcaribou/transfermarkt-datasets">dcaribou/transfermarkt-datasets</a>
-          </p>
-        </div>
-        <div>
-          <div className="font-display text-ink text-sm mb-2">Inspirado em</div>
-          <p>
-            <a className="underline hover:text-ink" href="https://7a0.com.br/">7a0</a> e{' '}
-            <a className="underline hover:text-ink" href="https://38a0.com/">38a0</a>{' '}
-            — feito com obsessão por UI/UX e dados reais.
-          </p>
-        </div>
-        <div className="sm:col-span-3 pt-4 border-t border-rule/60 flex items-center justify-between flex-wrap gap-2">
-          <span>v0.1 · {TOTAL_GROUPS} grupos · {TOTAL_TEAMS} seleções · {TOTAL_PLAYERS.toLocaleString('pt-BR')} jogadores</span>
-          <span>Pra rolar o dado em junho de 2026.</span>
-        </div>
+    <div
+      style={{
+        width: 64,
+        height: 44,
+        borderRadius: 8,
+        background: sample.bg,
+        position: 'relative',
+        overflow: 'hidden',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          padding: '8px 7px 4px',
+          background: 'linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72))',
+          fontFamily: 'Space Mono',
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#fff',
+          letterSpacing: '0.04em',
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.55)',
+          textAlign: 'center',
+        }}
+      >
+        {sample.code}
+      </span>
+    </div>
+  )
+}
+
+// ============================================================
+// CTA Final + Footer
+// ============================================================
+
+function CtaFinalSection() {
+  return (
+    <div
+      style={{
+        padding: 'clamp(56px, 9vw, 110px) clamp(20px, 5vw, 56px)',
+        textAlign: 'center',
+        background: 'linear-gradient(180deg, #0a0b09, #101310)',
+      }}
+    >
+      <div style={{ maxWidth: 680, margin: '0 auto' }}>
+        <Kicker color="var(--color-d-lime)">SEU DADO ESTÁ ESPERANDO</Kicker>
+        <h2
+          style={{
+            fontFamily: 'Anton',
+            fontWeight: 400,
+            fontSize: 'clamp(36px, 8vw, 64px)',
+            lineHeight: 0.96,
+            margin: '0 0 26px',
+          }}
+        >
+          PRONTO PRA
+          <br />
+          <span style={{ color: 'var(--color-d-lime)' }}>CONQUISTAR O MUNDO?</span>
+        </h2>
+        <Link
+          to="/draft"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 12,
+            background: 'var(--color-d-lime)',
+            color: 'var(--color-d-bg)',
+            borderRadius: 13,
+            padding: '18px 34px',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            letterSpacing: '0.02em',
+            textDecoration: 'none',
+            animation: 'd26-pulse 2.6s ease-out infinite',
+          }}
+        >
+          <SmallDice />
+          JOGAR AGORA
+        </Link>
       </div>
-    </section>
+    </div>
+  )
+}
+
+function Footer() {
+  return (
+    <div
+      style={{
+        borderTop: '1px solid var(--color-d-line)',
+        padding: '24px clamp(20px, 5vw, 56px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        flexWrap: 'wrap',
+      }}
+    >
+      <Wordmark small />
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 11,
+          color: 'var(--color-d-mut)',
+          letterSpacing: '0.08em',
+        }}
+      >
+        JOGO NO DADO · COPA 2026 · 48 SELEÇÕES
+      </div>
+    </div>
   )
 }

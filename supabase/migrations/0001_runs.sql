@@ -1,4 +1,4 @@
--- Torneio de Verano '26 — schema inicial
+-- Draft 26 — schema inicial
 -- Single-player roda 100% local (squads no bundle, estado em localStorage).
 -- Supabase guarda apenas snapshots de partidas (`runs`) pra leaderboard e cross-device.
 

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Oswald:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#e6e6e2}
+  @keyframes onzePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,255,61,.55)}50%{box-shadow:0 0 0 7px rgba(212,255,61,0)}}
+  @keyframes onzeSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  @keyframes onzeShimmer{0%{background-position:-160px 0}100%{background-position:220px 0}}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#e6e6e2;padding:40px 44px 80px;font-family:'Archivo',sans-serif">
+  <div style="max-width:1280px;margin:0 0 30px">
+    <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9a9a93">Torneio 2026 · Round 1 · Direções</div>
+    <h1 style="font-family:'Archivo',sans-serif;font-weight:900;font-size:34px;letter-spacing:-.02em;color:#15150f;margin:8px 0 6px">A tela que define tudo: Escalação no dado</h1>
+    <p style="max-width:720px;font-size:15px;line-height:1.5;color:#56564e;margin:0">Mesma estrutura, duas personalidades. Você rola o dado por posição entre os 26 convocados de uma seleção, completa o XI e parte pro torneio. Escolha o rumo — depois eu construo o design system e as demais telas em cima dele.</p>
+  </div>
+
+  <div style="display:flex;gap:54px;align-items:flex-start;overflow-x:auto;padding-bottom:12px">
+
+    <!-- ===================== DIRECTION A ===================== -->
+    <section style="flex:0 0 auto">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px">
+        <span style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.16em;color:#15150f">A</span>
+        <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:#15150f;letter-spacing:-.01em">Broadcast Stadium</span>
+      </div>
+      <p style="font-size:13px;color:#6a6a62;margin:0 0 16px;max-width:560px">Energia de overlay de transmissão: numerais enormes, barras anguladas, dado em destaque. Densa e elétrica.</p>
+
+      <div style="--lime:#d4ff3d;--bg:#0a0b09;--panel:#141613;--panel2:#1b1e19;--line:#2a2e26;--ink:#f3f4ec;--mut:#888c80;width:1080px;background:var(--bg);border-radius:20px;overflow:hidden;border:1px solid #20231d;box-shadow:0 30px 60px -24px rgba(0,0,0,.55);color:var(--ink)">
+
+        <!-- header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:linear-gradient(180deg,#101310,#0a0b09);border-bottom:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;padding:7px">
+              <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+              <span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:center"></span><span></span>
+              <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:7px">
+              <span style="font-family:'Anton',sans-serif;font-size:24px;letter-spacing:.02em">DRAFT</span>
+              <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--lime);font-weight:700">26</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--mut)">
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 8px #ff3b3b"></span>MONTAGEM</span>
+            <span style="color:var(--line)">·</span>
+            <span>FASE: ESCALAÇÃO</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="text-align:right">
+              <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--mut)">OVR DO TIME</div>
+              <div style="font-family:'Anton',sans-serif;font-size:26px;line-height:.9;color:var(--lime)">84</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- body -->
+        <div style="display:grid;grid-template-columns:1fr 372px;gap:0">
+
+          <!-- LEFT: nation + pitch -->
+          <div style="padding:18px 20px 20px;border-right:1px solid var(--line)">
+            <!-- nation banner -->
+            <div style="display:flex;align-items:stretch;gap:0;border-radius:12px;overflow:hidden;margin-bottom:16px;border:1px solid var(--line)">
+              <div style="width:8px;background:linear-gradient(180deg,#1c9b4b,#f5d11e)"></div>
+              <div style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--panel)">
+                <div style="display:flex;align-items:center;gap:14px">
+                  <div style="width:46px;height:32px;border-radius:5px;background:linear-gradient(135deg,#1c9b4b 0%,#1c9b4b 45%,#f5d11e 45%,#f5d11e 100%);position:relative;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:#0a0b09;text-shadow:0 1px 0 rgba(255,255,255,.3)">BRA</span></div>
+                  <div>
+                    <div style="font-family:'Anton',sans-serif;font-size:28px;line-height:.9;letter-spacing:.01em">BRASIL</div>
+                    <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--mut);margin-top:3px">GRUPO C · 26 CONVOCADOS</div>
+                  </div>
+                </div>
+                <button style="display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer">
+                  <span style="font-size:13px">⤬</span> TROCAR
+                </button>
+              </div>
+            </div>
+
+            <!-- PITCH -->
+            <div style="position:relative;height:476px;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:repeating-linear-gradient(0deg,#0f2014,#0f2014 38px,#0d1c12 38px,#0d1c12 76px)">
+              <!-- vignette -->
+              <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0%,transparent 40%,rgba(0,0,0,.45) 100%)"></div>
+              <!-- field lines -->
+              <div style="position:absolute;inset:14px;border:2px solid rgba(255,255,255,.13);border-radius:6px"></div>
+              <div style="position:absolute;left:14px;right:14px;top:50%;height:0;border-top:2px solid rgba(255,255,255,.12)"></div>
+              <div style="position:absolute;left:50%;top:50%;width:92px;height:92px;border:2px solid rgba(255,255,255,.12);border-radius:50%;transform:translate(-50%,-50%)"></div>
+              <div style="position:absolute;left:50%;top:50%;width:6px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;transform:translate(-50%,-50%)"></div>
+              <div style="position:absolute;left:28%;right:28%;top:14px;height:54px;border:2px solid rgba(255,255,255,.1);border-top:none"></div>
+              <div style="position:absolute;left:28%;right:28%;bottom:14px;height:54px;border:2px solid rgba(255,255,255,.1);border-bottom:none"></div>
+
+              <!-- SLOTS (4-3-3) -->
+              <!-- ATTACK row y22 -->
+              <div style="position:absolute;left:20%;top:22%;transform:translate(-50%,-50%);text-align:center;width:104px">
+                <div style="width:48px;height:48px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:22px;color:var(--lime);box-shadow:0 6px 16px -6px rgba(212,255,61,.4)">7</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:13px;margin-top:5px;letter-spacing:-.01em">VINI JR</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:#0a0b09;background:var(--lime);display:inline-block;padding:1px 6px;border-radius:4px;font-weight:700;margin-top:2px">90 · PE</div>
+              </div>
+              <div style="position:absolute;left:50%;top:18%;transform:translate(-50%,-50%);text-align:center;width:104px">
+                <div style="width:48px;height:48px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:22px">9</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:13px;margin-top:5px">ENDRICK</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);display:inline-block;padding:1px 6px;border-radius:4px;font-weight:700;margin-top:2px">81 · CA</div>
+              </div>
+              <div style="position:absolute;left:80%;top:22%;transform:translate(-50%,-50%);text-align:center;width:104px">
+                <div style="width:48px;height:48px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:22px">11</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:13px;margin-top:5px">RAPHINHA</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);display:inline-block;padding:1px 6px;border-radius:4px;font-weight:700;margin-top:2px">87 · PD</div>
+              </div>
+              <!-- MID row y48 — one ROLLING -->
+              <div style="position:absolute;left:28%;top:47%;transform:translate(-50%,-50%);text-align:center;width:104px">
+                <div style="width:48px;height:48px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:22px">5</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:13px;margin-top:5px">CASEMIRO</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);display:inline-block;padding:1px 6px;border-radius:4px;font-weight:700;margin-top:2px">82 · VOL</div>
+              </div>
+              <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:104px">
+                <div style="width:52px;height:52px;margin:0 auto;border-radius:12px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:11px;animation:onzeSpin 1.1s linear infinite;box-shadow:0 0 22px -2px rgba(212,255,61,.6)">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#0a0b09"></span><span style="width:6px;height:6px;border-radius:50%;background:#0a0b09"></span>
+                  <span style="width:6px;height:6px;border-radius:50%;background:#0a0b09"></span><span style="width:6px;height:6px;border-radius:50%;background:#0a0b09"></span>
+                </div>
+                <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:10px;margin-top:6px;letter-spacing:.12em;color:var(--lime)">ROLANDO…</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mut);margin-top:1px">MEIA-CENTRO</div>
+              </div>
+              <div style="position:absolute;left:72%;top:47%;transform:translate(-50%,-50%);text-align:center;width:104px">
+                <div style="width:48px;height:48px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:22px">10</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:13px;margin-top:5px">PAQUETÁ</div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);display:inline-block;padding:1px 6px;border-radius:4px;font-weight:700;margin-top:2px">83 · MEI</div>
+              </div>
+              <!-- DEF row y73 -->
+              <div style="position:absolute;left:18%;top:73%;transform:translate(-50%,-50%);text-align:center;width:96px">
+                <div style="width:44px;height:44px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:20px">2</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:12px;margin-top:4px">DANILO</div>
+              </div>
+              <div style="position:absolute;left:39%;top:75%;transform:translate(-50%,-50%);text-align:center;width:96px">
+                <div style="width:44px;height:44px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:20px">3</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:12px;margin-top:4px">MARQUINHOS</div>
+              </div>
+              <div style="position:absolute;left:61%;top:75%;transform:translate(-50%,-50%);text-align:center;width:96px">
+                <div style="width:44px;height:44px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:20px">14</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:12px;margin-top:4px">MILITÃO</div>
+              </div>
+              <div style="position:absolute;left:82%;top:73%;transform:translate(-50%,-50%);text-align:center;width:96px">
+                <div style="width:44px;height:44px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:20px">6</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:12px;margin-top:4px">WENDELL</div>
+              </div>
+              <!-- GK y92 -->
+              <div style="position:absolute;left:50%;top:92%;transform:translate(-50%,-50%);text-align:center;width:96px">
+                <div style="width:46px;height:46px;margin:0 auto;border-radius:50%;background:var(--panel);border:2px solid #ff8a3b;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:20px;color:#ff8a3b">1</div>
+                <div style="font-family:'Archivo';font-weight:800;font-size:12px;margin-top:4px">ALISSON</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: squad pool -->
+          <div style="display:flex;flex-direction:column;background:#0c0d0b">
+            <div style="padding:16px 18px 12px;border-bottom:1px solid var(--line)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="font-family:'Anton',sans-serif;font-size:17px;letter-spacing:.02em">CONVOCADOS</div>
+                <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--mut)">26</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <span style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;padding:5px 9px;border-radius:6px;background:var(--lime);color:#0a0b09">TODOS</span>
+                <span style="font-family:'Space Mono',monospace;font-size:10px;padding:5px 9px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)">GOL</span>
+                <span style="font-family:'Space Mono',monospace;font-size:10px;padding:5px 9px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)">DEF</span>
+                <span style="font-family:'Space Mono',monospace;font-size:10px;padding:5px 9px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)">MEI</span>
+                <span style="font-family:'Space Mono',monospace;font-size:10px;padding:5px 9px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)">ATA</span>
+              </div>
+            </div>
+
+            <div style="flex:1;overflow-y:auto;max-height:418px;padding:8px 10px;display:flex;flex-direction:column;gap:6px">
+              <!-- row template: selected -->
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;background:linear-gradient(90deg,rgba(212,255,61,.1),rgba(212,255,61,.02));border:1px solid rgba(212,255,61,.35)">
+                <div style="width:30px;font-family:'Anton',sans-serif;font-size:17px;color:var(--lime);text-align:center">7</div>
+                <div style="flex:1"><div style="font-family:'Archivo';font-weight:700;font-size:13px">Vinícius Jr.</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mut);letter-spacing:.08em">PONTA ESQUERDA</div></div>
+                <div style="font-family:'Anton',sans-serif;font-size:18px;color:var(--lime)">90</div>
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--lime);display:flex;align-items:center;justify-content:center;color:#0a0b09;font-size:13px;font-weight:800">✓</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;background:linear-gradient(90deg,rgba(212,255,61,.1),rgba(212,255,61,.02));border:1px solid rgba(212,255,61,.35)">
+                <div style="width:30px;font-family:'Anton',sans-serif;font-size:17px;color:var(--lime);text-align:center">11</div>
+                <div style="flex:1"><div style="font-family:'Archivo';font-weight:700;font-size:13px">Raphinha</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mut);letter-spacing:.08em">PONTA DIREITA</div></div>
+                <div style="font-family:'Anton',sans-serif;font-size:18px;color:var(--lime)">87</div>
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--lime);display:flex;align-items:center;justify-content:center;color:#0a0b09;font-size:13px;font-weight:800">✓</div>
+              </div>
+              <!-- candidates (rolling pool) -->
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;background:var(--panel);border:1px solid var(--line)">
+                <div style="width:30px;font-family:'Anton',sans-serif;font-size:17px;color:var(--mut);text-align:center">8</div>
+                <div style="flex:1"><div style="font-family:'Archivo';font-weight:700;font-size:13px">Bruno Guimarães</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mut);letter-spacing:.08em">VOLANTE</div></div>
+                <div style="font-family:'Anton',sans-serif;font-size:18px;color:var(--ink)">85</div>
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:11px">⚄</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;background:var(--panel);border:1px solid var(--line)">
+                <div style="width:30px;font-family:'Anton',sans-serif;font-size:17px;color:var(--mut);text-align:center">19</div>
+                <div style="flex:1"><div style="font-family:'Archivo';font-weight:700;font-size:13px">Rodrygo</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mut);letter-spacing:.08em">PONTA</div></div>
+                <div style="font-family:'Anton',sans-serif;font-size:18px;color:var(--ink)">86</div>
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:11px">⚄</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;background:var(--panel);border:1px solid var(--line)">
+                <div style="width:30px;font-family:'Anton',sans-serif;font-size:17px;color:var(--mut);text-align:center">23</div>
+                <div style="flex:1"><div style="font-family:'Archivo';font-weight:700;font-size:13px">Ederson</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mut);letter-spacing:.08em">GOLEIRO</div></div>
+                <div style="font-family:'Anton',sans-serif;font-size:18px;color:var(--ink)">84</div>
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:11px">⚄</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;background:var(--panel);border:1px solid var(--line);opacity:.78">
+                <div style="width:30px;font-family:'Anton',sans-serif;font-size:17px;color:var(--mut);text-align:center">16</div>
+                <div style="flex:1"><div style="font-family:'Archivo';font-weight:700;font-size:13px">Savinho</div><div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mut);letter-spacing:.08em">PONTA</div></div>
+                <div style="font-family:'Anton',sans-serif;font-size:18px;color:var(--ink)">82</div>
+                <div style="width:22px;height:22px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:11px">⚄</div>
+              </div>
+            </div>
+
+            <!-- roll cta -->
+            <div style="padding:14px 16px;border-top:1px solid var(--line);background:#0c0d0b">
+              <button style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--lime);color:#0a0b09;border:none;border-radius:11px;padding:15px;font-family:'Anton',sans-serif;font-size:19px;letter-spacing:.02em;cursor:pointer;animation:onzePulse 2.4s infinite">
+                <span style="font-size:18px">⚄</span> ROLAR TODAS AS POSIÇÕES
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- footer bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:linear-gradient(180deg,#0a0b09,#101310);border-top:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--mut)">XI ESCALADO</div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <span style="font-family:'Anton',sans-serif;font-size:22px;color:var(--lime)">10</span>
+              <span style="font-family:'Anton',sans-serif;font-size:22px;color:var(--mut)">/11</span>
+            </div>
+            <div style="width:160px;height:7px;border-radius:6px;background:var(--panel2);overflow:hidden"><div style="width:91%;height:100%;background:var(--lime)"></div></div>
+          </div>
+          <button style="display:flex;align-items:center;gap:10px;background:var(--ink);color:#0a0b09;border:none;border-radius:10px;padding:13px 22px;font-family:'Anton',sans-serif;font-size:17px;letter-spacing:.02em;cursor:pointer;opacity:.45">
+            SIMULAR COPA <span style="font-size:15px">→</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DIRECTION B ===================== -->
+    <section style="flex:0 0 auto">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px">
+        <span style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.16em;color:#15150f">B</span>
+        <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:#15150f;letter-spacing:-.01em">Sport Almanac / Terminal</span>
+      </div>
+      <p style="font-size:13px;color:#6a6a62;margin:0 0 16px;max-width:560px">Calma e editorial: masthead tipográfico, prancheta tática flat, dados em mono como um almanaque. O dado vira controle preciso, não espetáculo.</p>
+
+      <div style="--lime:#d4ff3d;--bg:#0b0d11;--panel:#14171d;--panel2:#1a1e26;--line:#262b34;--ink:#eef1f4;--mut:#79808c;width:1080px;background:var(--bg);border-radius:6px;overflow:hidden;border:1px solid #1d222a;box-shadow:0 30px 60px -24px rgba(0,0,0,.55);color:var(--ink);font-family:'IBM Plex Sans',sans-serif">
+
+        <!-- header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:13px">
+            <div style="width:30px;height:30px;border-radius:6px;border:1.5px solid var(--lime);display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:7px">
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--lime)"></span><span style="width:4px;height:4px;border-radius:50%;background:var(--lime)"></span>
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--lime)"></span><span style="width:4px;height:4px;border-radius:50%;background:var(--lime)"></span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:21px;letter-spacing:.06em">ONZE</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut)">/ 2026</span>
+            </div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--mut)">ESCALAÇÃO — MONTAGEM DO XI</div>
+          <div style="display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:6px 11px">OVR <span style="color:var(--lime);font-weight:600;font-size:14px">84</span></div>
+        </div>
+
+        <!-- masthead -->
+        <div style="padding:20px 22px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-end;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="display:flex;align-items:center;justify-content:center;width:54px;height:38px;border:1px solid var(--line);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.06em;background:linear-gradient(135deg,rgba(28,155,75,.22),rgba(245,209,30,.18));color:var(--ink)">BRA</div>
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-weight:500;font-size:42px;line-height:.9;letter-spacing:.01em">BRASIL</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--mut);margin-top:5px">GRUPO C · 26 CONVOCADOS · FIFA #5</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:7px 12px;border-radius:5px;background:var(--lime);color:#0b0d11">4-3-3</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 12px;border-radius:5px;border:1px solid var(--line);color:var(--mut)">4-4-2</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 12px;border-radius:5px;border:1px solid var(--line);color:var(--mut)">3-5-2</span>
+          </div>
+        </div>
+
+        <!-- body -->
+        <div style="display:grid;grid-template-columns:1fr 392px">
+          <!-- LEFT: tactics board (flat) -->
+          <div style="padding:20px;border-right:1px solid var(--line)">
+            <div style="position:relative;height:470px;border-radius:4px;border:1px solid var(--line);background:linear-gradient(0deg,#0e1116,#0e1116),repeating-linear-gradient(0deg,transparent,transparent 46px,rgba(255,255,255,.02) 46px,rgba(255,255,255,.02) 47px);overflow:hidden">
+              <div style="position:absolute;inset:16px;border:1px solid rgba(212,255,61,.14);border-radius:2px"></div>
+              <div style="position:absolute;left:16px;right:16px;top:50%;height:0;border-top:1px dashed rgba(212,255,61,.16)"></div>
+              <div style="position:absolute;left:50%;top:50%;width:82px;height:82px;border:1px solid rgba(212,255,61,.14);border-radius:50%;transform:translate(-50%,-50%)"></div>
+              <div style="position:absolute;left:30%;right:30%;top:16px;height:46px;border:1px solid rgba(212,255,61,.1);border-top:none"></div>
+              <div style="position:absolute;left:30%;right:30%;bottom:16px;height:46px;border:1px solid rgba(212,255,61,.1);border-bottom:none"></div>
+
+              <!-- nodes -->
+              <!-- ATT -->
+              <div style="position:absolute;left:20%;top:21%;transform:translate(-50%,-50%);text-align:center;width:92px">
+                <div style="width:40px;height:40px;margin:0 auto;border-radius:50%;background:var(--lime);border:1px solid var(--lime);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:18px;color:#0b0d11">7</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;margin-top:5px;letter-spacing:.04em">VINI JR</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mut);margin-top:1px">90</div>
+              </div>
+              <div style="position:absolute;left:50%;top:18%;transform:translate(-50%,-50%);text-align:center;width:92px">
+                <div style="width:40px;height:40px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:18px">9</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;margin-top:5px">ENDRICK</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mut);margin-top:1px">81</div>
+              </div>
+              <div style="position:absolute;left:80%;top:21%;transform:translate(-50%,-50%);text-align:center;width:92px">
+                <div style="width:40px;height:40px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:18px">11</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;margin-top:5px">RAPHINHA</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mut);margin-top:1px">87</div>
+              </div>
+              <!-- MID, one rolling -->
+              <div style="position:absolute;left:28%;top:47%;transform:translate(-50%,-50%);text-align:center;width:92px">
+                <div style="width:40px;height:40px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:18px">5</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;margin-top:5px">CASEMIRO</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mut);margin-top:1px">82</div>
+              </div>
+              <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:92px">
+                <div style="width:42px;height:42px;margin:0 auto;border-radius:7px;border:1.5px solid var(--lime);display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:9px;animation:onzeSpin 1.1s linear infinite">
+                  <span style="width:5px;height:5px;border-radius:50%;background:var(--lime)"></span><span style="width:5px;height:5px;border-radius:50%;background:var(--lime)"></span>
+                  <span style="width:5px;height:5px;border-radius:50%;background:var(--lime)"></span><span style="width:5px;height:5px;border-radius:50%;background:var(--lime)"></span>
+                </div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;margin-top:6px;letter-spacing:.1em;color:var(--lime)">ROLANDO</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mut);margin-top:1px">MEIA</div>
+              </div>
+              <div style="position:absolute;left:72%;top:47%;transform:translate(-50%,-50%);text-align:center;width:92px">
+                <div style="width:40px;height:40px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:18px">10</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;margin-top:5px">PAQUETÁ</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mut);margin-top:1px">83</div>
+              </div>
+              <!-- DEF -->
+              <div style="position:absolute;left:18%;top:73%;transform:translate(-50%,-50%);text-align:center;width:84px">
+                <div style="width:36px;height:36px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:16px">2</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;margin-top:4px">DANILO</div>
+              </div>
+              <div style="position:absolute;left:39%;top:75%;transform:translate(-50%,-50%);text-align:center;width:84px">
+                <div style="width:36px;height:36px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:16px">3</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;margin-top:4px">MARQUINHOS</div>
+              </div>
+              <div style="position:absolute;left:61%;top:75%;transform:translate(-50%,-50%);text-align:center;width:84px">
+                <div style="width:36px;height:36px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:16px">14</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;margin-top:4px">MILITÃO</div>
+              </div>
+              <div style="position:absolute;left:82%;top:73%;transform:translate(-50%,-50%);text-align:center;width:84px">
+                <div style="width:36px;height:36px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:16px">6</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;margin-top:4px">WENDELL</div>
+              </div>
+              <!-- GK -->
+              <div style="position:absolute;left:50%;top:92%;transform:translate(-50%,-50%);text-align:center;width:84px">
+                <div style="width:38px;height:38px;margin:0 auto;border-radius:50%;background:var(--panel2);border:1px solid #5aa0ff;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:600;font-size:16px;color:#5aa0ff">1</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;margin-top:4px">ALISSON</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: team sheet table -->
+          <div style="display:flex;flex-direction:column">
+            <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;padding:11px 18px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--mut)">
+              <span>#</span><span>JOGADOR</span><span>POS</span><span style="text-align:right">OVR</span><span></span>
+            </div>
+            <div style="flex:1;overflow-y:auto;max-height:432px">
+              <!-- selected -->
+              <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);border-left:2px solid var(--lime);background:rgba(212,255,61,.04)">
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--lime)">7</span>
+                <span style="font-family:'IBM Plex Sans';font-weight:600;font-size:13px">Vinícius Jr.</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mut)">PE</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--lime);text-align:right">90</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--lime);text-align:center">✓</span>
+              </div>
+              <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);border-left:2px solid var(--lime);background:rgba(212,255,61,.04)">
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--lime)">11</span>
+                <span style="font-family:'IBM Plex Sans';font-weight:600;font-size:13px">Raphinha</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mut)">PD</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--lime);text-align:right">87</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--lime);text-align:center">✓</span>
+              </div>
+              <!-- pool -->
+              <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);border-left:2px solid transparent">
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--mut)">8</span>
+                <span style="font-family:'IBM Plex Sans';font-weight:600;font-size:13px">Bruno Guimarães</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mut)">VOL</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;text-align:right">85</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mut);text-align:center">⚄</span>
+              </div>
+              <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);border-left:2px solid transparent">
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--mut)">19</span>
+                <span style="font-family:'IBM Plex Sans';font-weight:600;font-size:13px">Rodrygo</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mut)">PD</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;text-align:right">86</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mut);text-align:center">⚄</span>
+              </div>
+              <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);border-left:2px solid transparent">
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--mut)">23</span>
+                <span style="font-family:'IBM Plex Sans';font-weight:600;font-size:13px">Ederson</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mut)">GOL</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;text-align:right">84</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mut);text-align:center">⚄</span>
+              </div>
+              <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);border-left:2px solid transparent">
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--mut)">16</span>
+                <span style="font-family:'IBM Plex Sans';font-weight:600;font-size:13px">Savinho</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mut)">PD</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;text-align:right">82</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mut);text-align:center">⚄</span>
+              </div>
+              <div style="display:grid;grid-template-columns:34px 1fr 54px 40px 34px;gap:8px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);border-left:2px solid transparent">
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;color:var(--mut)">25</span>
+                <span style="font-family:'IBM Plex Sans';font-weight:600;font-size:13px">Martinelli</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mut)">PE</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;text-align:right">81</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mut);text-align:center">⚄</span>
+              </div>
+            </div>
+
+            <div style="padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:9px">
+              <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px solid var(--lime);color:var(--lime);border-radius:7px;padding:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.06em;cursor:pointer"><span>⚄</span> ROLAR POSIÇÃO</button>
+              <button style="flex:1;background:var(--lime);border:none;color:#0b0d11;border-radius:7px;padding:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.06em;cursor:pointer">ROLAR TUDO</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- footer -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-top:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--mut)">XI</span>
+            <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:17px"><span style="color:var(--lime)">10</span><span style="color:var(--mut)">/11</span></span>
+            <div style="width:150px;height:4px;border-radius:4px;background:var(--panel2);overflow:hidden"><div style="width:91%;height:100%;background:var(--lime)"></div></div>
+          </div>
+          <button style="display:flex;align-items:center;gap:9px;background:transparent;border:1.5px solid var(--line);color:var(--mut);border-radius:7px;padding:11px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.08em;cursor:pointer">SIMULAR COPA →</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

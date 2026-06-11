@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0b09}
+  a{text-decoration:none;color:inherit}
+  @keyframes onzePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,255,61,.5)}50%{box-shadow:0 0 0 6px rgba(212,255,61,0)}}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:#0a0b09}
+  ::-webkit-scrollbar-thumb{background:#2a2e26;border-radius:8px}
+</style>
+</helmet>
+<div style="--bg:#0a0b09;--surface:#141613;--surface2:#1b1e19;--line:#2a2e26;--ink:#f3f4ec;--mut:#888c80;--lime:#d4ff3d;--red:#ff3b3b;background:#0a0b09;min-height:100vh;color:#f3f4ec;font-family:'Archivo',sans-serif">
+
+  <!-- APP BAR -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101310,#0a0b09)">
+    <div style="display:flex;align-items:center;gap:13px">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;padding:7px">
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+        <span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:center"></span><span></span>
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:7px"><span style="font-family:'Anton';font-size:23px;letter-spacing:.02em">DRAFT</span><span style="font-family:'Space Mono';font-size:11px;color:var(--lime);font-weight:700">26</span></div>
+    </div>
+    <div style="display:flex;gap:4px;background:#0a0b09;border:1px solid var(--line);border-radius:11px;padding:5px">
+      <a href="ONZE%20-%20Escalacao.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut)">ESCALAÇÃO</a>
+      <a href="ONZE%20-%20Grupos.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut)">GRUPOS</a>
+      <span style="font-family:'Space Mono';font-size:12px;font-weight:700;padding:8px 13px;border-radius:8px;background:var(--lime);color:#0a0b09">CHAVEAMENTO</span>
+      <a href="ONZE%20-%20Partida.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut)">PARTIDA</a>
+    </div>
+    <div style="font-family:'Space Mono';font-size:11px;color:var(--lime)">SEU XI · SEMIFINAL</div>
+  </div>
+
+  <!-- TITLE -->
+  <div style="max-width:1640px;margin:0 auto;padding:24px 28px 2px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.18em;color:var(--lime);margin-bottom:6px">COPA 2026 · MATA-MATA · 5 FASES</div>
+      <h1 style="font-family:'Anton';font-size:42px;margin:0;line-height:.92">CHAVEAMENTO</h1>
+    </div>
+    <div style="display:flex;gap:9px;font-family:'Space Mono';font-size:11px">
+      <span style="padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--mut)">32 CLASSIFICADOS</span>
+      <span style="padding:9px 13px;border:1px solid rgba(212,255,61,.4);border-radius:8px;color:var(--lime);background:rgba(212,255,61,.07)">SEU CAMINHO EM DESTAQUE</span>
+    </div>
+  </div>
+
+  <!-- BRACKET -->
+  <div style="overflow-x:auto;padding:16px 28px 56px">
+    <div style="min-width:1580px;max-width:1640px;margin:0 auto;height:864px;display:flex;gap:10px;align-items:stretch">
+      <sc-for list="{{ columns }}" as="col" hint-placeholder-count="9">
+        <div style="flex:1;min-width:150px;display:flex;flex-direction:column">
+          <div style="font-family:'Space Mono';font-size:10px;letter-spacing:.12em;color:{{ col.labelColor }};text-align:center;margin-bottom:12px">{{ col.label }}</div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:{{ col.justify }};gap:7px">
+            <sc-if value="{{ col.isFinal }}" hint-placeholder-val="{{ true }}">
+              <div style="text-align:center;margin-bottom:8px">
+                <div style="width:50px;height:50px;margin:0 auto 8px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:24px">🏆</div>
+                <div style="font-family:'Anton';font-size:18px;color:var(--lime);line-height:.9">FAÇA<br>7 A 0</div>
+              </div>
+            </sc-if>
+            <sc-for list="{{ col.matches }}" as="m" hint-placeholder-count="4">
+              <div style="background:var(--surface);border:1px solid {{ m.border }};border-radius:9px;overflow:hidden;box-shadow:{{ m.shadow }}">
+                <div style="display:flex;align-items:center;gap:7px;padding:7px 9px">
+                  <sc-if value="{{ m.a.isYou }}" hint-placeholder-val="{{ true }}"><span style="width:16px;height:16px;border-radius:4px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:8px;color:#0a0b09;flex:0 0 auto">⚄</span></sc-if>
+                  <sc-if value="{{ m.a.notYou }}" hint-placeholder-val="{{ true }}"><span style="width:16px;height:11px;border-radius:3px;background:{{ m.a.chip }};flex:0 0 auto"></span></sc-if>
+                  <span style="flex:1;font-weight:700;font-size:12px;color:{{ m.a.codeColor }}">{{ m.a.code }}</span>
+                  <span style="font-family:'Anton';font-size:16px;color:{{ m.a.scoreColor }}">{{ m.a.score }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;padding:7px 9px;border-top:1px solid var(--line)">
+                  <sc-if value="{{ m.b.isYou }}" hint-placeholder-val="{{ true }}"><span style="width:16px;height:16px;border-radius:4px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:8px;color:#0a0b09;flex:0 0 auto">⚄</span></sc-if>
+                  <sc-if value="{{ m.b.notYou }}" hint-placeholder-val="{{ true }}"><span style="width:16px;height:11px;border-radius:3px;background:{{ m.b.chip }};flex:0 0 auto"></span></sc-if>
+                  <span style="flex:1;font-weight:700;font-size:12px;color:{{ m.b.codeColor }}">{{ m.b.code }}</span>
+                  <span style="font-family:'Anton';font-size:16px;color:{{ m.b.scoreColor }}">{{ m.b.score }}</span>
+                </div>
+                <sc-if value="{{ m.jogar }}" hint-placeholder-val="{{ true }}">
+                  <a href="ONZE%20-%20Partida.dc.html" style="display:flex;align-items:center;justify-content:center;gap:6px;background:var(--lime);color:#0a0b09;padding:9px;font-family:'Anton';font-size:13px;letter-spacing:.02em;cursor:pointer;animation:onzePulse 2.2s infinite">JOGAR →</a>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const C = {
+      'SEU XI':'', BRA:'linear-gradient(135deg,#1c9b4b,#f5d11e)', ARG:'linear-gradient(180deg,#6ea8ff,#fff,#6ea8ff)',
+      FRA:'linear-gradient(90deg,#1b3a8f,#fff,#e2483d)', ESP:'linear-gradient(135deg,#e2483d,#f5d11e)',
+      ENG:'linear-gradient(90deg,#fff,#e2483d,#fff)', POR:'linear-gradient(135deg,#1c7a3c,#e2483d)',
+      GER:'linear-gradient(180deg,#111,#e2483d,#f5d11e)', NED:'linear-gradient(180deg,#ff7a1a,#fff)',
+      CRO:'linear-gradient(90deg,#d11,#fff)', MEX:'linear-gradient(135deg,#1c9b4b,#fff)',
+      URU:'linear-gradient(180deg,#6ea8ff,#fff)', COL:'linear-gradient(135deg,#f5d11e,#1b3a8f)',
+      ITA:'linear-gradient(135deg,#1c9b4b,#fff,#e2483d)', SUI:'#e2483d', JAP:'#fff',
+      MAR:'linear-gradient(135deg,#1c9b4b,#d11)', SEN:'linear-gradient(135deg,#1c9b4b,#f5d11e)',
+      CAT:'linear-gradient(135deg,#7a1f2b,#fff)', EUA:'linear-gradient(90deg,#1b3a8f,#fff,#e2483d)',
+      AUS:'#1c9b4b', BEL:'linear-gradient(90deg,#111,#f5d11e,#e2483d)', TUR:'#e2483d', NGA:'#1c9b4b',
+      SRB:'#c0392b', NOR:'#c0392b', DEN:'#e2483d', OMA:'#c0392b', PAR:'linear-gradient(135deg,#d11,#1b3a8f)',
+      EGI:'#111', CMR:'#1c9b4b', AUT:'linear-gradient(180deg,#e2483d,#fff,#e2483d)'
+    };
+    const chip=(code)=> (C[code]!==undefined ? (C[code]||'#3a3f36') : '#3a3f36');
+    const row=(code,score,win,you)=>({
+      isYou:!!you, notYou:!you, chip:chip(code), code:code,
+      codeColor: you?'var(--lime)':(win?'var(--ink)':'var(--mut)'),
+      score:(score==null?'–':String(score)),
+      scoreColor:(win?'var(--lime)':'var(--mut)')
+    });
+    const M=(a,b,o)=>{o=o||{};return{
+      border:o.jogar?'var(--lime)':(o.you?'rgba(212,255,61,.5)':'var(--line)'),
+      shadow:o.jogar?'0 0 24px -8px rgba(212,255,61,.55)':(o.you?'0 0 16px -10px rgba(212,255,61,.6)':'none'),
+      jogar:!!o.jogar, a:a, b:b };};
+
+    const R32L=[
+      M(row('SEU XI',4,true,true), row('CAT',1,false), {you:true}),
+      M(row('ESP',3,true), row('JAP',0,false)),
+      M(row('FRA',2,true), row('MEX',0,false)),
+      M(row('CRO',2,true), row('MAR',1,false)),
+      M(row('ARG',3,true), row('AUS',0,false)),
+      M(row('COL',1,true), row('SEN',0,false)),
+      M(row('URU',1,true), row('GER',0,false)),
+      M(row('BEL',2,true), row('NGA',1,false))
+    ];
+    const R16L=[
+      M(row('SEU XI',2,true,true), row('ESP',0,false), {you:true}),
+      M(row('FRA',2,true), row('CRO',1,false)),
+      M(row('ARG',2,true), row('COL',0,false)),
+      M(row('URU',1,true), row('BEL',0,false))
+    ];
+    const QFL=[
+      M(row('SEU XI',2,true,true), row('FRA',0,false), {you:true}),
+      M(row('ARG',3,true), row('URU',1,false))
+    ];
+    const SFL=[ M(row('SEU XI',null,false,true), row('ARG',null,false), {you:true,jogar:true}) ];
+    const FINAL=[ M(row('?',null,false), row('?',null,false)) ];
+    const SFR=[ M(row('POR',null,false), row('NED',null,false)) ];
+    const QFR=[
+      M(row('POR',2,true), row('ENG',1,false)),
+      M(row('NED',2,true), row('AUT',0,false))
+    ];
+    const R16R=[
+      M(row('POR',2,true), row('TUR',0,false)),
+      M(row('ENG',1,true), row('ITA',0,false)),
+      M(row('NED',2,true), row('BRA',1,false)),
+      M(row('AUT',1,true), row('PAR',0,false))
+    ];
+    const R32R=[
+      M(row('POR',3,true), row('EUA',1,false)),
+      M(row('TUR',2,true), row('NGA',1,false)),
+      M(row('ENG',2,true), row('SRB',1,false)),
+      M(row('ITA',1,true), row('NOR',0,false)),
+      M(row('NED',1,true), row('DEN',0,false)),
+      M(row('BRA',4,true), row('OMA',0,false)),
+      M(row('PAR',1,true), row('EGI',0,false)),
+      M(row('AUT',2,true), row('CMR',1,false))
+    ];
+
+    this.columns = [
+      {label:'32-AVOS',justify:'space-around',isFinal:false,labelColor:'var(--mut)',matches:R32L},
+      {label:'OITAVAS',justify:'space-around',isFinal:false,labelColor:'var(--mut)',matches:R16L},
+      {label:'QUARTAS',justify:'space-around',isFinal:false,labelColor:'var(--mut)',matches:QFL},
+      {label:'SEMIFINAL',justify:'center',isFinal:false,labelColor:'var(--lime)',matches:SFL},
+      {label:'FINAL',justify:'center',isFinal:true,labelColor:'var(--lime)',matches:FINAL},
+      {label:'SEMIFINAL',justify:'center',isFinal:false,labelColor:'var(--mut)',matches:SFR},
+      {label:'QUARTAS',justify:'space-around',isFinal:false,labelColor:'var(--mut)',matches:QFR},
+      {label:'OITAVAS',justify:'space-around',isFinal:false,labelColor:'var(--mut)',matches:R16R},
+      {label:'32-AVOS',justify:'space-around',isFinal:false,labelColor:'var(--mut)',matches:R32R}
+    ];
+  }
+  renderVals(){ return { columns: this.columns }; }
+}
+</script>
+</body>
+</html>

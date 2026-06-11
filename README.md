@@ -1,4 +1,4 @@
-# Torneio de Verano 2026
+# Draft 26
 
 Simulador da Copa do Mundo 2026 no navegador. Você sorteia uma das 48 seleções,
 monta seu XI titular entre os 26 convocados oficiais e simula o torneio inteiro
@@ -31,7 +31,7 @@ pnpm preview
 
 ## Supabase
 
-Schema em `supabase/migrations/0001_init.sql`. Para inicializar o banco
+Schema em `supabase/migrations/0001_runs.sql`. Para inicializar o banco
 localmente (precisa do [Supabase CLI](https://supabase.com/docs/guides/cli)):
 
 ```bash
