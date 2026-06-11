@@ -22,7 +22,14 @@ import {
 } from '../lib/bracket'
 import { rosterForKnockout } from '../lib/rosters'
 import { narrateMatch } from '../lib/narrate'
-import { loadBracket, loadStage, saveBracket, saveStage } from '../lib/persistence'
+import {
+  loadBracket,
+  loadMatchSpeed,
+  loadStage,
+  saveBracket,
+  saveMatchSpeed,
+  saveStage,
+} from '../lib/persistence'
 import { nationGradient } from '../lib/nation-colors'
 import type { MatchEvent } from '../lib/narrate'
 import type { DraftState } from '../lib/draft'
@@ -63,7 +70,11 @@ function GroupMatchRunner({
   const [data, setData] = useState<{ stage: GroupStage; draft: DraftState } | null>(null)
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const [speed, setSpeed] = useState<Speed>('normal')
+  const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
+  const setSpeed = (s: Speed) => {
+    saveMatchSpeed(s)
+    _setSpeed(s)
+  }
   const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
   const persistedRef = useRef(false)
 
@@ -263,7 +274,11 @@ function KnockoutMatchRunner({
   const [stage, setStage] = useState<GroupStage | null>(null)
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const [speed, setSpeed] = useState<Speed>('normal')
+  const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
+  const setSpeed = (s: Speed) => {
+    saveMatchSpeed(s)
+    _setSpeed(s)
+  }
   const [simResult, setSimResult] = useState<
     | { events: MatchEvent[]; extraTime?: { homeGoals: number; awayGoals: number }; penalties?: Penalties; winner: 'home' | 'away' }
     | null
@@ -585,7 +600,6 @@ interface PartidaShellProps {
 }
 
 function PartidaShell(p: PartidaShellProps) {
-  const totalGoals = p.homeGoals + p.awayGoals
   const isOutcomeOpen = !!p.outcome
 
   return (
@@ -600,7 +614,6 @@ function PartidaShell(p: PartidaShellProps) {
         totalMinutes={p.totalMinutes}
         playing={p.playing}
         finished={p.finished}
-        flashKey={totalGoals}
         markers={p.goalAndRedEvents}
       />
       <Body>
@@ -790,7 +803,7 @@ function dotStyle(justify?: 'end' | 'center'): CSSProperties {
 // ---------- Scoreboard ----------
 
 function ScoreboardHero({
-  home, away, homeGoals, awayGoals, clockMinute, totalMinutes, playing, finished, flashKey, markers,
+  home, away, homeGoals, awayGoals, clockMinute, totalMinutes, playing, finished, markers,
 }: {
   home: SideTeam
   away: SideTeam
@@ -800,7 +813,6 @@ function ScoreboardHero({
   totalMinutes: number
   playing: boolean
   finished: boolean
-  flashKey: number
   markers: MatchEvent[]
 }) {
   const statusLabel = computeStatusLabel(clockMinute, totalMinutes, playing, finished)
@@ -821,9 +833,9 @@ function ScoreboardHero({
         <TeamSide team={home} reverse={false} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2.5vw, 14px)', justifyContent: 'center' }}>
-            <ScoreNumber value={homeGoals} flashKey={flashKey} highlight={home.isUser} />
+            <ScoreNumber value={homeGoals} isUser={home.isUser} />
             <span style={{ fontFamily: 'Anton', fontSize: 'clamp(22px, 6vw, 34px)', color: 'var(--color-d-mut)' }}>—</span>
-            <ScoreNumber value={awayGoals} flashKey={flashKey} highlight={away.isUser} />
+            <ScoreNumber value={awayGoals} isUser={away.isUser} />
           </div>
           <div
             style={{
@@ -916,17 +928,19 @@ function computeStatusLabel(minute: number, total: number, playing: boolean, fin
   return '1º TEMPO'
 }
 
-function ScoreNumber({ value, flashKey, highlight }: { value: number; flashKey: number; highlight: boolean }) {
+function ScoreNumber({ value, isUser }: { value: number; isUser: boolean }) {
   return (
     <span
-      key={`${value}-${flashKey}`}
+      // key muda só quando esse lado marca — gol adversário não dispara flash celebrativo
+      key={value}
       style={{
         fontFamily: 'Anton',
         fontSize: 'clamp(40px, 12vw, 64px)',
         lineHeight: 0.85,
-        color: highlight ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
+        color: isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
         display: 'inline-block',
-        animation: 'd26-goal-flash .5s ease',
+        // Celebração só do nosso lado. Lado adversário muda número sem animação.
+        animation: isUser ? 'd26-goal-flash .5s ease' : 'none',
       }}
     >
       {value}
@@ -1106,26 +1120,20 @@ function LancesFeed({ events, home, away }: { events: MatchEvent[]; home: SideTe
 }
 
 function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: SideTeam }) {
-  const isGoal = ev.type === 'goal'
-  const isRed = ev.type === 'red'
-  const bg = isGoal
-    ? 'rgba(212,255,61,0.07)'
-    : isRed
-      ? 'rgba(255,59,59,0.07)'
-      : 'var(--color-d-surface2)'
-  const bd = isGoal
-    ? 'rgba(212,255,61,0.3)'
-    : isRed
-      ? 'rgba(255,59,59,0.3)'
-      : 'var(--color-d-line)'
-  const dotColor = isGoal ? 'var(--color-d-lime)' : isRed ? 'var(--color-d-red)' : 'var(--color-d-mut)'
-  const minColor = isGoal ? 'var(--color-d-lime)' : isRed ? 'var(--color-d-red)' : 'var(--color-d-ink)'
+  const eventIsUser =
+    (home.isUser && ev.teamCode === home.code) || (away.isUser && ev.teamCode === away.code)
   const teamTag =
     ev.teamCode === home.code
-      ? home.isUser ? 'SEU XI' : home.code.toUpperCase()
+      ? home.isUser
+        ? 'SEU XI'
+        : home.code.toUpperCase()
       : ev.teamCode === away.code
-        ? away.isUser ? 'SEU XI' : away.code.toUpperCase()
+        ? away.isUser
+          ? 'SEU XI'
+          : away.code.toUpperCase()
         : ''
+
+  const styling = lanceStyle(ev.type, eventIsUser)
 
   return (
     <div
@@ -1134,16 +1142,25 @@ function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: Si
         gap: 13,
         padding: '11px 12px',
         borderRadius: 10,
-        background: bg,
-        border: `1px solid ${bd}`,
+        background: styling.bg,
+        border: `1px solid ${styling.bd}`,
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 40, flex: '0 0 auto' }}>
-        <span style={{ fontFamily: 'Anton', fontSize: 18, color: minColor }}>{ev.minute}'</span>
-        <span style={{ width: 9, height: 9, borderRadius: '50%', background: dotColor }} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 4,
+          width: 40,
+          flex: '0 0 auto',
+        }}
+      >
+        <span style={{ fontFamily: 'Anton', fontSize: 18, color: styling.minColor }}>{ev.minute}'</span>
+        <span style={{ fontSize: 14, lineHeight: 1 }}>{styling.emoji}</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        {(isGoal || isRed) && (
+        {styling.chip && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             <span
               style={{
@@ -1151,24 +1168,91 @@ function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: Si
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: '0.08em',
-                color: isGoal ? 'var(--color-d-bg)' : '#fff',
-                background: isGoal ? 'var(--color-d-lime)' : 'var(--color-d-red)',
+                color: styling.chip.fg,
+                background: styling.chip.bg,
                 padding: '3px 8px',
                 borderRadius: 5,
               }}
             >
-              {isGoal ? 'GOL' : 'EXPULSÃO'}
+              {styling.chip.label}
             </span>
-            <span style={{ fontFamily: 'Space Mono', fontSize: 10, fontWeight: 700, color: 'var(--color-d-ink)' }}>
+            <span
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 10,
+                fontWeight: 700,
+                color: styling.nameColor,
+              }}
+            >
               {ev.player.toUpperCase()}
             </span>
-            <span style={{ fontFamily: 'Space Mono', fontSize: 10, color: 'var(--color-d-mut)' }}>{teamTag}</span>
+            <span style={{ fontFamily: 'Space Mono', fontSize: 10, color: 'var(--color-d-mut)' }}>
+              {teamTag}
+            </span>
           </div>
         )}
-        <div style={{ fontSize: 13, color: 'var(--color-d-ink)', lineHeight: 1.4 }}>{ev.text}</div>
+        <div style={{ fontSize: 13, color: styling.textColor, lineHeight: 1.4 }}>{ev.text}</div>
       </div>
     </div>
   )
+}
+
+interface LanceStyle {
+  bg: string
+  bd: string
+  minColor: string
+  emoji: string
+  textColor: string
+  nameColor: string
+  chip: { label: string; bg: string; fg: string } | null
+}
+
+function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
+  if (type === 'goal') {
+    if (byUser) {
+      // ⚽ gol nosso — celebração lima
+      return {
+        bg: 'rgba(212,255,61,0.07)',
+        bd: 'rgba(212,255,61,0.3)',
+        minColor: 'var(--color-d-lime)',
+        emoji: '⚽',
+        textColor: 'var(--color-d-ink)',
+        nameColor: 'var(--color-d-ink)',
+        chip: { label: 'GOL', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
+      }
+    }
+    // 💔 gol adversário — tom apagado, sem destaque lima
+    return {
+      bg: 'rgba(255,59,59,0.04)',
+      bd: 'rgba(255,59,59,0.18)',
+      minColor: 'var(--color-d-red)',
+      emoji: '💔',
+      textColor: 'var(--color-d-mut)',
+      nameColor: 'var(--color-d-mut)',
+      chip: { label: 'GOL', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+    }
+  }
+  if (type === 'red') {
+    return {
+      bg: 'rgba(255,59,59,0.07)',
+      bd: 'rgba(255,59,59,0.3)',
+      minColor: 'var(--color-d-red)',
+      emoji: '🟥',
+      textColor: 'var(--color-d-ink)',
+      nameColor: 'var(--color-d-ink)',
+      chip: { label: 'EXPULSÃO', bg: 'var(--color-d-red)', fg: '#fff' },
+    }
+  }
+  // yellow
+  return {
+    bg: 'rgba(255,138,59,0.06)',
+    bd: 'rgba(255,138,59,0.22)',
+    minColor: 'var(--color-d-warn)',
+    emoji: '🟨',
+    textColor: 'var(--color-d-ink)',
+    nameColor: 'var(--color-d-ink)',
+    chip: { label: 'AMARELO', bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' },
+  }
 }
 
 function RightColumn(props: {
@@ -1904,16 +1988,6 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
             <div style={{ width: 24, flexShrink: 0, fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-mut)', textAlign: 'center' }}>
               {i + 1}
             </div>
-            <div
-              style={{
-                width: 30,
-                height: 21,
-                borderRadius: 4,
-                background: nationGradient(s.name),
-                flex: '0 0 auto',
-                border: '1px solid rgba(255,255,255,0.12)',
-              }}
-            />
             <div style={{ flex: '1 1 70px', minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {s.name}
