@@ -1,8 +1,9 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { features } from '../lib/features'
 
 export function Home() {
+  const [privacyOpen, setPrivacyOpen] = useState(false)
   return (
     <div className="d26-scope">
       <TopBar />
@@ -14,7 +15,8 @@ export function Home() {
         <SelecoesSection />
       </Container>
       <CtaFinalSection />
-      <Footer />
+      <Footer onPrivacy={() => setPrivacyOpen(true)} />
+      {privacyOpen && <PrivacyDrawer onClose={() => setPrivacyOpen(false)} />}
     </div>
   )
 }
@@ -867,7 +869,8 @@ function TeamBadge({ sample }: { sample: BadgeSample }) {
           right: 0,
           bottom: 0,
           padding: '8px 7px 4px',
-          background: 'linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72))',
+          background:
+            'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.55) 35%, rgba(0, 0, 0, 0.95) 100%)',
           fontFamily: 'Space Mono',
           fontSize: 11,
           fontWeight: 700,
@@ -936,7 +939,7 @@ function CtaFinalSection() {
   )
 }
 
-function Footer() {
+function Footer({ onPrivacy }: { onPrivacy: () => void }) {
   return (
     <div
       style={{
@@ -952,14 +955,240 @@ function Footer() {
       <Wordmark small />
       <div
         style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
           fontFamily: 'Space Mono',
           fontSize: 11,
           color: 'var(--color-d-mut)',
           letterSpacing: '0.08em',
         }}
       >
-        JOGO NO DADO · COPA 2026 · 48 SELEÇÕES
+        <span>JOGO NO DADO · COPA 2026 · 48 SELEÇÕES</span>
+        <button
+          type="button"
+          onClick={onPrivacy}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--color-d-mut)',
+            fontFamily: 'inherit',
+            fontSize: 'inherit',
+            letterSpacing: 'inherit',
+            textDecoration: 'underline dotted',
+            textUnderlineOffset: 3,
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          PRIVACIDADE · LGPD
+        </button>
       </div>
     </div>
+  )
+}
+
+// ============================================================
+// Privacy / LGPD drawer
+// ============================================================
+
+function PrivacyDrawer({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(6,7,5,0.78)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 30,
+          animation: 'd26-fade-in .25s ease',
+        }}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 31,
+          display: 'flex',
+          justifyContent: 'center',
+          animation: 'd26-sheet-up .32s cubic-bezier(.2,.9,.3,1)',
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 640,
+            maxHeight: '92vh',
+            overflowY: 'auto',
+            background: 'var(--color-d-surface)',
+            border: '1px solid var(--color-d-line)',
+            borderBottom: 'none',
+            borderRadius: '22px 22px 0 0',
+            boxShadow: '0 -30px 60px -20px rgba(0,0,0,0.7)',
+            pointerEvents: 'auto',
+          }}
+        >
+          <div
+            style={{
+              padding: '24px clamp(20px, 5vw, 32px) 20px',
+              borderBottom: '1px solid var(--color-d-line)',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 5,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.15)',
+                margin: '0 auto 18px',
+              }}
+            />
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                position: 'absolute',
+                top: 20,
+                right: 20,
+                background: 'var(--color-d-surface2)',
+                border: '1px solid var(--color-d-line)',
+                color: 'var(--color-d-ink)',
+                borderRadius: 8,
+                width: 30,
+                height: 30,
+                fontSize: 14,
+                cursor: 'pointer',
+              }}
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+            <Kicker color="var(--color-d-lime)">PRIVACIDADE · LGPD</Kicker>
+            <h2
+              style={{
+                fontFamily: 'Anton',
+                fontWeight: 400,
+                fontSize: 'clamp(28px, 5vw, 36px)',
+                margin: '0 0 6px',
+                lineHeight: 0.95,
+              }}
+            >
+              SEUS DADOS, SEU CONTROLE
+            </h2>
+            <p
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 12,
+                color: 'var(--color-d-mut)',
+                margin: 0,
+                letterSpacing: '0.04em',
+              }}
+            >
+              Versão preliminar. Conteúdo será revisado com o time legal.
+            </p>
+          </div>
+          <div style={{ padding: 'clamp(18px, 4vw, 28px) clamp(20px, 5vw, 32px) 28px' }}>
+            <PrivacySection title="O QUE COLETAMOS">
+              Tudo o que você joga no DRAFT 26 — formação escolhida, time montado, resultados de
+              partidas e progressão na Copa — fica gravado{' '}
+              <b style={{ color: 'var(--color-d-ink)' }}>localmente no seu navegador</b> (localStorage).
+              Não pedimos cadastro, nome ou email pra jogar.
+            </PrivacySection>
+            <PrivacySection title="O QUE COMPARTILHAMOS">
+              Quando você termina uma campanha, um espelho anônimo do seu run pode ser enviado
+              pro nosso backend (Supabase, RLS-protected) pra alimentar leaderboards e estatísticas
+              agregadas. Sem dados pessoais — só o XI, o desempenho e um ID anônimo.
+            </PrivacySection>
+            <PrivacySection title="COOKIES E TRACKING">
+              Usamos apenas armazenamento local pra manter seu progresso entre sessões. Sem
+              cookies de terceiros, sem analytics invasivo. Fontes Google (Anton / Archivo /
+              Space Mono) são carregadas via CDN.
+            </PrivacySection>
+            <PrivacySection title="SEUS DIREITOS · LGPD">
+              Sob a Lei Geral de Proteção de Dados, você pode pedir acesso, correção ou exclusão
+              dos seus dados a qualquer momento. Como o jogo não exige cadastro, limpar o
+              localStorage do navegador já apaga tudo do seu lado. Pra remover o run espelhado
+              no backend, é só nos contatar.
+            </PrivacySection>
+            <PrivacySection title="CONTATO" last>
+              Esta é uma versão preliminar. Quando finalizarmos os termos, adicionamos email de
+              contato e canal pra solicitações LGPD aqui.
+            </PrivacySection>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                width: '100%',
+                marginTop: 24,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: 'var(--color-d-lime)',
+                color: 'var(--color-d-bg)',
+                border: 'none',
+                borderRadius: 12,
+                padding: 15,
+                fontFamily: 'Anton',
+                fontSize: 18,
+                letterSpacing: '0.02em',
+                cursor: 'pointer',
+              }}
+            >
+              ENTENDI →
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function PrivacySection({
+  title,
+  children,
+  last,
+}: {
+  title: string
+  children: ReactNode
+  last?: boolean
+}) {
+  return (
+    <section
+      style={{
+        marginBottom: last ? 0 : 22,
+        paddingBottom: last ? 0 : 22,
+        borderBottom: last ? 'none' : '1px solid var(--color-d-line)',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.18em',
+          color: 'var(--color-d-lime)',
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+      <p
+        style={{
+          color: 'var(--color-d-mut)',
+          fontSize: 14,
+          lineHeight: 1.6,
+          margin: 0,
+        }}
+      >
+        {children}
+      </p>
+    </section>
   )
 }

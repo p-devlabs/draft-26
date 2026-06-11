@@ -989,7 +989,8 @@ function TeamBadge({ team }: { team: SideTeam }) {
           right: 0,
           bottom: 0,
           padding: '6px 6px 4px',
-          background: 'linear-gradient(180deg, transparent, rgba(0,0,0,0.72))',
+          background:
+            'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.95) 100%)',
           color: '#fff',
           fontFamily: 'Space Mono',
           fontWeight: 700,
