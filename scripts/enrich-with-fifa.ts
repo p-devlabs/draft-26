@@ -30,6 +30,31 @@ const WIKI_TO_FIFA: Record<string, string> = {
   Turkey: 'Türkiye',
 }
 
+// Partículas/artigos que não devem ser exigidos no match de tokens.
+// Cobre prefixos árabes ("al-"), holandeses ("van", "de"), espanhóis ("de la"),
+// portugueses ("dos", "da"), alemães ("von", "zu"), franceses ("le", "du"), etc.
+const STOPWORD_TOKENS = new Set([
+  'al', 'el', 'bin', 'ibn', 'abu', 'abd',
+  'van', 'von', 'der', 'den', 'ter', 'de', 'da', 'do', 'dos', 'das',
+  'la', 'le', 'les', 'du', 'di', 'del', 'della', 'lo',
+  'mc', 'mac', 'st', 'jr', 'sr', 'ii', 'iii',
+])
+
+// Apelidos conhecidos onde o "nome de convocação" da Wikipedia difere muito
+// do nome formal usado pela EA FC. Mapeamento normalizado.
+// Manter pequeno — só pra casos onde nem prefix-match nem inicial salvam.
+const NICKNAMES: Record<string, string[]> = {
+  andy: ['andrew'],
+  alex: ['alexander', 'alejandro', 'alessandro'],
+  chuck: ['charles'],
+  jim: ['james'],
+  bill: ['william'],
+  bob: ['robert'],
+  tony: ['anthony', 'antonio'],
+  noni: ['chukwunonso'],
+  paddy: ['patrick'],
+}
+
 interface FifaRow {
   long_name: string
   short_name: string
@@ -103,20 +128,73 @@ function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // tira diacríticos combinantes
-    .replace(/[.'`’\-]/g, ' ') // pontos e apóstrofos viram espaço (E. Álvarez → e alvarez)
+    .replace(/[̀-ͯ]/g, '') // tira diacríticos combinantes (faixa explícita)
+    .replace(/ø/g, 'o') // ø não decompõe em NFD
+    .replace(/æ/g, 'ae')
+    .replace(/ß/g, 'ss')
+    .replace(/[.'`’\-]/g, ' ') // pontos e apóstrofos viram espaço
     .replace(/[^a-z0-9 ]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 }
 
-// "todos os tokens do nome desejado aparecem no nome FIFA" — pega
-// "edson alvarez" dentro de "edson omar alvarez velazquez"
+// Norueguês: "Håland" ↔ "Haaland", "Bjørn" ↔ "Bjoern". Gera variantes do nome
+// normalizado pra testar contra cada candidato.
+function nameVariants(name: string): string[] {
+  const v = new Set<string>([name])
+  // aa <-> a (Håland → haland; mas Wiki escreve Haaland → haaland)
+  if (name.includes('aa')) v.add(name.replace(/aa/g, 'a'))
+  if (/(^|[^a])a([^a]|$)/.test(name)) v.add(name.replace(/a/g, 'aa'))
+  return [...v]
+}
+
+function isStopword(t: string): boolean {
+  return STOPWORD_TOKENS.has(t)
+}
+
+function nicknameVariants(token: string): string[] {
+  return NICKNAMES[token] ?? []
+}
+
+/**
+ * Token-based match com tolerância a:
+ *   - stopwords ("al", "van", "de"...) — não exigidos
+ *   - prefix-match ("dayot" casa com "dayotchanculle")
+ *   - apelidos ("andy" casa com "andrew" via NICKNAMES)
+ *   - inicial ("a" casa com "andy"/"andrew")
+ *
+ * Wanted token vale se: aparece exato OU é prefix de algum candidato OU
+ * algum apelido do wanted aparece OU é uma inicial isolada e o sobrenome
+ * do wanted bate exato em algum token candidato.
+ */
 function tokensMatch(wanted: string, candidate: string): boolean {
-  const want = wanted.split(' ').filter((t) => t.length >= 2)
+  const wantAll = wanted.split(' ').filter((t) => t.length >= 1)
+  const want = wantAll.filter((t) => t.length >= 2 && !isStopword(t))
   if (want.length === 0) return false
-  const candTokens = new Set(candidate.split(' '))
-  return want.every((t) => candTokens.has(t))
+
+  const candAll = candidate.split(' ').filter(Boolean)
+  const candTokens = new Set(candAll)
+
+  return want.every((t) => {
+    if (candTokens.has(t)) return true
+    if (t.length >= 3 && candAll.some((c) => c.startsWith(t))) return true
+    const nicks = nicknameVariants(t)
+    if (nicks.length && candAll.some((c) => nicks.includes(c) || nicks.some((n) => c.startsWith(n))))
+      return true
+    return false
+  })
+}
+
+/** Tenta casar "A. Robertson" (short_name) com "Andy Robertson" via inicial+sobrenome. */
+function initialPlusSurnameMatch(wanted: string, candidateShort: string): boolean {
+  const wantTokens = wanted.split(' ').filter((t) => t.length >= 2 && !isStopword(t))
+  if (wantTokens.length < 2) return false
+  const surname = wantTokens[wantTokens.length - 1]
+  const firstInitial = wantTokens[0][0]
+  // candidateShort tipicamente: "a robertson" depois de normalize
+  const parts = candidateShort.split(' ').filter(Boolean)
+  if (parts.length < 2) return false
+  return parts[0] === firstInitial && parts[parts.length - 1] === surname
 }
 
 // Levenshtein distância — O(m*n) com array linear
@@ -174,6 +252,7 @@ async function main() {
     for (const player of squad.players) {
       const wantedName = normalize(player.name)
       const wantedClub = normalize(player.club)
+      const variants = nameVariants(wantedName)
 
       // 1. Junta TODOS os candidatos viáveis (por nome) sem escolher ainda
       const viable: { row: FifaRow; nameScore: number; isFuzzy: boolean }[] = []
@@ -181,30 +260,32 @@ async function main() {
       for (const x of candidates) {
         const ln = normalize(x.long_name)
         const sn = normalize(x.short_name)
+        let matched = false
+        let nameScore = 0
 
-        if (ln === wantedName) viable.push({ row: x, nameScore: 100, isFuzzy: false })
-        else if (sn === wantedName) viable.push({ row: x, nameScore: 90, isFuzzy: false })
-        else if (ln.includes(wantedName) || wantedName.includes(ln) || sn.includes(wantedName))
-          viable.push({ row: x, nameScore: 70, isFuzzy: false })
-        else if (tokensMatch(wantedName, ln))
-          viable.push({ row: x, nameScore: 60, isFuzzy: false })
+        for (const v of variants) {
+          if (ln === v || sn === v) { nameScore = 100; matched = true; break }
+          if (ln.includes(v) || v.includes(ln) || sn.includes(v)) { nameScore = 70; matched = true; break }
+          if (tokensMatch(v, ln) || tokensMatch(v, sn)) { nameScore = 60; matched = true; break }
+          if (initialPlusSurnameMatch(v, sn)) { nameScore = 55; matched = true; break }
+        }
+
+        if (matched) viable.push({ row: x, nameScore, isFuzzy: false })
       }
 
-      // 2. Se nada por nome direto, tenta fuzzy
+      // 2. Se nada por nome direto, tenta fuzzy contra long_name e short_name (todas variantes)
       if (viable.length === 0) {
         let best: FifaRow | undefined
         let bestDist = Infinity
         for (const x of candidates) {
-          const d = Math.min(
-            levenshtein(wantedName, normalize(x.long_name)),
-            levenshtein(wantedName, normalize(x.short_name)),
-          )
-          if (d < bestDist) {
-            bestDist = d
-            best = x
+          const ln = normalize(x.long_name)
+          const sn = normalize(x.short_name)
+          for (const v of variants) {
+            const d = Math.min(levenshtein(v, ln), levenshtein(v, sn))
+            if (d < bestDist) { bestDist = d; best = x }
           }
         }
-        const threshold = Math.max(2, Math.floor(wantedName.length * 0.15))
+        const threshold = Math.max(2, Math.floor(wantedName.length * 0.2))
         if (best && bestDist <= threshold) {
           viable.push({ row: best, nameScore: 40, isFuzzy: true })
         }
@@ -215,10 +296,13 @@ async function main() {
       for (const v of viable) {
         let score = v.nameScore
 
-        // Bucket de posição bate (GK na Wiki = GK no FIFA)
-        const bucket = fifaBucket(v.row.player_positions)
-        if (bucket === player.position) score += 50
-        else if (bucket && bucket !== player.position) score -= 30 // penaliza fortemente
+        // Bucket de posição: considera TODAS posições FIFA (primary + alt).
+        // Penalidade só se NENHUMA delas cai no bucket da Wiki — versáteis tipo
+        // Kimmich (CDM, RB, CM → MID + DEF) não são mais mortos pela penalidade.
+        const allPositions = v.row.player_positions.split(',').map((s) => s.trim()).filter(Boolean)
+        const buckets = new Set(allPositions.map((p) => POSITION_BUCKET[p]).filter(Boolean))
+        if (buckets.has(player.position)) score += 50
+        else if (buckets.size > 0) score -= 10 // suave (era -30)
 
         // Clube bate
         if (wantedClub && normalize(v.row.club_name) === wantedClub) score += 30

@@ -2,7 +2,7 @@ import enriched from '../../data/squads-enriched.json'
 
 export type Position = 'GK' | 'DEF' | 'MID' | 'FWD'
 
-export type RatingSource = 'fifa' | 'fifa-fuzzy' | 'heuristic'
+export type RatingSource = 'fifa' | 'fifa-fuzzy' | 'tm' | 'club-tier' | 'heuristic'
 
 export interface Player {
   shirt: number | null
