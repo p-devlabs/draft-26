@@ -15,7 +15,9 @@
     "enrich:fifa": "tsx scripts/enrich-with-fifa.ts",
     "enrich:transfermarkt": "tsx scripts/enrich-with-transfermarkt.ts",
     "recalibrate:heuristic": "tsx scripts/recalibrate-heuristic.ts",
-    "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa && pnpm download:transfermarkt && pnpm enrich:transfermarkt && pnpm recalibrate:heuristic"
+    "download:matches": "tsx scripts/download-matches.ts",
+    "calibrate:sim": "tsx scripts/calibrate-sim.ts",
+    "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa && pnpm download:transfermarkt && pnpm enrich:transfermarkt && pnpm recalibrate:heuristic && pnpm download:matches && pnpm calibrate:sim"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",

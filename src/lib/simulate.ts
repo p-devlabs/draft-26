@@ -1,17 +1,27 @@
 /**
- * Motor de simulação de partida — Poisson ponderada por overall.
+ * Motor de simulação de partida — Dixon-Coles (1997) sobre Poisson ponderada.
  *
  * Modelo:
- *   - cada time tem uma "taxa de gols" λ derivada do seu overall vs o do adversário
- *   - λ vira média de uma Poisson; sorteamos gols inteiros
- *   - mando de campo dá +2 ao overall do mandante
- *   - taxa média de gols por jogo da Copa moderna é ~2.6
+ *   - cada time tem taxa de gols λ derivada do seu overall vs o do adversário
+ *   - λ_home e λ_away geram um PMF conjunto Poisson independente
+ *   - aplica o ajuste τ(x,y,λ,μ,ρ) de Dixon-Coles nos placares 0-0, 0-1, 1-0, 1-1
+ *     pra corrigir a correlação que Poisson independente ignora
+ *   - amostragem via grid 0..8 × 0..8 + inverse CDF (placares acima de 8 têm prob ~0)
+ *   - mando dá +HOME_ADVANTAGE ao overall do mandante
  *
- * Não é F1 do tactical realism — é só pra dar resultados plausíveis e variáveis.
+ * Parâmetros (ρ, mando, gols/jogo) vêm de `data/sim-params.json`, fitados em
+ * scripts/calibrate-sim.ts contra ~5800 jogos competitivos de seleção pós-2018
+ * (martj42/international_results). Pra recalibrar: `pnpm calibrate:sim`.
+ *
+ * Referência: Dixon &amp; Coles (1997), "Modelling Association Football Scores...".
  */
+import simParams from '../../data/sim-params.json'
 
-const AVG_GOALS_PER_MATCH = 2.6
-const HOME_ADVANTAGE = 2 // overall a mais pro mandante
+const AVG_GOALS_PER_MATCH = simParams.avgGoalsPerMatch
+const HOME_ADVANTAGE = simParams.homeAdvantage
+const DC_RHO = simParams.rho
+
+const MAX_GOALS = 8 // teto do grid de amostragem; P(x ≥ 8 | λ ≤ 3) ≈ 0
 
 export interface Team {
   averageOverall: number
@@ -34,16 +44,36 @@ export function seededRng(seed: number): () => number {
   }
 }
 
-/** Sample de Poisson via Knuth (suficiente pra λ < 30). */
-function samplePoisson(lambda: number, rng: () => number): number {
-  const L = Math.exp(-lambda)
-  let k = 0
-  let p = 1
-  do {
-    k++
-    p *= rng()
-  } while (p > L)
-  return k - 1
+/** P(X = k) para X ~ Poisson(λ). */
+function poissonPmf(k: number, lambda: number): number {
+  let p = Math.exp(-lambda)
+  for (let i = 1; i <= k; i++) p *= lambda / i
+  return p
+}
+
+/**
+ * Fator τ de Dixon-Coles. Multiplica P(x, y) Poisson independente nas 4 caixas
+ * baixas. Fora delas, τ = 1 e o modelo coincide com Poisson independente.
+ */
+function dixonColesTau(x: number, y: number, lambda: number, mu: number, rho: number): number {
+  if (x === 0 && y === 0) return 1 - lambda * mu * rho
+  if (x === 0 && y === 1) return 1 + lambda * rho
+  if (x === 1 && y === 0) return 1 + mu * rho
+  if (x === 1 && y === 1) return 1 - rho
+  return 1
+}
+
+/** Converte overall do par (mandante, visitante) em (λ, μ) da Poisson. */
+function rates(home: Team, away: Team): { lambda: number; mu: number } {
+  const homeStr = home.averageOverall + HOME_ADVANTAGE
+  const awayStr = away.averageOverall
+  const homeWeight = Math.pow(homeStr / 50, 1.5)
+  const awayWeight = Math.pow(awayStr / 50, 1.5)
+  const total = homeWeight + awayWeight
+  return {
+    lambda: (homeWeight / total) * AVG_GOALS_PER_MATCH,
+    mu: (awayWeight / total) * AVG_GOALS_PER_MATCH,
+  }
 }
 
 export function simulateMatch(
@@ -51,17 +81,37 @@ export function simulateMatch(
   away: Team,
   rng: () => number = Math.random,
 ): MatchResult {
-  const homeStr = home.averageOverall + HOME_ADVANTAGE
-  const awayStr = away.averageOverall
-  // peso exponencial pra que diferenças amplifiquem
-  const homeWeight = Math.pow(homeStr / 50, 1.5)
-  const awayWeight = Math.pow(awayStr / 50, 1.5)
-  const total = homeWeight + awayWeight
-  const homeRate = (homeWeight / total) * AVG_GOALS_PER_MATCH
-  const awayRate = (awayWeight / total) * AVG_GOALS_PER_MATCH
+  const { lambda, mu } = rates(home, away)
 
-  return {
-    homeGoals: samplePoisson(homeRate, rng),
-    awayGoals: samplePoisson(awayRate, rng),
+  // PMFs marginais (uma vez cada k)
+  const homePmf: number[] = new Array(MAX_GOALS + 1)
+  const awayPmf: number[] = new Array(MAX_GOALS + 1)
+  for (let k = 0; k <= MAX_GOALS; k++) {
+    homePmf[k] = poissonPmf(k, lambda)
+    awayPmf[k] = poissonPmf(k, mu)
   }
+
+  // Grid conjunto com ajuste Dixon-Coles + soma pra normalizar (cobre o "vazamento"
+  // de massa pra x > MAX_GOALS e a renormalização após o τ).
+  let total = 0
+  const probs: number[] = new Array((MAX_GOALS + 1) * (MAX_GOALS + 1))
+  for (let x = 0; x <= MAX_GOALS; x++) {
+    for (let y = 0; y <= MAX_GOALS; y++) {
+      const p = homePmf[x] * awayPmf[y] * dixonColesTau(x, y, lambda, mu, DC_RHO)
+      probs[x * (MAX_GOALS + 1) + y] = p
+      total += p
+    }
+  }
+
+  // Inverse CDF
+  const r = rng() * total
+  let cum = 0
+  for (let x = 0; x <= MAX_GOALS; x++) {
+    for (let y = 0; y <= MAX_GOALS; y++) {
+      cum += probs[x * (MAX_GOALS + 1) + y]
+      if (r <= cum) return { homeGoals: x, awayGoals: y }
+    }
+  }
+  // Salvaguarda numérica (massa restante por floating point)
+  return { homeGoals: 0, awayGoals: 0 }
 }

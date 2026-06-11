@@ -15,3 +15,6 @@ data/eafc26-players.csv
 
 # dataset Transfermarkt extraído (4 MB, baixado por script — não comitar)
 data/transfermarkt-players.csv
+
+# dataset de jogos internacionais (2 MB, baixado por script — não comitar)
+data/international-matches.csv

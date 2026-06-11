@@ -1,0 +1,27 @@
+{
+  "rho": 0.04,
+  "homeAdvantage": 2,
+  "avgGoalsPerMatch": 2.6,
+  "calibration": {
+    "calibratedAt": "2026-06-11",
+    "source": "github.com/martj42/international_results",
+    "filter": "competitive matches >= 2018-01-01",
+    "nMatches": 5836,
+    "empiricalAvgGoalsHome": 1.614,
+    "empiricalAvgGoalsAway": 1.172,
+    "observedFreq": {
+      "0-0": 0.0793,
+      "1-0": 0.1086,
+      "0-1": 0.0816,
+      "1-1": 0.0997
+    },
+    "fittedFreq": {
+      "0-0": 0.057,
+      "1-0": 0.1042,
+      "0-1": 0.077,
+      "1-1": 0.112
+    },
+    "mse": 0.00017227,
+    "mseBaseline": 0.00019167
+  }
+}
