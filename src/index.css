@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-display: "Source Serif 4", ui-serif, Georgia, serif;
+
+  --color-paper: oklch(98% 0.005 80);
+  --color-ink: oklch(22% 0.02 50);
+  --color-ink-soft: oklch(45% 0.02 50);
+  --color-rule: oklch(88% 0.01 80);
+  --color-sand: oklch(94% 0.02 80);
+  --color-clay: oklch(58% 0.13 35);
+  --color-clay-soft: oklch(92% 0.04 35);
+  --color-moss: oklch(48% 0.08 145);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-clay-soft);
+    color: var(--color-ink);
+  }
+}
