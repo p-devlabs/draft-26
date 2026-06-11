@@ -859,7 +859,6 @@ function TeamBadge({ sample }: { sample: BadgeSample }) {
         background: sample.bg,
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
       }}
     >
       <span
@@ -870,7 +869,7 @@ function TeamBadge({ sample }: { sample: BadgeSample }) {
           bottom: 0,
           padding: '8px 7px 4px',
           background:
-            'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.55) 35%, rgba(0, 0, 0, 0.95) 100%)',
+            'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 40%, rgba(0, 0, 0, 1) 80%)',
           fontFamily: 'Space Mono',
           fontSize: 11,
           fontWeight: 700,
