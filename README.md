@@ -61,10 +61,32 @@ O `public/_redirects` já trata SPA fallback.
 - **Roteamento client-side** com `react-router-dom` v7. Sem SSR — o conteúdo
   é interativo e personalizado por usuário, não vale a pena pré-renderizar.
 
+## Pipeline de dados
+
+A pasta `data/` mistura curadoria manual e arquivos gerados:
+
+| Arquivo                     | Origem                          | No git?       |
+|-----------------------------|---------------------------------|---------------|
+| `country-codes.json`        | curadoria manual                | ✅            |
+| `tactics.json`              | curadoria manual                | ✅            |
+| `squads.json`               | `pnpm scrape:squads` (Wikipedia)| ✅ (referência) |
+| `squads-enriched.json`      | `pnpm enrich:squads` + `enrich:fifa` | ✅ (consumido pelo app) |
+| `eafc26-players.csv`        | `pnpm download:fifa` (10 MB)    | ❌ (gitignored)|
+
+Pra reconstruir tudo do zero:
+
+```bash
+pnpm data:rebuild
+```
+
+(equivale a `scrape:squads → enrich:squads → download:fifa → enrich:fifa`)
+
+Match com EA FC 26 pega ~71% dos convocados; o resto (Irã, Jordânia, Uzbequistão
+e outros mal cobertos pelo EA) cai numa heurística por tier do clube + caps + idade.
+
 ## Próximos passos
 
-- [ ] Importar as 48 convocações oficiais (`scripts/import-squads.ts`)
-- [ ] Tela de draft de seleção (sorteio com animação)
-- [ ] Editor de XI com formação configurável
-- [ ] Motor de simulação (probabilidade ponderada por overall + fator casa)
+- [ ] Tela de draft (drawer com tática/estilo, depois sorteio por posição)
+- [ ] Motor de simulação (probabilidade ponderada por overall)
 - [ ] Tela de torneio com tabela dos grupos + chaveamento
+- [ ] Subir os dados pro Supabase (hoje JSON inline no bundle, 594 KB)

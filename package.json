@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "tsc -b --noEmit"
+    "lint": "tsc -b --noEmit",
+    "scrape:squads": "tsx scripts/scrape-squads.ts",
+    "enrich:squads": "tsx scripts/enrich-squads.ts",
+    "download:fifa": "tsx scripts/download-fifa-dataset.ts",
+    "enrich:fifa": "tsx scripts/enrich-with-fifa.ts",
+    "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
@@ -17,10 +22,14 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "cheerio": "^1.2.0",
+    "papaparse": "^5.5.3",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.22.4",
     "typescript": "~5.7.2",
     "vite": "^6.0.7"
   }
