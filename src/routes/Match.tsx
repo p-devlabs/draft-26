@@ -14,7 +14,7 @@ import {
   fullySimulate,
   ROUND_LABEL,
   ROUND_ORDER,
-  simulateNonUserRound,
+  ensureRoundsSimulated,
   type BracketMatch,
   type KnockoutBracket,
   type KORound,
@@ -324,7 +324,10 @@ function KnockoutMatchRunner({
       winnerCode,
       events,
     })
-    next = simulateNonUserRound(next, match.round)
+    // Avança round-a-round: o lado oposto só evolui depois da rodada do user.
+    // Se o user foi eliminado, ensureRoundsSimulated continua até o final
+    // pra ter campeão definido.
+    next = ensureRoundsSimulated(next)
     setBracket(next)
   }, [matchId, navigate])
 
