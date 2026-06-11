@@ -2,7 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './index.css'
-import { AppLayout } from './AppLayout'
 import { Home } from './routes/Home'
 import { Selecoes } from './routes/Selecoes'
 import { SelecaoDetalhe } from './routes/SelecaoDetalhe'
@@ -16,10 +15,8 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route index element={<Home />} />
-        <Route element={<AppLayout />}>
-          <Route path="/teams" element={<Selecoes />} />
-          <Route path="/teams/:code" element={<SelecaoDetalhe />} />
-        </Route>
+        <Route path="/teams" element={<Selecoes />} />
+        <Route path="/teams/:code" element={<SelecaoDetalhe />} />
         <Route path="/draft" element={<Draft />} />
         <Route path="/groups" element={<Copa />} />
         <Route path="/bracket" element={<MataMata />} />
