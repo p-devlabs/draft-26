@@ -19,6 +19,12 @@ export interface DraftSlot {
   x: number
   y: number
   player?: ChosenPlayer
+  /**
+   * Resultado do dado pra esse slot que ainda não virou pick. Sobrevive a
+   * fechar/reabrir o drawer — o usuário vê o mesmo sorteio em vez de rodar
+   * de novo. Limpa em pickPlayer ou em useSkip.
+   */
+  pendingSquadCode?: string
 }
 
 export interface ChosenPlayer {
@@ -143,12 +149,30 @@ export function rollUntilCompatible(
     currentState = applyRoll(currentState, squad.code)
 
     if (candidates.length > 0) {
+      // Marca o resultado no slot pra sobreviver fechar/reabrir o drawer.
+      currentState = setPendingRoll(currentState, slotIndex, squad.code)
       return { state: currentState, squad, candidates, skipped }
     }
     skipped.push(squad)
   }
 
   throw new Error('limite de tentativas excedido sem achar seleção compatível')
+}
+
+/** Marca um sorteio pendente num slot. Limpa em pickPlayer ou clearPendingRoll. */
+export function setPendingRoll(state: DraftState, slotIndex: number, squadCode: string): DraftState {
+  const slots = state.slots.map((s, i) =>
+    i === slotIndex ? { ...s, pendingSquadCode: squadCode } : s,
+  )
+  return { ...state, slots }
+}
+
+/** Limpa o sorteio pendente (usado quando o user pula). */
+export function clearPendingRoll(state: DraftState, slotIndex: number): DraftState {
+  const slots = state.slots.map((s, i) =>
+    i === slotIndex ? { ...s, pendingSquadCode: undefined } : s,
+  )
+  return { ...state, slots }
 }
 
 /** Escolhe um jogador pra um slot. Marca o país como picked. */
@@ -172,6 +196,7 @@ export function pickPlayer(
             countryName: squad.country,
             countryFlag: squad.flag,
           },
+          pendingSquadCode: undefined,
         }
       : s,
   )

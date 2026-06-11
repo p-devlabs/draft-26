@@ -1,8 +1,13 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { SLOT_LABEL } from '../lib/positions'
-import { rollUntilCompatible, useSkip, type DraftState } from '../lib/draft'
+import { compatiblePlayers, SLOT_LABEL } from '../lib/positions'
+import {
+  clearPendingRoll,
+  rollUntilCompatible,
+  useSkip,
+  type DraftState,
+} from '../lib/draft'
 import { nationGradient } from '../lib/nation-colors'
-import type { Player, Squad } from '../data/squads'
+import { findSquad, type Player, type Squad } from '../data/squads'
 
 interface PickDrawerProps {
   open: boolean
@@ -28,11 +33,25 @@ export function PickDrawer({
 }: PickDrawerProps) {
   const [phase, setPhase] = useState<Phase>({ kind: 'rolling' })
 
-  // Auto-roll quando o drawer abre — sem CTA intermediária.
-  // Usar a state do MOMENTO da abertura (capturada na ref pra não disparar
-  // re-roll quando a state-prop mudar entre abertura e timeout).
+  // Ao abrir:
+  //   - se o slot já tem pendingSquadCode (sorteio antigo, drawer foi fechado
+  //     sem pick) → mostra de novo o mesmo resultado, sem animação
+  //   - senão → auto-roll com a animação de ~1s
   useEffect(() => {
     if (!open || slotIndex == null) return
+    const slot = state.slots[slotIndex]
+
+    if (slot?.pendingSquadCode) {
+      const squad = findSquad(slot.pendingSquadCode)
+      if (squad) {
+        const candidates = compatiblePlayers(slot.pos, squad.players)
+        if (candidates.length > 0) {
+          setPhase({ kind: 'result', squad, candidates, skipped: 0 })
+          return
+        }
+      }
+    }
+
     setPhase({ kind: 'rolling' })
     const id = window.setTimeout(() => {
       try {
@@ -87,17 +106,13 @@ export function PickDrawer({
 
   const handleSkip = () => {
     if (!canSkip || phase.kind !== 'result') return
-    // Decrementa pulos primeiro, depois re-roll a partir do state atualizado.
-    // Antes a gente chamava onStateChange(useSkip(state)) E handleRoll() — o
-    // handleRoll usava o `state` velho da closure e seu onStateChange final
-    // sobrescrevia o decremento. Daí pulava infinito.
-    rollFrom(useSkip(state))
+    // Pula gasta um skip e descarta o sorteio pendente antes de rodar de novo.
+    rollFrom(clearPendingRoll(useSkip(state), slotIndex))
   }
 
   const handleClose = () => {
-    if (phase.kind === 'result' && canSkip) {
-      onStateChange(useSkip(state))
-    }
+    // Fechar sem escolher NÃO gasta skip — o sorteio fica gravado no slot
+    // (pendingSquadCode) e a próxima abertura mostra as mesmas opções.
     onClose()
   }
 
@@ -358,7 +373,14 @@ function ResultState({
 }) {
   const code = squad.code.toUpperCase()
   const canSkip = skipsRemaining > 0
-  const sorted = [...candidates].sort((a, b) => b.overall - a.overall)
+  // Sem ranking — primeira ordem por posição primária (caso o fallback
+  // LWB→LB / RWB→RB / CF→ST traga uma mistura), depois alfabética por nome.
+  const sorted = [...candidates].sort((a, b) => {
+    const pa = a.primaryPosition ?? ''
+    const pb = b.primaryPosition ?? ''
+    if (pa !== pb) return pa.localeCompare(pb)
+    return a.name.localeCompare(b.name, 'pt-BR')
+  })
   return (
     <div style={{ animation: 'd26-fade-in .3s ease' }}>
       <div
