@@ -25,21 +25,15 @@ export function PickDrawer({
   onPick,
   onStateChange,
 }: PickDrawerProps) {
-  const [phase, setPhase] = useState<Phase>({ kind: 'roll' })
+  const [phase, setPhase] = useState<Phase>({ kind: 'rolling' })
 
+  // Auto-roll quando o drawer abre — sem CTA intermediária.
+  // Usar a state do MOMENTO da abertura (capturada na ref pra não disparar
+  // re-roll quando a state-prop mudar entre abertura e timeout).
   useEffect(() => {
-    if (open) setPhase({ kind: 'roll' })
-  }, [open, slotIndex])
-
-  if (!open || slotIndex == null) return null
-
-  const slot = state.slots[slotIndex]
-  const slotLabel = SLOT_LABEL[slot.pos].toUpperCase()
-  const canSkip = state.skipsRemaining > 0
-
-  const handleRoll = () => {
+    if (!open || slotIndex == null) return
     setPhase({ kind: 'rolling' })
-    window.setTimeout(() => {
+    const id = window.setTimeout(() => {
       try {
         const result = rollUntilCompatible(state, slotIndex)
         onStateChange(result.state)
@@ -54,6 +48,35 @@ export function PickDrawer({
         setPhase({ kind: 'roll' })
       }
     }, 1050)
+    return () => window.clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, slotIndex])
+
+  if (!open || slotIndex == null) return null
+
+  const slot = state.slots[slotIndex]
+  const slotLabel = SLOT_LABEL[slot.pos].toUpperCase()
+  const canSkip = state.skipsRemaining > 0
+
+  // Re-roll manual (fallback do estado 'roll' ou disparado pelo skip).
+  const rollFrom = (fromState: DraftState) => {
+    setPhase({ kind: 'rolling' })
+    window.setTimeout(() => {
+      try {
+        const result = rollUntilCompatible(fromState, slotIndex)
+        onStateChange(result.state)
+        setPhase({
+          kind: 'result',
+          squad: result.squad,
+          candidates: result.candidates,
+          skipped: result.skipped.length,
+        })
+      } catch (err) {
+        console.error(err)
+        onStateChange(fromState)
+        setPhase({ kind: 'roll' })
+      }
+    }, 1050)
   }
 
   const handlePick = (player: Player) => {
@@ -63,8 +86,11 @@ export function PickDrawer({
 
   const handleSkip = () => {
     if (!canSkip || phase.kind !== 'result') return
-    onStateChange(useSkip(state))
-    handleRoll()
+    // Decrementa pulos primeiro, depois re-roll a partir do state atualizado.
+    // Antes a gente chamava onStateChange(useSkip(state)) E handleRoll() — o
+    // handleRoll usava o `state` velho da closure e seu onStateChange final
+    // sobrescrevia o decremento. Daí pulava infinito.
+    rollFrom(useSkip(state))
   }
 
   const handleClose = () => {
@@ -121,7 +147,7 @@ export function PickDrawer({
         >
           <Header label={slotLabel} onClose={handleClose} />
           {phase.kind === 'roll' && (
-            <RollState slotLabel={slotLabel} recentStr={recentStr} onRoll={handleRoll} />
+            <RollState slotLabel={slotLabel} recentStr={recentStr} onRoll={() => rollFrom(state)} />
           )}
           {phase.kind === 'rolling' && <RollingState />}
           {phase.kind === 'result' && (

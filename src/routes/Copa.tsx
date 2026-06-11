@@ -17,8 +17,6 @@ import { createDraft, isComplete, type DraftState } from '../lib/draft'
 import { loadDraft, saveStage, loadStage, clearStage } from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
 
-const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-
 export function Copa() {
   const navigate = useNavigate()
   const [stage, setStage] = useState<GroupStage | null>(null)
@@ -122,7 +120,6 @@ export function Copa() {
   return (
     <div className="d26-scope" style={{ position: 'relative', overflowX: 'hidden' }}>
       <AppBar phaseLabel={phaseLabel} onReset={handleReset} />
-      <GroupSelector userLetter={stage.letter} />
       <div
         style={{
           maxWidth: 1180,
@@ -216,7 +213,7 @@ function AppBar({ phaseLabel, onReset }: { phaseLabel: string; onReset?: () => v
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <NavPill to="/draft" label="ESCALAÇÃO" />
+        <NavPill disabled label="ESCALAÇÃO" />
         <NavPill active label="GRUPOS" />
         <NavPill to="/bracket" label="CHAVEAMENTO" />
         <NavPill to="/match" label="PARTIDA" />
@@ -256,7 +253,17 @@ function AppBar({ phaseLabel, onReset }: { phaseLabel: string; onReset?: () => v
   )
 }
 
-function NavPill({ to, label, active }: { to?: string; label: string; active?: boolean }) {
+function NavPill({
+  to,
+  label,
+  active,
+  disabled,
+}: {
+  to?: string
+  label: string
+  active?: boolean
+  disabled?: boolean
+}) {
   const base: CSSProperties = {
     fontFamily: 'Space Mono',
     fontSize: 12,
@@ -268,6 +275,16 @@ function NavPill({ to, label, active }: { to?: string; label: string; active?: b
     return (
       <span
         style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}
+      >
+        {label}
+      </span>
+    )
+  }
+  if (disabled) {
+    return (
+      <span
+        title="Use o ↻ no header pra recomeçar essa etapa"
+        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.35, cursor: 'not-allowed' }}
       >
         {label}
       </span>
@@ -316,72 +333,6 @@ function DiceMark() {
 // ============================================================
 // Group selector
 // ============================================================
-
-function GroupSelector({ userLetter }: { userLetter: string }) {
-  return (
-    <div style={{ borderBottom: '1px solid var(--color-d-line)', background: '#0c0e0b' }}>
-      <div
-        style={{
-          maxWidth: 1180,
-          margin: '0 auto',
-          padding: '11px clamp(16px, 4vw, 28px)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'Space Mono',
-            fontSize: 10,
-            letterSpacing: '0.16em',
-            color: 'var(--color-d-mut)',
-            flexShrink: 0,
-          }}
-        >
-          GRUPO
-        </span>
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            paddingBottom: 1,
-          }}
-        >
-          {GROUP_LETTERS.map((g) => {
-            const on = g === userLetter
-            return (
-              <span
-                key={g}
-                title={on ? 'Seu grupo' : 'Grupo sem dados ainda'}
-                style={{
-                  fontFamily: 'Anton',
-                  fontSize: 14,
-                  width: 30,
-                  height: 30,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 8,
-                  flexShrink: 0,
-                  background: on ? 'var(--color-d-lime)' : 'var(--color-d-surface2)',
-                  color: on ? 'var(--color-d-bg)' : 'var(--color-d-mut)',
-                  border: `1px solid ${on ? 'var(--color-d-lime)' : 'var(--color-d-line)'}`,
-                  cursor: 'default',
-                  opacity: on ? 1 : 0.6,
-                }}
-              >
-                {g}
-              </span>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ============================================================
 // Masthead

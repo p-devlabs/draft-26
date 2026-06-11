@@ -48,11 +48,12 @@ const COMPAT: Record<SlotPosition, string[]> = {
 export function isCompatible(
   slot: SlotPosition,
   primary: string | undefined,
-  alt: string[] | undefined,
+  _alt: string[] | undefined,
 ): boolean {
+  // Por ora só considera a posição principal — altPositions ainda precisa
+  // de curadoria. Voltar aqui quando o critério das alternativas estiver definido.
   const allowed = COMPAT[slot]
   if (primary && allowed.includes(primary)) return true
-  if (alt && alt.some((p) => allowed.includes(p))) return true
   return false
 }
 

@@ -685,9 +685,9 @@ function AppBar({ phaseLabel }: { phaseLabel: string }) {
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <NavPill to="/draft" label="ESCALAÇÃO" />
-        <NavPill to="/groups" label="GRUPOS" />
-        <NavPill to="/bracket" label="CHAVEAMENTO" />
+        <NavPill disabled label="ESCALAÇÃO" />
+        <NavPill disabled label="GRUPOS" />
+        <NavPill disabled label="CHAVEAMENTO" />
         <NavPill active label="PARTIDA" />
       </nav>
       <div
@@ -705,7 +705,17 @@ function AppBar({ phaseLabel }: { phaseLabel: string }) {
   )
 }
 
-function NavPill({ to, label, active }: { to?: string; label: string; active?: boolean }) {
+function NavPill({
+  to,
+  label,
+  active,
+  disabled,
+}: {
+  to?: string
+  label: string
+  active?: boolean
+  disabled?: boolean
+}) {
   const base: CSSProperties = {
     fontFamily: 'Space Mono',
     fontSize: 12,
@@ -716,6 +726,16 @@ function NavPill({ to, label, active }: { to?: string; label: string; active?: b
   if (active) {
     return (
       <span style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}>
+        {label}
+      </span>
+    )
+  }
+  if (disabled) {
+    return (
+      <span
+        title="Use o ↻ no header pra recomeçar essa etapa"
+        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.35, cursor: 'not-allowed' }}
+      >
         {label}
       </span>
     )
