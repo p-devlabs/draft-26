@@ -1,7 +1,13 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { SLOT_LABEL } from '../lib/positions'
-import { rollUntilCompatible, useSkip, type DraftState } from '../lib/draft'
-import type { Player, Squad } from '../data/squads'
+import { compatiblePlayers, SLOT_LABEL } from '../lib/positions'
+import {
+  clearPendingRoll,
+  rollUntilCompatible,
+  useSkip,
+  type DraftState,
+} from '../lib/draft'
+import { nationGradient } from '../lib/nation-colors'
+import { findSquad, type Player, type Squad } from '../data/squads'
 
 interface PickDrawerProps {
   open: boolean
@@ -25,21 +31,29 @@ export function PickDrawer({
   onPick,
   onStateChange,
 }: PickDrawerProps) {
-  const [phase, setPhase] = useState<Phase>({ kind: 'roll' })
+  const [phase, setPhase] = useState<Phase>({ kind: 'rolling' })
 
+  // Ao abrir:
+  //   - se o slot já tem pendingSquadCode (sorteio antigo, drawer foi fechado
+  //     sem pick) → mostra de novo o mesmo resultado, sem animação
+  //   - senão → auto-roll com a animação de ~1s
   useEffect(() => {
-    if (open) setPhase({ kind: 'roll' })
-  }, [open, slotIndex])
+    if (!open || slotIndex == null) return
+    const slot = state.slots[slotIndex]
 
-  if (!open || slotIndex == null) return null
+    if (slot?.pendingSquadCode) {
+      const squad = findSquad(slot.pendingSquadCode)
+      if (squad) {
+        const candidates = compatiblePlayers(slot.pos, squad.players)
+        if (candidates.length > 0) {
+          setPhase({ kind: 'result', squad, candidates, skipped: 0 })
+          return
+        }
+      }
+    }
 
-  const slot = state.slots[slotIndex]
-  const slotLabel = SLOT_LABEL[slot.pos].toUpperCase()
-  const canSkip = state.skipsRemaining > 0
-
-  const handleRoll = () => {
     setPhase({ kind: 'rolling' })
-    window.setTimeout(() => {
+    const id = window.setTimeout(() => {
       try {
         const result = rollUntilCompatible(state, slotIndex)
         onStateChange(result.state)
@@ -54,6 +68,35 @@ export function PickDrawer({
         setPhase({ kind: 'roll' })
       }
     }, 1050)
+    return () => window.clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, slotIndex])
+
+  if (!open || slotIndex == null) return null
+
+  const slot = state.slots[slotIndex]
+  const slotLabel = SLOT_LABEL[slot.pos].toUpperCase()
+  const canSkip = state.skipsRemaining > 0
+
+  // Re-roll manual (fallback do estado 'roll' ou disparado pelo skip).
+  const rollFrom = (fromState: DraftState) => {
+    setPhase({ kind: 'rolling' })
+    window.setTimeout(() => {
+      try {
+        const result = rollUntilCompatible(fromState, slotIndex)
+        onStateChange(result.state)
+        setPhase({
+          kind: 'result',
+          squad: result.squad,
+          candidates: result.candidates,
+          skipped: result.skipped.length,
+        })
+      } catch (err) {
+        console.error(err)
+        onStateChange(fromState)
+        setPhase({ kind: 'roll' })
+      }
+    }, 1050)
   }
 
   const handlePick = (player: Player) => {
@@ -63,14 +106,13 @@ export function PickDrawer({
 
   const handleSkip = () => {
     if (!canSkip || phase.kind !== 'result') return
-    onStateChange(useSkip(state))
-    handleRoll()
+    // Pula gasta um skip e descarta o sorteio pendente antes de rodar de novo.
+    rollFrom(clearPendingRoll(useSkip(state), slotIndex))
   }
 
   const handleClose = () => {
-    if (phase.kind === 'result' && canSkip) {
-      onStateChange(useSkip(state))
-    }
+    // Fechar sem escolher NÃO gasta skip — o sorteio fica gravado no slot
+    // (pendingSquadCode) e a próxima abertura mostra as mesmas opções.
     onClose()
   }
 
@@ -121,7 +163,7 @@ export function PickDrawer({
         >
           <Header label={slotLabel} onClose={handleClose} />
           {phase.kind === 'roll' && (
-            <RollState slotLabel={slotLabel} recentStr={recentStr} onRoll={handleRoll} />
+            <RollState slotLabel={slotLabel} recentStr={recentStr} onRoll={() => rollFrom(state)} />
           )}
           {phase.kind === 'rolling' && <RollingState />}
           {phase.kind === 'result' && (
@@ -331,7 +373,14 @@ function ResultState({
 }) {
   const code = squad.code.toUpperCase()
   const canSkip = skipsRemaining > 0
-  const sorted = [...candidates].sort((a, b) => b.overall - a.overall)
+  // Sem ranking — primeira ordem por posição primária (caso o fallback
+  // LWB→LB / RWB→RB / CF→ST traga uma mistura), depois alfabética por nome.
+  const sorted = [...candidates].sort((a, b) => {
+    const pa = a.primaryPosition ?? ''
+    const pb = b.primaryPosition ?? ''
+    if (pa !== pb) return pa.localeCompare(pb)
+    return a.name.localeCompare(b.name, 'pt-BR')
+  })
   return (
     <div style={{ animation: 'd26-fade-in .3s ease' }}>
       <div
@@ -456,7 +505,7 @@ function SquadBadge({ code }: { code: string }) {
         width: 52,
         height: 36,
         borderRadius: 6,
-        background: gradientFor(code),
+        background: nationGradient(code),
         position: 'relative',
         border: '1px solid rgba(255,255,255,0.14)',
         flex: '0 0 auto',
@@ -483,13 +532,6 @@ function SquadBadge({ code }: { code: string }) {
   )
 }
 
-function gradientFor(code: string): string {
-  let h = 0
-  for (const c of code) h = (h * 31 + c.charCodeAt(0)) | 0
-  const h1 = Math.abs(h) % 360
-  const h2 = (h1 + 95) % 360
-  return `linear-gradient(135deg, hsl(${h1} 65% 42%), hsl(${h2} 70% 52%))`
-}
 
 function CandidateRow({ player, onPick }: { player: Player; onPick: () => void }) {
   return (

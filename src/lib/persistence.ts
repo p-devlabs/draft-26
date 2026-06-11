@@ -10,6 +10,9 @@ import type { KnockoutBracket } from './bracket'
 const KEY_DRAFT = 'd26:draft'
 const KEY_STAGE = 'd26:stage'
 const KEY_BRACKET = 'd26:bracket'
+const KEY_SPEED = 'd26:speed'
+
+type StoredSpeed = 'slow' | 'normal' | 'fast'
 
 function safeRead<T>(key: string): T | null {
   try {
@@ -87,4 +90,14 @@ export function clearBracket(): void {
   } catch {
     /* ignore */
   }
+}
+
+export function loadMatchSpeed(): StoredSpeed {
+  const v = safeRead<StoredSpeed>(KEY_SPEED)
+  if (v === 'slow' || v === 'normal' || v === 'fast') return v
+  return 'normal'
+}
+
+export function saveMatchSpeed(s: StoredSpeed): void {
+  safeWrite(KEY_SPEED, s)
 }

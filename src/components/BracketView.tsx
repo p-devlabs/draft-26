@@ -9,6 +9,7 @@ import {
   type KnockoutTeam,
   type KORound,
 } from '../lib/bracket'
+import { nationGradient } from '../lib/nation-colors'
 
 interface BracketViewProps {
   bracket: KnockoutBracket
@@ -165,7 +166,7 @@ function BracketColumn({
                 lineHeight: 0.9,
               }}
             >
-              FAÇA<br />7 A 0
+              CAMPEÃO<br />DO MUNDO
             </div>
           </div>
         )}
@@ -465,7 +466,7 @@ function TeamChip({ code, compact }: { code: string; compact?: boolean }) {
         width: compact ? 16 : 28,
         height: compact ? 11 : 19,
         borderRadius: compact ? 3 : 5,
-        background: gradientFor(code),
+        background: nationGradient(code),
         flex: '0 0 auto',
         border: '1px solid rgba(255,255,255,0.12)',
       }}
@@ -473,13 +474,6 @@ function TeamChip({ code, compact }: { code: string; compact?: boolean }) {
   )
 }
 
-function gradientFor(code: string): string {
-  let h = 0
-  for (const c of code) h = (h * 31 + c.charCodeAt(0)) | 0
-  const h1 = Math.abs(h) % 360
-  const h2 = (h1 + 95) % 360
-  return `linear-gradient(135deg, hsl(${h1} 65% 42%), hsl(${h2} 70% 52%))`
-}
 
 function cellScore(match: BracketMatch, side: 'home' | 'away'): number | null {
   if (!match.result) return null
@@ -898,4 +892,4 @@ function FinalView({ matches, bracket }: { matches: BracketMatch[]; bracket: Kno
 }
 
 // Re-exports so consumers can opt into a specific layout
-export { BracketDesktop, BracketMobile, gradientFor, ROUND_LABEL }
+export { BracketDesktop, BracketMobile, ROUND_LABEL }

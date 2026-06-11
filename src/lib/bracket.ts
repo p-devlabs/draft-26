@@ -368,17 +368,42 @@ export function simulateOtherHalfToFinal(
 }
 
 /**
- * Setup completo: cria o bracket + simula o lado oposto até o finalista.
- * É o que MataMata.tsx deve usar no primeiro acesso.
+ * Setup completo: cria o bracket + simula só o que cabe na rodada atual do
+ * usuário (R32 inicialmente). O resto avança round a round via
+ * `ensureRoundsSimulated` conforme o user joga.
  */
 export function setupBracket(
   draft: DraftState,
   replacedCode?: string,
   rng: () => number = Math.random,
 ): KnockoutBracket {
-  const initial = createBracket(draft, replacedCode)
-  const half = userHalfOf(initial)
-  return simulateOtherHalfToFinal(initial, half, rng)
+  return ensureRoundsSimulated(createBracket(draft, replacedCode), rng)
+}
+
+/**
+ * Avança a simulação dos jogos não-user de rodada em rodada — uma por vez,
+ * só até onde o user ainda não jogou. Se o user já caiu (não tem jogo nessa
+ * rodada), continua simulando tudo até a final.
+ *
+ * Para na primeira rodada onde o user tem jogo pendente. Idempotente —
+ * pode ser chamado quantas vezes quiser, só simula o que falta.
+ */
+export function ensureRoundsSimulated(
+  bracket: KnockoutBracket,
+  rng: () => number = Math.random,
+): KnockoutBracket {
+  let next = bracket
+  for (const round of ROUND_ORDER) {
+    next = simulateNonUserRound(next, round, rng)
+    const userMatch = next.matches.find(
+      (m) =>
+        m.round === round &&
+        (m.homeCode === next.userCode || m.awayCode === next.userCode),
+    )
+    // Se o user tem jogo pendente nessa rodada, para — espera ele jogar.
+    if (userMatch && !userMatch.winnerCode) break
+  }
+  return next
 }
 
 /** Aplica um resultado a um match e propaga o vencedor pra próxima rodada. */

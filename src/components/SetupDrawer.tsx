@@ -104,7 +104,14 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
           </p>
 
           <SectionLabel>TÁTICA</SectionLabel>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+              gap: 10,
+              marginBottom: 24,
+            }}
+          >
             {FORMATION_OPTIONS.map((f) => {
               const on = formationName === f.name
               return (
@@ -114,7 +121,6 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
                   className="az-formbtn"
                   onClick={() => setFormationName(f.name)}
                   style={{
-                    flex: '1 1 120px',
                     background: on ? 'var(--color-d-lime)' : 'var(--color-d-surface2)',
                     border: `1px solid ${on ? 'var(--color-d-lime)' : 'var(--color-d-line)'}`,
                     color: on ? 'var(--color-d-bg)' : 'var(--color-d-ink)',
@@ -124,6 +130,7 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
                     fontSize: 22,
                     letterSpacing: '0.02em',
                     cursor: 'pointer',
+                    minWidth: 0,
                   }}
                   title={f.description}
                 >
@@ -167,6 +174,7 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
               justifyContent: 'space-between',
               marginBottom: 11,
               gap: 10,
+              flexWrap: 'wrap',
             }}
           >
             <SectionLabel inline>DIFICULDADE</SectionLabel>

@@ -14,7 +14,7 @@ import {
   fullySimulate,
   ROUND_LABEL,
   ROUND_ORDER,
-  simulateNonUserRound,
+  ensureRoundsSimulated,
   type BracketMatch,
   type KnockoutBracket,
   type KORound,
@@ -22,7 +22,15 @@ import {
 } from '../lib/bracket'
 import { rosterForKnockout } from '../lib/rosters'
 import { narrateMatch } from '../lib/narrate'
-import { loadBracket, loadStage, saveBracket, saveStage } from '../lib/persistence'
+import {
+  loadBracket,
+  loadMatchSpeed,
+  loadStage,
+  saveBracket,
+  saveMatchSpeed,
+  saveStage,
+} from '../lib/persistence'
+import { nationGradient } from '../lib/nation-colors'
 import type { MatchEvent } from '../lib/narrate'
 import type { DraftState } from '../lib/draft'
 
@@ -62,7 +70,11 @@ function GroupMatchRunner({
   const [data, setData] = useState<{ stage: GroupStage; draft: DraftState } | null>(null)
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const [speed, setSpeed] = useState<Speed>('normal')
+  const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
+  const setSpeed = (s: Speed) => {
+    saveMatchSpeed(s)
+    _setSpeed(s)
+  }
   const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
   const persistedRef = useRef(false)
 
@@ -206,9 +218,11 @@ function buildGroupOutcomeContext(
   const scorers = computeGroupScorers(stage)
   const table = standings(stage)
   const userPos = table.findIndex((s) => s.team.code === USER_TEAM_CODE) + 1
+  const oppLabel = opp?.name?.slice(0, 3).toUpperCase() ?? 'OPP'
   return {
     phase: `FASE DE GRUPOS · ${round}/3`,
-    resultLine: `SEU XI ${userGoals}–${oppGoals} ${opp?.name?.slice(0, 3).toUpperCase() ?? 'OPP'}`,
+    resultLine: `SEU XI ${userGoals}–${oppGoals} ${oppLabel}`,
+    matchResult: { userGoals, oppGoals, oppLabel },
     draft,
     stats,
     scorers,
@@ -262,7 +276,11 @@ function KnockoutMatchRunner({
   const [stage, setStage] = useState<GroupStage | null>(null)
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const [speed, setSpeed] = useState<Speed>('normal')
+  const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
+  const setSpeed = (s: Speed) => {
+    saveMatchSpeed(s)
+    _setSpeed(s)
+  }
   const [simResult, setSimResult] = useState<
     | { events: MatchEvent[]; extraTime?: { homeGoals: number; awayGoals: number }; penalties?: Penalties; winner: 'home' | 'away' }
     | null
@@ -308,7 +326,10 @@ function KnockoutMatchRunner({
       winnerCode,
       events,
     })
-    next = simulateNonUserRound(next, match.round)
+    // Avança round-a-round: o lado oposto só evolui depois da rodada do user.
+    // Se o user foi eliminado, ensureRoundsSimulated continua até o final
+    // pra ter campeão definido.
+    next = ensureRoundsSimulated(next)
     setBracket(next)
   }, [matchId, navigate])
 
@@ -434,17 +455,26 @@ function buildKnockoutOutcomeContext(
   const stats = computeFullCampaign(stage, bracket)
   const scorers = computeFullScorers(stage, bracket)
   const roundLabel = ROUND_LABEL[match.round].toUpperCase()
-  let resultLine = `SEU XI ${userGoals}–${oppGoals} ${oppTeam?.code ?? 'OPP'}`
+  const oppLabel = oppTeam?.code ?? 'OPP'
+  let resultLine = `SEU XI ${userGoals}–${oppGoals} ${oppLabel}`
+  let normalizedPenalties: OutcomeContext['matchResult']['penalties']
   if (penalties) {
-    const ph = penalties.homeScored
-    const pa = penalties.awayScored
-    const userP = userIsHome ? ph : pa
-    const oppP = userIsHome ? pa : ph
+    const userP = userIsHome ? penalties.homeScored : penalties.awayScored
+    const oppP = userIsHome ? penalties.awayScored : penalties.homeScored
     resultLine += ` (${userP}–${oppP} pen)`
+    normalizedPenalties = {
+      userScored: userP,
+      oppScored: oppP,
+      sequence: penalties.sequence.map((k) => ({
+        isUser: userIsHome ? k.team === 'home' : k.team === 'away',
+        scored: k.scored,
+      })),
+    }
   }
   return {
     phase: `${roundLabel} · COPA 2026`,
     resultLine,
+    matchResult: { userGoals, oppGoals, oppLabel, penalties: normalizedPenalties },
     draft,
     stats,
     scorers,
@@ -551,6 +581,18 @@ type OutcomeKind =
 interface OutcomeContext {
   phase: string
   resultLine: string
+  matchResult: {
+    userGoals: number
+    oppGoals: number
+    oppLabel: string
+    /** Pênaltis (knockout) já normalizados na perspectiva do user. */
+    penalties?: {
+      userScored: number
+      oppScored: number
+      /** Cobranças em ordem cronológica — true = converteu. */
+      sequence: { isUser: boolean; scored: boolean }[]
+    }
+  }
   draft: DraftState
   stats: CampaignStats
   scorers: ScorerRow[]
@@ -584,7 +626,6 @@ interface PartidaShellProps {
 }
 
 function PartidaShell(p: PartidaShellProps) {
-  const totalGoals = p.homeGoals + p.awayGoals
   const isOutcomeOpen = !!p.outcome
 
   return (
@@ -599,7 +640,6 @@ function PartidaShell(p: PartidaShellProps) {
         totalMinutes={p.totalMinutes}
         playing={p.playing}
         finished={p.finished}
-        flashKey={totalGoals}
         markers={p.goalAndRedEvents}
       />
       <Body>
@@ -685,9 +725,9 @@ function AppBar({ phaseLabel }: { phaseLabel: string }) {
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <NavPill to="/draft" label="ESCALAÇÃO" />
-        <NavPill to="/groups" label="GRUPOS" />
-        <NavPill to="/bracket" label="CHAVEAMENTO" />
+        <NavPill disabled label="ESCALAÇÃO" />
+        <NavPill disabled label="GRUPOS" />
+        <NavPill disabled label="CHAVEAMENTO" />
         <NavPill active label="PARTIDA" />
       </nav>
       <div
@@ -705,7 +745,17 @@ function AppBar({ phaseLabel }: { phaseLabel: string }) {
   )
 }
 
-function NavPill({ to, label, active }: { to?: string; label: string; active?: boolean }) {
+function NavPill({
+  to,
+  label,
+  active,
+  disabled,
+}: {
+  to?: string
+  label: string
+  active?: boolean
+  disabled?: boolean
+}) {
   const base: CSSProperties = {
     fontFamily: 'Space Mono',
     fontSize: 12,
@@ -716,6 +766,16 @@ function NavPill({ to, label, active }: { to?: string; label: string; active?: b
   if (active) {
     return (
       <span style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}>
+        {label}
+      </span>
+    )
+  }
+  if (disabled) {
+    return (
+      <span
+        title="Use o ↻ no header pra recomeçar essa etapa"
+        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.35, cursor: 'not-allowed' }}
+      >
         {label}
       </span>
     )
@@ -769,7 +829,7 @@ function dotStyle(justify?: 'end' | 'center'): CSSProperties {
 // ---------- Scoreboard ----------
 
 function ScoreboardHero({
-  home, away, homeGoals, awayGoals, clockMinute, totalMinutes, playing, finished, flashKey, markers,
+  home, away, homeGoals, awayGoals, clockMinute, totalMinutes, playing, finished, markers,
 }: {
   home: SideTeam
   away: SideTeam
@@ -779,7 +839,6 @@ function ScoreboardHero({
   totalMinutes: number
   playing: boolean
   finished: boolean
-  flashKey: number
   markers: MatchEvent[]
 }) {
   const statusLabel = computeStatusLabel(clockMinute, totalMinutes, playing, finished)
@@ -800,9 +859,9 @@ function ScoreboardHero({
         <TeamSide team={home} reverse={false} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2.5vw, 14px)', justifyContent: 'center' }}>
-            <ScoreNumber value={homeGoals} flashKey={flashKey} highlight={home.isUser} />
+            <ScoreNumber value={homeGoals} isUser={home.isUser} />
             <span style={{ fontFamily: 'Anton', fontSize: 'clamp(22px, 6vw, 34px)', color: 'var(--color-d-mut)' }}>—</span>
-            <ScoreNumber value={awayGoals} flashKey={flashKey} highlight={away.isUser} />
+            <ScoreNumber value={awayGoals} isUser={away.isUser} />
           </div>
           <div
             style={{
@@ -895,17 +954,19 @@ function computeStatusLabel(minute: number, total: number, playing: boolean, fin
   return '1º TEMPO'
 }
 
-function ScoreNumber({ value, flashKey, highlight }: { value: number; flashKey: number; highlight: boolean }) {
+function ScoreNumber({ value, isUser }: { value: number; isUser: boolean }) {
   return (
     <span
-      key={`${value}-${flashKey}`}
+      // key muda só quando esse lado marca — gol adversário não dispara flash celebrativo
+      key={value}
       style={{
         fontFamily: 'Anton',
         fontSize: 'clamp(40px, 12vw, 64px)',
         lineHeight: 0.85,
-        color: highlight ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
+        color: isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
         display: 'inline-block',
-        animation: 'd26-goal-flash .5s ease',
+        // Celebração só do nosso lado. Lado adversário muda número sem animação.
+        animation: isUser ? 'd26-goal-flash .5s ease' : 'none',
       }}
     >
       {value}
@@ -976,10 +1037,9 @@ function TeamBadge({ team }: { team: SideTeam }) {
     <div
       style={{
         ...sizeStyle,
-        background: gradientFor(team.code),
+        background: nationGradient(team.code),
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.12)',
       }}
     >
       <span
@@ -989,7 +1049,8 @@ function TeamBadge({ team }: { team: SideTeam }) {
           right: 0,
           bottom: 0,
           padding: '6px 6px 4px',
-          background: 'linear-gradient(180deg, transparent, rgba(0,0,0,0.72))',
+          background:
+            'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,1) 80%)',
           color: '#fff',
           fontFamily: 'Space Mono',
           fontWeight: 700,
@@ -1004,13 +1065,6 @@ function TeamBadge({ team }: { team: SideTeam }) {
   )
 }
 
-function gradientFor(code: string): string {
-  let h = 0
-  for (const c of code) h = (h * 31 + c.charCodeAt(0)) | 0
-  const h1 = Math.abs(h) % 360
-  const h2 = (h1 + 95) % 360
-  return `linear-gradient(135deg, hsl(${h1} 65% 42%), hsl(${h2} 70% 52%))`
-}
 
 // ---------- Body / Lances / Right Column ----------
 
@@ -1092,26 +1146,20 @@ function LancesFeed({ events, home, away }: { events: MatchEvent[]; home: SideTe
 }
 
 function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: SideTeam }) {
-  const isGoal = ev.type === 'goal'
-  const isRed = ev.type === 'red'
-  const bg = isGoal
-    ? 'rgba(212,255,61,0.07)'
-    : isRed
-      ? 'rgba(255,59,59,0.07)'
-      : 'var(--color-d-surface2)'
-  const bd = isGoal
-    ? 'rgba(212,255,61,0.3)'
-    : isRed
-      ? 'rgba(255,59,59,0.3)'
-      : 'var(--color-d-line)'
-  const dotColor = isGoal ? 'var(--color-d-lime)' : isRed ? 'var(--color-d-red)' : 'var(--color-d-mut)'
-  const minColor = isGoal ? 'var(--color-d-lime)' : isRed ? 'var(--color-d-red)' : 'var(--color-d-ink)'
+  const eventIsUser =
+    (home.isUser && ev.teamCode === home.code) || (away.isUser && ev.teamCode === away.code)
   const teamTag =
     ev.teamCode === home.code
-      ? home.isUser ? 'SEU XI' : home.code.toUpperCase()
+      ? home.isUser
+        ? 'SEU XI'
+        : home.code.toUpperCase()
       : ev.teamCode === away.code
-        ? away.isUser ? 'SEU XI' : away.code.toUpperCase()
+        ? away.isUser
+          ? 'SEU XI'
+          : away.code.toUpperCase()
         : ''
+
+  const styling = lanceStyle(ev.type, eventIsUser)
 
   return (
     <div
@@ -1120,16 +1168,25 @@ function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: Si
         gap: 13,
         padding: '11px 12px',
         borderRadius: 10,
-        background: bg,
-        border: `1px solid ${bd}`,
+        background: styling.bg,
+        border: `1px solid ${styling.bd}`,
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 40, flex: '0 0 auto' }}>
-        <span style={{ fontFamily: 'Anton', fontSize: 18, color: minColor }}>{ev.minute}'</span>
-        <span style={{ width: 9, height: 9, borderRadius: '50%', background: dotColor }} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 4,
+          width: 40,
+          flex: '0 0 auto',
+        }}
+      >
+        <span style={{ fontFamily: 'Anton', fontSize: 18, color: styling.minColor }}>{ev.minute}'</span>
+        <span style={{ fontSize: 14, lineHeight: 1 }}>{styling.emoji}</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        {(isGoal || isRed) && (
+        {styling.chip && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
             <span
               style={{
@@ -1137,24 +1194,91 @@ function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: Si
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: '0.08em',
-                color: isGoal ? 'var(--color-d-bg)' : '#fff',
-                background: isGoal ? 'var(--color-d-lime)' : 'var(--color-d-red)',
+                color: styling.chip.fg,
+                background: styling.chip.bg,
                 padding: '3px 8px',
                 borderRadius: 5,
               }}
             >
-              {isGoal ? 'GOL' : 'EXPULSÃO'}
+              {styling.chip.label}
             </span>
-            <span style={{ fontFamily: 'Space Mono', fontSize: 10, fontWeight: 700, color: 'var(--color-d-ink)' }}>
+            <span
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 10,
+                fontWeight: 700,
+                color: styling.nameColor,
+              }}
+            >
               {ev.player.toUpperCase()}
             </span>
-            <span style={{ fontFamily: 'Space Mono', fontSize: 10, color: 'var(--color-d-mut)' }}>{teamTag}</span>
+            <span style={{ fontFamily: 'Space Mono', fontSize: 10, color: 'var(--color-d-mut)' }}>
+              {teamTag}
+            </span>
           </div>
         )}
-        <div style={{ fontSize: 13, color: 'var(--color-d-ink)', lineHeight: 1.4 }}>{ev.text}</div>
+        <div style={{ fontSize: 13, color: styling.textColor, lineHeight: 1.4 }}>{ev.text}</div>
       </div>
     </div>
   )
+}
+
+interface LanceStyle {
+  bg: string
+  bd: string
+  minColor: string
+  emoji: string
+  textColor: string
+  nameColor: string
+  chip: { label: string; bg: string; fg: string } | null
+}
+
+function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
+  if (type === 'goal') {
+    if (byUser) {
+      // ⚽ gol nosso — celebração lima
+      return {
+        bg: 'rgba(212,255,61,0.07)',
+        bd: 'rgba(212,255,61,0.3)',
+        minColor: 'var(--color-d-lime)',
+        emoji: '⚽',
+        textColor: 'var(--color-d-ink)',
+        nameColor: 'var(--color-d-ink)',
+        chip: { label: 'GOL', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
+      }
+    }
+    // 💔 gol adversário — tom apagado, sem destaque lima
+    return {
+      bg: 'rgba(255,59,59,0.04)',
+      bd: 'rgba(255,59,59,0.18)',
+      minColor: 'var(--color-d-red)',
+      emoji: '💔',
+      textColor: 'var(--color-d-mut)',
+      nameColor: 'var(--color-d-mut)',
+      chip: { label: 'GOL', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+    }
+  }
+  if (type === 'red') {
+    return {
+      bg: 'rgba(255,59,59,0.07)',
+      bd: 'rgba(255,59,59,0.3)',
+      minColor: 'var(--color-d-red)',
+      emoji: '🟥',
+      textColor: 'var(--color-d-ink)',
+      nameColor: 'var(--color-d-ink)',
+      chip: { label: 'EXPULSÃO', bg: 'var(--color-d-red)', fg: '#fff' },
+    }
+  }
+  // yellow
+  return {
+    bg: 'rgba(255,138,59,0.06)',
+    bd: 'rgba(255,138,59,0.22)',
+    minColor: 'var(--color-d-warn)',
+    emoji: '🟨',
+    textColor: 'var(--color-d-ink)',
+    nameColor: 'var(--color-d-ink)',
+    chip: { label: 'AMARELO', bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' },
+  }
 }
 
 function RightColumn(props: {
@@ -1503,7 +1627,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         accent: 'var(--color-d-red)',
         bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
         showCheck: false,
-        emoji: '🥀',
+        emoji: null,
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft',
         cta2Label: 'VER CHAVEAMENTO',
@@ -1539,7 +1663,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         accent: 'var(--color-d-red)',
         bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
         showCheck: false,
-        emoji: '🥀',
+        emoji: null,
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft',
         cta2Label: 'VER CHAVEAMENTO',
@@ -1626,7 +1750,7 @@ function OutcomeDrawer({
         >
           <OutcomeBanner cfg={cfg} onClose={onClose} />
           <div style={{ padding: '22px clamp(18px, 5vw, 28px) 30px' }}>
-            <ResultChip phase={ctx.phase} result={ctx.resultLine} />
+            <MatchResultCard phase={ctx.phase} result={ctx.matchResult} />
             <TeamChosenCard draft={ctx.draft} />
             <CampaignStatsRow stats={ctx.stats} />
             {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
@@ -1731,27 +1855,179 @@ function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => vo
   )
 }
 
-function ResultChip({ phase, result }: { phase: string; result: string }) {
+function MatchResultCard({
+  phase,
+  result,
+}: {
+  phase: string
+  result: OutcomeContext['matchResult']
+}) {
+  const { userGoals, oppGoals, oppLabel, penalties } = result
+  const userWon = penalties
+    ? penalties.userScored > penalties.oppScored
+    : userGoals > oppGoals
+
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
         background: 'var(--color-d-surface2)',
         border: '1px solid var(--color-d-line)',
-        borderRadius: 11,
-        padding: '11px 14px',
+        borderRadius: 12,
+        padding: '14px 16px',
         marginBottom: 14,
       }}
     >
-      <span style={{ fontFamily: 'Space Mono', fontSize: 10, letterSpacing: '0.1em', color: 'var(--color-d-mut)' }}>
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.1em',
+          color: 'var(--color-d-mut)',
+          marginBottom: 10,
+        }}
+      >
         {phase}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          gap: 14,
+        }}
+      >
+        <div
+          style={{
+            textAlign: 'right',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-lime)',
+          }}
+        >
+          SEU XI
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 8,
+            fontFamily: 'Anton',
+            fontSize: 34,
+            lineHeight: 1,
+          }}
+        >
+          <span style={{ color: userWon ? 'var(--color-d-lime)' : 'var(--color-d-mut)' }}>
+            {userGoals}
+          </span>
+          <span style={{ fontSize: 22, color: 'var(--color-d-mut)' }}>—</span>
+          <span style={{ color: !userWon ? 'var(--color-d-ink)' : 'var(--color-d-mut)' }}>
+            {oppGoals}
+          </span>
+        </div>
+        <div
+          style={{
+            textAlign: 'left',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-ink)',
+          }}
+        >
+          {oppLabel}
+        </div>
+      </div>
+      {penalties && <PenaltyDots penalties={penalties} userWon={userWon} />}
+    </div>
+  )
+}
+
+function PenaltyDots({
+  penalties,
+  userWon,
+}: {
+  penalties: NonNullable<OutcomeContext['matchResult']['penalties']>
+  userWon: boolean
+}) {
+  const userKicks = penalties.sequence.filter((k) => k.isUser)
+  const oppKicks = penalties.sequence.filter((k) => !k.isUser)
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        paddingTop: 12,
+        borderTop: '1px solid var(--color-d-line)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.1em',
+          color: 'var(--color-d-mut)',
+          marginBottom: 8,
+        }}
+      >
+        <span>PÊNALTIS</span>
+        <span style={{ fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-ink)' }}>
+          <span style={{ color: userWon ? 'var(--color-d-lime)' : 'var(--color-d-mut)' }}>
+            {penalties.userScored}
+          </span>
+          <span style={{ color: 'var(--color-d-mut)', margin: '0 5px' }}>—</span>
+          <span style={{ color: !userWon ? 'var(--color-d-ink)' : 'var(--color-d-mut)' }}>
+            {penalties.oppScored}
+          </span>
+        </span>
+      </div>
+      <PenaltyRow label="SEU XI" kicks={userKicks} ours scoredColor="var(--color-d-lime)" />
+      <div style={{ height: 6 }} />
+      <PenaltyRow label={penalties.sequence.length ? 'OPP' : ''} kicks={oppKicks} scoredColor="var(--color-d-ink)" />
+    </div>
+  )
+}
+
+function PenaltyRow({
+  label,
+  kicks,
+  ours,
+  scoredColor,
+}: {
+  label: string
+  kicks: NonNullable<OutcomeContext['matchResult']['penalties']>['sequence']
+  ours?: boolean
+  scoredColor: string
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          color: ours ? 'var(--color-d-lime)' : 'var(--color-d-mut)',
+          width: 56,
+        }}
+      >
+        {label}
       </span>
-      <span style={{ fontFamily: 'Anton', fontSize: 18, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-        {result}
-      </span>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+        {kicks.map((k, i) => (
+          <span
+            key={i}
+            title={k.scored ? 'Convertida' : 'Perdida'}
+            style={{
+              width: 13,
+              height: 13,
+              borderRadius: '50%',
+              background: k.scored ? scoredColor : 'transparent',
+              border: `1.5px solid ${k.scored ? scoredColor : 'var(--color-d-mut)'}`,
+              opacity: k.scored ? 1 : 0.5,
+            }}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -1890,16 +2166,6 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
             <div style={{ width: 24, flexShrink: 0, fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-mut)', textAlign: 'center' }}>
               {i + 1}
             </div>
-            <div
-              style={{
-                width: 30,
-                height: 21,
-                borderRadius: 4,
-                background: gradientFor(s.name),
-                flex: '0 0 auto',
-                border: '1px solid rgba(255,255,255,0.12)',
-              }}
-            />
             <div style={{ flex: '1 1 70px', minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {s.name}
