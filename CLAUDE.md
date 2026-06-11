@@ -1,0 +1,85 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+Draft 26 — single-player simulator of the 2026 FIFA World Cup. The user drafts an XI position-by-position (each slot rolls a random country, then picks a compatible player from that country's roster), then plays group stage + knockout bracket against the other 47 nations. Inspired by 7a0.com.br / 38a0.com, scoped narrowly to Copa 2026.
+
+The repo's `README.md` and `HANDOFF.md` are the canonical product overview — read them before scoping any non-trivial change. Code comments are in pt-BR; default to pt-BR for new comments/docstrings.
+
+## Commands
+
+```bash
+pnpm dev               # vite dev server (localhost:5173)
+pnpm build             # tsc -b && vite build → dist/
+pnpm preview           # serve dist/
+pnpm lint              # tsc -b --noEmit (this is the only check — no test runner is configured)
+pnpm data:rebuild      # full data pipeline (network-bound, ~minutes)
+```
+
+Individual pipeline steps (run in order if rebuilding manually):
+`pnpm scrape:squads` → `pnpm enrich:squads` → `pnpm download:fifa` → `pnpm enrich:fifa` → `pnpm download:transfermarkt` → `pnpm enrich:transfermarkt`.
+
+There is **no test runner and no linter beyond `tsc`**. Don't claim "tests pass" — there are none. When asked to verify, run `pnpm lint` and exercise the UI in the dev server.
+
+`pnpm install` requires `allowBuilds: { esbuild: true }` in `pnpm-workspace.yaml` (already set) — CI will break without it.
+
+## Architecture
+
+### Frontend (SPA)
+
+Vite 6 + React 19 + TS + Tailwind v4. Routing via React Router 7 (`BrowserRouter`, defined in `src/main.tsx`):
+
+| Route          | Component                       | Purpose                                              |
+|----------------|---------------------------------|------------------------------------------------------|
+| `/`            | `routes/Home`                   | Landing (dark-themed, scoped via `.d26-scope`)       |
+| `/teams`       | `routes/Selecoes`               | 48-nation grid (wrapped in `AppLayout`)              |
+| `/teams/:code` | `routes/SelecaoDetalhe`         | Single squad detail                                  |
+| `/draft`       | `routes/Draft`                  | Formation/style/difficulty setup → roll-by-slot      |
+| `/groups`      | `routes/Copa`                   | 3-round group stage                                  |
+| `/match`       | `routes/Match`                  | Live match (group or knockout via `?kind=`)          |
+| `/bracket`     | `routes/MataMata`               | 32-team knockout, renders user's half + final only   |
+
+Note: README.md / HANDOFF.md still reference the old Portuguese paths (`/selecoes`, `/copa`, `/mata-mata`). The code has moved to English paths — trust `src/main.tsx`, not the docs.
+
+### Core domain (everything important is in `src/lib/`)
+
+- **`draft.ts`** — `DraftState` plus the country-cooldown sorter. `rollUntilCompatible` re-rolls automatically when the random country has no player compatible with the current slot. `COUNTRY_COOLDOWN = 5` (a rolled country can't reappear in the next 5 rolls). Pending rolls are persisted on the slot itself so closing/reopening the drawer doesn't re-randomize.
+- **`formations.ts`** — 4 formations (4-3-3, 4-2-3-1, 4-4-2, 3-4-3) with `{x, y}` coordinates per slot; `DIFFICULTY_SKIPS` = `{ easy: 5, medium: 3, hard: 1 }`.
+- **`positions.ts`** — slot↔player compatibility is **strictly 1:1 on `primaryPosition`**. `altPositions[]` is intentionally ignored (needs curation). The only fallbacks: `LWB→LB`, `RWB→RB`, `CF→ST` (because the dataset has zero players whose primary is LWB/RWB/CF).
+- **`simulate.ts`** — Poisson-weighted match engine; per-team rate = `(strength^1.5 / total) * 2.6` with `HOME_ADVANTAGE = 2` added to the home overall. `seededRng` is Mulberry32 for reproducibility.
+- **`groups.ts`** — `createGroupStage` picks a random group and substitutes the **weakest** nation with the user's XI. Tiebreakers implement FIFA 2026 Article 13 in order: head-to-head points → H2H goal-diff → H2H goals-for → overall GD → overall GF → (skipped fair play) → `averageOverall` as a FIFA-ranking proxy.
+- **`bracket.ts`** — Top-32 by `averageOverall` (user included) seeded into NCAA snake pairing (`SEED_ORDER_32`). When the bracket is set up, `simulateOtherHalfToFinal` immediately simulates the entire opposite half so the user always knows who's waiting in the final. `ensureRoundsSimulated` advances non-user matches round-by-round as the user plays. Knockout matches go full-game: ET (≈0.7 expected goals) → penalties (5 + sudden death, per-shot prob clamped 0.3–0.9 by overall).
+- **`narrate.ts`** — per-minute event stream (goals/cards), weighted by player position; consumed by `routes/Match` for the live playback.
+- **`persistence.ts`** — `localStorage` keys: `d26:draft`, `d26:stage`, `d26:bracket`, `d26:speed`. This is the source of truth for in-progress runs. The `Formation` object isn't serialized — only `formationName`, and `loadDraft` re-derives it.
+- **`features.ts`** — `?dev=1` (or localStorage `d26:dev`) enables dev affordances like autofill (`autofill.ts`).
+- **`supabase.ts` / `runs.ts`** — scaffolded but **not yet wired into the app flow**. Schema is in `supabase/migrations/0001_runs.sql` (table `runs` with RLS: owner sees all, public reads only `completed_at is not null`). Persistence still lives entirely in `localStorage`. Don't introduce Supabase writes unless explicitly asked.
+
+### Data layer
+
+The bundle inlines `data/squads-enriched.json` (~570 KB) via `src/data/squads.ts`. That JSON is committed and is the runtime source of squad/player data. Player records carry a granular `primaryPosition` (CB, LW, ST…) plus a coarse `position` bucket (GK/DEF/MID/FWD) — slot compatibility uses `primaryPosition`; narration uses the bucket.
+
+Two-source rating system: ~71% of players match EA FC 26 (`ratingSource: 'fifa'`); the rest fall back to a heuristic by club tier + caps + age (`ratingSource: 'heuristic'`, marked with ✦ in UI). Match disambiguation scores candidates by `(positional bucket, club, age)` — this fixed the bug where GK Alisson Becker was being matched to a RW namesake at Shakhtar. Don't simplify the matcher back to name-only.
+
+Raw CSVs (`eafc26-players.csv`, `transfermarkt-players.csv`) are gitignored — `pnpm data:rebuild` re-downloads them.
+
+### Styling
+
+Two coexisting design systems in `src/index.css`:
+- **Light "paper/ink" theme** (the default) — Tailwind v4 `@theme` tokens like `paper`, `ink`, `ink-soft`, `clay`, `sand`, `moss`, `rule`. Used by `/teams`, `/draft`, `/groups`, `/bracket`, `/match`.
+- **Dark "Draft 26" theme** — tokens prefixed `--color-d-*` plus `.d26-*` utility classes; scoped via the `.d26-scope` wrapper on `routes/Home`.
+
+Inline-style-driven responsive overrides for the Draft screen live as `.az-*` classes with `!important` — they exist to defeat inline styles set by the component. Don't refactor away unless you're also removing the inline styles.
+
+### Deployment
+
+Cloudflare Pages, static only. Build `pnpm build`, output `dist/`, SPA fallback in `public/_redirects`. Env vars at build time: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (the anon key is public by design — RLS protects the data, not the key).
+
+## Conventions specific to this repo
+
+- Prefer pt-BR for new comments and user-facing strings; the codebase is consistently Portuguese.
+- Treat `localStorage` as authoritative for in-flight runs. Don't shim Supabase writes into the gameplay loop without explicit ask.
+- Keep the country-cooldown / 1:1 position-match invariants intact — they're the load-bearing constraints of the draft loop.
+- `averageOverall` is the canonical strength signal across simulation, seeding, and tiebreakers. If you change how it's computed, expect ripple effects in `groups.ts`, `bracket.ts`, and `simulate.ts`.
+- The bundle is ~795 KB JS / 158 KB gzip; the obvious next optimization (code-splitting the squads JSON to `/data/squads.json` fetched async) is on the roadmap but **not done** — don't add unrelated code-splitting without checking with the user.
