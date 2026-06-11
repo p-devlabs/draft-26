@@ -168,8 +168,15 @@ function PlayerTable({ players }: { players: Player[] }) {
               </td>
               <td className="px-3 py-2 text-right tabular-nums font-medium text-ink">
                 {p.overall}
-                {p.ratingSource === 'heuristic' && (
-                  <span className="text-clay ml-0.5" title="Não encontrado no dataset EA FC 26 — overall heurístico">
+                {p.ratingSource && p.ratingSource !== 'fifa' && p.ratingSource !== 'fifa-fuzzy' && (
+                  <span
+                    className="text-clay ml-0.5"
+                    title={
+                      p.ratingSource === 'tm'
+                        ? 'Não encontrado no EA FC 26 — overall estimado por valor de mercado (Transfermarkt)'
+                        : 'Não encontrado no EA FC 26 nem no Transfermarkt — overall estimado por tier do clube'
+                    }
+                  >
                     ✦
                   </span>
                 )}
