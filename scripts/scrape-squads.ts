@@ -12,7 +12,7 @@ import { resolve } from 'node:path'
 
 const URL = 'https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_squads'
 const USER_AGENT =
-  'TorneioVerano2026Scraper/0.1 (rlpereira@inf.ufpel.edu.br) - personal use'
+  'Draft26Scraper/0.1 (rlpereira@inf.ufpel.edu.br) - personal use'
 
 type Position = 'GK' | 'DEF' | 'MID' | 'FWD'
 

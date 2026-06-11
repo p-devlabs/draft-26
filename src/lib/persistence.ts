@@ -7,9 +7,9 @@ import type { DraftState } from './draft'
 import type { GroupStage } from './groups'
 import type { KnockoutBracket } from './bracket'
 
-const KEY_DRAFT = 'tv26:draft'
-const KEY_STAGE = 'tv26:stage'
-const KEY_BRACKET = 'tv26:bracket'
+const KEY_DRAFT = 'd26:draft'
+const KEY_STAGE = 'd26:stage'
+const KEY_BRACKET = 'd26:bracket'
 
 function safeRead<T>(key: string): T | null {
   try {

@@ -1,4 +1,4 @@
-# Handoff — Torneio de Verano '26
+# Handoff — Draft 26
 
 ## O que é
 Simulador single-player da Copa do Mundo 2026. Sorteia seleções → monta XI → joga grupos → bate chaveamento. Alternativa ao 7a0.com.br / 38a0.com, focada em UX limpa (Claude design) e dados oficiais.
@@ -20,7 +20,7 @@ Fluxo coberto end-to-end:
 - **Routing**: React Router 7
 - **Package manager**: pnpm 11 (precisa `allowBuilds: { esbuild: true }` no `pnpm-workspace.yaml`)
 - **Tipografia**: Source Serif (display) + system stack
-- **Persistência**: localStorage, chaves `tv26:draft`, `tv26:stage`, `tv26:bracket`
+- **Persistência**: localStorage, chaves `d26:draft`, `d26:stage`, `d26:bracket`
 
 ## Pipeline de dados
 1. `pnpm scrape:squads` → Wikipedia "2026 FIFA World Cup squads" via cheerio → `data/squads.json`

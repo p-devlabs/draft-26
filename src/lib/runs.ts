@@ -3,7 +3,7 @@ import { averageOverall, type DraftState } from './draft'
 import type { GroupStage } from './groups'
 import type { KnockoutBracket, KORound } from './bracket'
 
-const LOCAL_RUN_ID_KEY = 'tv26:runId'
+const LOCAL_RUN_ID_KEY = 'd26:runId'
 
 export type FinishedRound = 'group' | KORound | 'CHAMPION'
 

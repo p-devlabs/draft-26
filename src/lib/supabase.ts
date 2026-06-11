@@ -13,7 +13,7 @@ export const supabase = createClient(url ?? '', anonKey ?? '', {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    storageKey: 'tv26:supabase.auth',
+    storageKey: 'd26:supabase.auth',
   },
 })
 
