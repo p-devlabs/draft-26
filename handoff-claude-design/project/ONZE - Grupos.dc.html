@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0b09}
+  a{text-decoration:none;color:inherit}
+  @keyframes onzePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,255,61,.55)}50%{box-shadow:0 0 0 8px rgba(212,255,61,0)}}
+  @keyframes liveDot{0%,100%{opacity:1}50%{opacity:.25}}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:#0a0b09}
+  ::-webkit-scrollbar-thumb{background:#2a2e26;border-radius:8px}
+</style>
+</helmet>
+<div style="--bg:#0a0b09;--surface:#141613;--surface2:#1b1e19;--line:#2a2e26;--ink:#f3f4ec;--mut:#888c80;--lime:#d4ff3d;--red:#ff3b3b;--amber:#ff8a3b;background:#0a0b09;min-height:100vh;color:#f3f4ec;font-family:'Archivo',sans-serif">
+
+  <!-- APP BAR -->
+  <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px clamp(16px,4vw,28px);border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101310,#0d0f0c);backdrop-filter:blur(8px)">
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;padding:7px">
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+        <span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:center"></span><span></span>
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:7px"><span style="font-family:'Anton';font-size:23px;letter-spacing:.02em">DRAFT</span><span style="font-family:'Space Mono';font-size:11px;color:var(--lime);font-weight:700">26</span></div>
+    </div>
+    <div style="display:flex;gap:4px;background:#0a0b09;border:1px solid var(--line);border-radius:11px;padding:5px;overflow-x:auto;max-width:100%;order:3;flex:1 1 320px;justify-content:center;-webkit-overflow-scrolling:touch">
+      <a href="ONZE%20-%20Escalacao.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">ESCALAÇÃO</a>
+      <span style="font-family:'Space Mono';font-size:12px;font-weight:700;padding:8px 13px;border-radius:8px;background:var(--lime);color:#0a0b09;white-space:nowrap">GRUPOS</span>
+      <a href="ONZE%20-%20Chaveamento.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">CHAVEAMENTO</a>
+      <a href="ONZE%20-%20Partida.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">PARTIDA</a>
+    </div>
+    <div style="font-family:'Space Mono';font-size:11px;color:var(--lime);flex-shrink:0;white-space:nowrap">FASE DE GRUPOS · JOGO 2/3</div>
+  </div>
+
+  <!-- GROUP SELECTOR -->
+  <div style="border-bottom:1px solid var(--line);background:#0c0e0b">
+    <div style="max-width:1180px;margin:0 auto;padding:11px clamp(16px,4vw,28px);display:flex;align-items:center;gap:14px">
+      <span style="font-family:'Space Mono';font-size:10px;letter-spacing:.16em;color:var(--mut);flex-shrink:0">GRUPO</span>
+      <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:1px">
+        <sc-for list="{{ groupTabs }}" as="gt" hint-placeholder-count="12">
+          <span style="font-family:'Anton';font-size:14px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0;background:{{ gt.bg }};color:{{ gt.color }};border:1px solid {{ gt.border }}">{{ gt.g }}</span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:clamp(20px,3.5vw,30px) clamp(16px,4vw,28px) 60px">
+
+    <!-- MASTHEAD -->
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:6px;height:54px;border-radius:4px;background:var(--lime)"></div>
+        <div>
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.16em;color:var(--lime);margin-bottom:5px">SEU GRUPO · COPA 2026</div>
+          <h1 style="font-family:'Anton';font-size:clamp(34px,7vw,52px);margin:0;line-height:.9;white-space:nowrap">GRUPO C</h1>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px">
+        <span style="font-family:'Space Mono';font-size:11px;font-weight:700;padding:6px 13px;border-radius:8px;background:var(--lime);color:#0a0b09;white-space:nowrap">LÍDER PARCIAL · 3 PTS</span>
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-family:'Space Mono';font-size:11px;color:var(--mut)">PROGRESSO</span>
+          <span style="font-family:'Anton';font-size:16px;color:var(--lime)">1</span><span style="font-family:'Anton';font-size:16px;color:var(--mut)">/3</span>
+          <div style="width:96px;height:7px;border-radius:6px;background:var(--surface2);overflow:hidden"><div style="width:33%;height:100%;background:var(--lime)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEXT MATCH BANNER -->
+    <div style="background:linear-gradient(120deg,#1a1e16,#141613 70%);border:1.5px solid rgba(212,255,61,.4);border-radius:16px;padding:clamp(16px,2.5vw,22px);margin-bottom:26px;box-shadow:0 18px 50px -28px rgba(212,255,61,.5)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--lime);animation:liveDot 1.3s infinite"></span>
+          <span style="font-family:'Space Mono';font-size:11px;letter-spacing:.14em;color:var(--lime);font-weight:700">SUA VEZ · RODADA 2</span>
+        </div>
+        <span style="font-family:'Space Mono';font-size:10px;color:var(--mut);letter-spacing:.1em">VENÇA PARA CARIMBAR A VAGA</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:clamp(14px,3vw,28px);flex-wrap:wrap">
+        <!-- teams -->
+        <div style="display:flex;align-items:center;gap:clamp(12px,2.5vw,22px);flex:1 1 280px;min-width:240px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:9px;flex:1">
+            <div style="width:54px;height:38px;border-radius:8px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-family:'Anton';font-size:18px;color:#0a0b09;box-shadow:0 6px 16px -6px rgba(212,255,61,.5)">XI</div>
+            <div style="font-family:'Anton';font-size:clamp(16px,2.4vw,20px);color:var(--lime);text-align:center;line-height:1">SEU XI</div>
+          </div>
+          <div style="font-family:'Anton';font-size:clamp(20px,3vw,26px);color:var(--mut)">VS</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:9px;flex:1">
+            <div style="width:54px;height:38px;border-radius:8px;background:linear-gradient(135deg,#ffffff,#e4e4e4);display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:13px;font-weight:700;color:#c81e1e;border:1px solid rgba(255,255,255,.15)">JAP</div>
+            <div style="font-family:'Anton';font-size:clamp(16px,2.4vw,20px);text-align:center;line-height:1">JAPÃO</div>
+          </div>
+        </div>
+        <!-- cta -->
+        <a href="ONZE%20-%20Partida.dc.html" style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--lime);color:#0a0b09;padding:16px 24px;border-radius:12px;font-family:'Anton';font-size:clamp(17px,2.4vw,21px);letter-spacing:.02em;cursor:pointer;flex:1 1 220px;animation:onzePulse 2.6s infinite">JOGAR PARTIDA →</a>
+      </div>
+    </div>
+
+    <!-- CLASSIFICAÇÃO -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:13px">
+      <div style="display:flex;align-items:center;gap:11px">
+        <h2 style="font-family:'Anton';font-size:22px;margin:0;letter-spacing:.01em">CLASSIFICAÇÃO</h2>
+        <span style="font-family:'Space Mono';font-size:10px;color:var(--mut);letter-spacing:.1em">APÓS RODADA 1</span>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:7px;font-family:'Space Mono';font-size:10px;color:var(--mut)"><span style="width:9px;height:9px;border-radius:3px;background:var(--lime)"></span>CLASSIFICADO</span>
+        <span style="display:flex;align-items:center;gap:7px;font-family:'Space Mono';font-size:10px;color:var(--mut)"><span style="width:9px;height:9px;border-radius:3px;background:var(--amber)"></span>MELHORES 3ºS</span>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:34px">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <div style="min-width:480px">
+          <div style="display:grid;grid-template-columns:38px minmax(120px,1fr) 46px 34px 34px 34px 34px 52px;gap:6px;padding:12px 16px;font-family:'Space Mono';font-size:10px;color:var(--mut);letter-spacing:.06em;border-bottom:1px solid var(--line)">
+            <span style="text-align:center">#</span><span>SELEÇÃO</span><span style="text-align:center;color:var(--ink)">PTS</span><span style="text-align:center">J</span><span style="text-align:center">V</span><span style="text-align:center">E</span><span style="text-align:center">D</span><span style="text-align:center">SG</span>
+          </div>
+          <sc-for list="{{ standings }}" as="t" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:38px minmax(120px,1fr) 46px 34px 34px 34px 34px 52px;gap:6px;align-items:center;padding:13px 16px;background:{{ t.rowBg }};border-bottom:1px solid var(--line)">
+              <span style="display:flex;align-items:center;justify-content:center;gap:6px"><span style="width:4px;height:22px;border-radius:3px;background:{{ t.zone }}"></span><span style="font-family:'Anton';font-size:16px;color:{{ t.numColor }}">{{ t.pos }}</span></span>
+              <span style="display:flex;align-items:center;gap:10px;min-width:0"><span style="width:30px;height:21px;border-radius:5px;background:{{ t.badgeBg }};display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:9px;font-weight:700;color:{{ t.textOn }};flex-shrink:0">{{ t.code }}</span><b style="font-size:14px;color:{{ t.nameColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</b></span>
+              <span style="font-family:'Anton';font-size:18px;color:{{ t.ptsColor }};text-align:center">{{ t.pts }}</span>
+              <span style="font-family:'Space Mono';font-size:13px;text-align:center;color:var(--mut)">{{ t.j }}</span>
+              <span style="font-family:'Space Mono';font-size:13px;text-align:center">{{ t.v }}</span>
+              <span style="font-family:'Space Mono';font-size:13px;text-align:center;color:var(--mut)">{{ t.e }}</span>
+              <span style="font-family:'Space Mono';font-size:13px;text-align:center;color:var(--mut)">{{ t.d }}</span>
+              <span style="font-family:'Space Mono';font-size:13px;text-align:center;color:{{ t.sgColor }}">{{ t.sg }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOGOS POR RODADA -->
+    <div style="display:flex;align-items:center;gap:11px;margin-bottom:15px">
+      <h2 style="font-family:'Anton';font-size:22px;margin:0;letter-spacing:.01em">JOGOS DO GRUPO</h2>
+      <span style="font-family:'Space Mono';font-size:10px;color:var(--mut);letter-spacing:.1em">3 RODADAS</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px">
+      <sc-for list="{{ rounds }}" as="r" hint-placeholder-count="3">
+        <div style="background:var(--surface);border:1px solid {{ r.cardBorder }};border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid var(--line);background:{{ r.headBg }}">
+            <span style="font-family:'Anton';font-size:15px;color:{{ r.titleColor }};white-space:nowrap">{{ r.label }}</span>
+            <span style="font-family:'Space Mono';font-size:9px;font-weight:700;letter-spacing:.08em;padding:4px 9px;border-radius:6px;background:{{ r.tagBg }};color:{{ r.tagColor }};white-space:nowrap;flex-shrink:0">{{ r.status }}</span>
+          </div>
+          <div style="padding:9px 11px;display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ r.matches }}" as="m" hint-placeholder-count="2">
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:11px 11px;border-radius:10px;background:{{ m.rowBg }};border:1px solid {{ m.rowBorder }}">
+                <div style="display:flex;align-items:center;gap:8px;min-width:0;justify-content:flex-end">
+                  <b style="font-size:12px;color:{{ m.home.nameColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">{{ m.home.code }}</b>
+                  <span style="width:26px;height:19px;border-radius:5px;background:{{ m.home.badgeBg }};display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:8px;font-weight:700;color:{{ m.home.textOn }};flex-shrink:0">{{ m.home.tag }}</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:center;min-width:54px">
+                  <span style="font-family:'Anton';font-size:18px;color:{{ m.home.scoreColor }}">{{ m.homeScore }}</span>
+                  <span style="font-family:'Anton';font-size:11px;color:var(--mut);margin:0 5px">{{ m.sep }}</span>
+                  <span style="font-family:'Anton';font-size:18px;color:{{ m.away.scoreColor }}">{{ m.awayScore }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                  <span style="width:26px;height:19px;border-radius:5px;background:{{ m.away.badgeBg }};display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:8px;font-weight:700;color:{{ m.away.textOn }};flex-shrink:0">{{ m.away.tag }}</span>
+                  <b style="font-size:12px;color:{{ m.away.nameColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.away.code }}</b>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- FOOTER NAV -->
+    <div style="margin-top:34px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;padding-top:22px;border-top:1px solid var(--line)">
+      <span style="font-family:'Space Mono';font-size:11px;color:var(--mut);max-width:340px;line-height:1.5">Conclua os 3 jogos do grupo para liberar o mata-mata.</span>
+      <a href="ONZE%20-%20Chaveamento.dc.html" style="display:flex;align-items:center;gap:9px;background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:11px;padding:13px 22px;font-family:'Space Mono';font-size:12px;font-weight:700;letter-spacing:.06em;cursor:pointer">VER MATA-MATA →</a>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    // Selecoes do grupo C (cor + codigo, sem bandeira)
+    this.T = {
+      XI:  { code:'SEU XI',  tag:'XI',  name:'SEU XI',  badgeBg:'var(--lime)', textOn:'#0a0b09', you:true },
+      ESP: { code:'ESP',     tag:'ESP', name:'ESPANHA', badgeBg:'linear-gradient(135deg,#e2483d,#f5d11e)', textOn:'#0a0b09' },
+      JAP: { code:'JAP',     tag:'JAP', name:'JAPÃO',   badgeBg:'linear-gradient(135deg,#ffffff,#e4e4e4)', textOn:'#c81e1e' },
+      GAN: { code:'GAN',     tag:'GAN', name:'GANA',    badgeBg:'linear-gradient(135deg,#ce1126,#fcd116,#006b3f)', textOn:'#0a0b09' }
+    };
+    // Classificacao apos rodada 1
+    this.STAND = [
+      { k:'XI',  pts:3, j:1, v:1, e:0, d:0, sg:3 },
+      { k:'ESP', pts:3, j:1, v:1, e:0, d:0, sg:2 },
+      { k:'JAP', pts:0, j:1, v:0, e:0, d:1, sg:-2 },
+      { k:'GAN', pts:0, j:1, v:0, e:0, d:1, sg:-3 }
+    ];
+    // Rodadas: done | live | next
+    this.ROUNDS = [
+      { label:'RODADA 1', state:'done', matches:[
+        { h:'XI', a:'GAN', hs:3, as:0, yours:true },
+        { h:'ESP', a:'JAP', hs:2, as:0 }
+      ]},
+      { label:'RODADA 2', state:'live', matches:[
+        { h:'XI', a:'JAP', yours:true, live:true },
+        { h:'GAN', a:'ESP' }
+      ]},
+      { label:'RODADA 3', state:'next', matches:[
+        { h:'XI', a:'ESP', yours:true },
+        { h:'JAP', a:'GAN' }
+      ]}
+    ];
+  }
+
+  renderVals(){
+    const groupTabs = ['A','B','C','D','E','F','G','H','I','J','K','L'].map(g=>{
+      const on = g==='C';
+      return { g, bg: on?'var(--lime)':'var(--surface2)', color: on?'#0a0b09':'var(--mut)', border: on?'var(--lime)':'var(--line)' };
+    });
+
+    const standings = this.STAND.map((s,i)=>{
+      const T = this.T[s.k];
+      const zone = i<2 ? 'var(--lime)' : (i===2 ? 'var(--amber)' : 'transparent');
+      return {
+        pos:i+1, code:T.tag, name:T.name, badgeBg:T.badgeBg, textOn:T.textOn,
+        pts:s.pts, j:s.j, v:s.v, e:s.e, d:s.d,
+        sg: (s.sg>0?'+':'')+s.sg,
+        rowBg: T.you ? 'rgba(212,255,61,.08)' : 'transparent',
+        zone,
+        numColor: T.you ? 'var(--lime)' : 'var(--ink)',
+        nameColor: T.you ? 'var(--lime)' : 'var(--ink)',
+        ptsColor: T.you ? 'var(--lime)' : 'var(--ink)',
+        sgColor: s.sg>0 ? 'var(--lime)' : (s.sg<0 ? 'var(--mut)' : 'var(--ink)')
+      };
+    });
+
+    const side = (k, score, played, winner) => {
+      const T = this.T[k];
+      return {
+        code:T.code, tag:T.tag, badgeBg:T.badgeBg, textOn:T.textOn,
+        nameColor: T.you ? 'var(--lime)' : (played ? 'var(--ink)' : 'var(--mut)'),
+        scoreColor: !played ? 'var(--mut)' : (winner ? (T.you?'var(--lime)':'var(--ink)') : 'var(--mut)')
+      };
+    };
+
+    const meta = {
+      done: { cardBorder:'var(--line)', headBg:'transparent', titleColor:'var(--ink)', tag:'ENCERRADA', tagBg:'var(--surface2)', tagColor:'var(--mut)' },
+      live: { cardBorder:'rgba(212,255,61,.4)', headBg:'rgba(212,255,61,.06)', titleColor:'var(--lime)', tag:'EM ANDAMENTO', tagBg:'var(--lime)', tagColor:'#0a0b09' },
+      next: { cardBorder:'var(--line)', headBg:'transparent', titleColor:'var(--mut)', tag:'A SEGUIR', tagBg:'transparent', tagColor:'var(--mut)' }
+    };
+
+    const rounds = this.ROUNDS.map(r=>{
+      const mt = meta[r.state];
+      return {
+        label:r.label, status:mt.tag, cardBorder:mt.cardBorder, headBg:mt.headBg,
+        titleColor:mt.titleColor, tagBg:mt.tagBg, tagColor:mt.tagColor,
+        matches: r.matches.map(m=>{
+          const played = r.state==='done';
+          const hWin = played && m.hs>m.as, aWin = played && m.as>m.hs;
+          let rowBg='var(--surface2)', rowBorder='var(--line)';
+          if(m.yours && m.live){ rowBg='rgba(212,255,61,.08)'; rowBorder='rgba(212,255,61,.35)'; }
+          else if(m.yours && played){ rowBg='rgba(212,255,61,.05)'; rowBorder='rgba(212,255,61,.22)'; }
+          else if(r.state==='next'){ rowBg='transparent'; rowBorder='var(--line)'; }
+          return {
+            home: side(m.h, m.hs, played, hWin),
+            away: side(m.a, m.as, played, aWin),
+            homeScore: played ? m.hs : '',
+            awayScore: played ? m.as : '',
+            sep: played ? '—' : 'VS',
+            rowBg, rowBorder
+          };
+        })
+      };
+    });
+
+    return { groupTabs, standings, rounds };
+  }
+}
+</script>
+</body>
+</html>

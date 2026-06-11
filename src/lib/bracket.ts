@@ -17,7 +17,7 @@ import { rosterForKnockout } from './rosters'
 export type KORound = 'R32' | 'R16' | 'QF' | 'SF' | 'F'
 
 export const ROUND_LABEL: Record<KORound, string> = {
-  R32: '16-avos',
+  R32: '32-avos',
   R16: 'Oitavas',
   QF: 'Quartas',
   SF: 'Semifinal',

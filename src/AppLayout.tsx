@@ -10,7 +10,7 @@ export function AppLayout() {
             <span className="ml-2 text-ink-soft text-sm align-baseline">26</span>
           </Link>
           <nav className="text-sm text-ink-soft flex gap-6">
-            <Link to="/selecoes" className="hover:text-ink transition-colors">Seleções</Link>
+            <Link to="/teams" className="hover:text-ink transition-colors">Seleções</Link>
             <a href="/#como-funciona" className="hover:text-ink transition-colors">Como funciona</a>
           </nav>
         </div>

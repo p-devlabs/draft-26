@@ -5,6 +5,10 @@
   --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
   --font-display: "Source Serif 4", ui-serif, Georgia, serif;
 
+  --font-anton: "Anton", ui-sans-serif, system-ui, sans-serif;
+  --font-archivo: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono-tech: "Space Mono", ui-monospace, monospace;
+
   --color-paper: oklch(98% 0.005 80);
   --color-ink: oklch(22% 0.02 50);
   --color-ink-soft: oklch(45% 0.02 50);
@@ -13,6 +17,18 @@
   --color-clay: oklch(58% 0.13 35);
   --color-clay-soft: oklch(92% 0.04 35);
   --color-moss: oklch(48% 0.08 145);
+
+  /* DRAFT 26 dark theme tokens */
+  --color-d-bg: #0a0b09;
+  --color-d-surface: #141613;
+  --color-d-surface2: #1b1e19;
+  --color-d-line: #2a2e26;
+  --color-d-ink: #f3f4ec;
+  --color-d-mut: #888c80;
+  --color-d-lime: #d4ff3d;
+  --color-d-red: #ff3b3b;
+  --color-d-warn: #ff8a3b;
+  --color-d-info: #5aa0ff;
 }
 
 @layer base {
@@ -34,3 +50,53 @@
     color: var(--color-ink);
   }
 }
+
+/* DRAFT 26 dark theme — used on the Partida route */
+@keyframes d26-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 255, 61, 0.5); }
+  50% { box-shadow: 0 0 0 7px rgba(212, 255, 61, 0); }
+}
+@keyframes d26-goal-flash {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@keyframes d26-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes d26-sheet-up {
+  from { transform: translateY(102%); }
+  to { transform: translateY(0); }
+}
+@keyframes d26-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes d26-spin {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes d26-pop-in {
+  from { opacity: 0; transform: scale(.82); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (max-width: 760px) {
+  .d26-hero-grid { grid-template-columns: 1fr !important; gap: 34px !important; }
+  .d26-hero-art { order: -1; align-items: flex-start !important; }
+  .d26-hero-dice { width: 104px !important; height: 104px !important; padding: 24px !important; }
+}
+@media (max-width: 480px) {
+  .d26-hero-stats { gap: 18px 22px !important; }
+  .d26-path-card { flex-basis: 100% !important; }
+}
+
+.d26-scope {
+  background: var(--color-d-bg);
+  color: var(--color-d-ink);
+  font-family: var(--font-archivo);
+  min-height: 100vh;
+}
+.d26-scope ::-webkit-scrollbar { width: 9px; height: 9px; }
+.d26-scope ::-webkit-scrollbar-track { background: var(--color-d-bg); }
+.d26-scope ::-webkit-scrollbar-thumb { background: var(--color-d-line); border-radius: 8px; }

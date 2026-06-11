@@ -15,15 +15,15 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
+        <Route index element={<Home />} />
         <Route element={<AppLayout />}>
-          <Route index element={<Home />} />
-          <Route path="/selecoes" element={<Selecoes />} />
-          <Route path="/selecoes/:code" element={<SelecaoDetalhe />} />
-          <Route path="/draft" element={<Draft />} />
-          <Route path="/copa" element={<Copa />} />
-          <Route path="/copa/partida" element={<Match />} />
-          <Route path="/mata-mata" element={<MataMata />} />
+          <Route path="/teams" element={<Selecoes />} />
+          <Route path="/teams/:code" element={<SelecaoDetalhe />} />
         </Route>
+        <Route path="/draft" element={<Draft />} />
+        <Route path="/groups" element={<Copa />} />
+        <Route path="/bracket" element={<MataMata />} />
+        <Route path="/match" element={<Match />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

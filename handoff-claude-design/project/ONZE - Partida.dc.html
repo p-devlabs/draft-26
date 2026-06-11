@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0b09}
+  a{text-decoration:none;color:inherit}
+  button{font-family:inherit}
+  @keyframes onzePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,255,61,.5)}50%{box-shadow:0 0 0 7px rgba(212,255,61,0)}}
+  @keyframes goalFlash{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{transform:scale(1)}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes sheetUp{from{transform:translateY(102%)}to{transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:#0a0b09}
+  ::-webkit-scrollbar-thumb{background:#2a2e26;border-radius:8px}
+</style>
+</helmet>
+<div style="--bg:#0a0b09;--surface:#141613;--surface2:#1b1e19;--line:#2a2e26;--ink:#f3f4ec;--mut:#888c80;--lime:#d4ff3d;--red:#ff3b3b;background:#0a0b09;min-height:100vh;color:#f3f4ec;font-family:'Archivo',sans-serif">
+
+  <!-- APP BAR -->
+  <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px clamp(16px,4vw,28px);border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101310,#0d0f0c);backdrop-filter:blur(8px)">
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;padding:7px">
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+        <span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:center"></span><span></span>
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:7px"><span style="font-family:'Anton';font-size:23px;letter-spacing:.02em">DRAFT</span><span style="font-family:'Space Mono';font-size:11px;color:var(--lime);font-weight:700">26</span></div>
+    </div>
+    <div style="display:flex;gap:4px;background:#0a0b09;border:1px solid var(--line);border-radius:11px;padding:5px;overflow-x:auto;max-width:100%;order:3;flex:1 1 320px;justify-content:center;-webkit-overflow-scrolling:touch">
+      <a href="ONZE%20-%20Escalacao.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">ESCALAÇÃO</a>
+      <a href="ONZE%20-%20Grupos.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">GRUPOS</a>
+      <a href="ONZE%20-%20Chaveamento.dc.html" style="font-family:'Space Mono';font-size:12px;padding:8px 13px;border-radius:8px;color:var(--mut);white-space:nowrap">CHAVEAMENTO</a>
+      <span style="font-family:'Space Mono';font-size:12px;font-weight:700;padding:8px 13px;border-radius:8px;background:var(--lime);color:#0a0b09;white-space:nowrap">PARTIDA</span>
+    </div>
+    <div style="font-family:'Space Mono';font-size:11px;color:var(--lime);flex-shrink:0;white-space:nowrap">SEMIFINAL · COPA 2026</div>
+  </div>
+
+  <!-- SCOREBOARD HERO -->
+  <div style="background:linear-gradient(180deg,#101310,#0a0b09);border-bottom:1px solid var(--line)">
+    <div style="max-width:1080px;margin:0 auto;padding:clamp(18px,3vw,26px) clamp(16px,4vw,28px) clamp(14px,2.2vw,22px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(10px,2.5vw,22px)">
+      <div style="display:flex;align-items:center;gap:clamp(9px,2vw,16px);justify-content:flex-end;min-width:0">
+        <div style="text-align:right;min-width:0">
+          <div style="font-family:'Anton';font-size:clamp(19px,4.6vw,30px);line-height:.9;color:var(--lime)">SEU XI</div>
+          <div style="font-family:'Space Mono';font-size:clamp(9px,1.6vw,10px);color:var(--mut);letter-spacing:.1em;margin-top:3px">ALL-STARS · OVR 86</div>
+        </div>
+        <div style="width:clamp(38px,9vw,46px);height:clamp(38px,9vw,46px);flex-shrink:0;border-radius:11px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:clamp(17px,4vw,22px);color:#0a0b09">⚄</div>
+      </div>
+      <div style="text-align:center">
+        <div style="display:flex;align-items:center;gap:clamp(8px,2.5vw,14px);justify-content:center">
+          <span style="font-family:'Anton';font-size:clamp(40px,12vw,64px);line-height:.85;color:var(--lime);display:inline-block;animation:goalFlash .5s ease {{ flashKey }}">{{ scoreA }}</span>
+          <span style="font-family:'Anton';font-size:clamp(22px,6vw,34px);color:var(--mut)">—</span>
+          <span style="font-family:'Anton';font-size:clamp(40px,12vw,64px);line-height:.85">{{ scoreB }}</span>
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;background:#0a0b09;border:1px solid var(--line);border-radius:8px;padding:6px clamp(9px,2vw,13px)">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1s infinite"></span>
+          <span style="font-family:'Space Mono';font-size:clamp(12px,2.4vw,13px);font-weight:700;letter-spacing:.06em">{{ clockText }}</span>
+          <span style="font-family:'Space Mono';font-size:10px;color:var(--mut);letter-spacing:.08em">{{ statusLabel }}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:clamp(9px,2vw,16px);min-width:0">
+        <div style="width:clamp(38px,9vw,46px);height:clamp(38px,9vw,46px);flex-shrink:0;border-radius:11px;background:linear-gradient(180deg,#6ea8ff,#fff,#6ea8ff);display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:11px;font-weight:700;color:#0a0b09">ARG</div>
+        <div style="min-width:0">
+          <div style="font-family:'Anton';font-size:clamp(19px,4.6vw,30px);line-height:.9">ARGENTINA</div>
+          <div style="font-family:'Space Mono';font-size:clamp(9px,1.6vw,10px);color:var(--mut);letter-spacing:.1em;margin-top:3px">SELEÇÃO · OVR 85</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:1080px;margin:0 auto;padding:0 clamp(16px,4vw,28px) 18px">
+      <div style="position:relative;height:8px;border-radius:6px;background:var(--surface2);overflow:visible">
+        <div style="position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--lime);width:{{ pct }};transition:width .15s linear"></div>
+        <sc-for list="{{ markers }}" as="m" hint-placeholder-count="7">
+          <div style="position:absolute;top:-3px;left:{{ m.left }};width:3px;height:14px;border-radius:2px;background:{{ m.color }};box-shadow:0 0 0 1.5px var(--bg)"></div>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:'Space Mono';font-size:10px;color:var(--mut);margin-top:6px"><span>0'</span><span>45'</span><span>90'</span></div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div style="max-width:1080px;margin:0 auto;padding:clamp(16px,3vw,22px) clamp(16px,4vw,28px) 48px;display:flex;flex-wrap:wrap;gap:18px;align-items:start">
+
+    <!-- LANCES FEED -->
+    <div style="flex:5 1 360px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line)">
+        <div style="font-family:'Anton';font-size:18px">LANCES</div>
+        <div style="font-family:'Space Mono';font-size:11px;color:var(--mut)">GOLS E EXPULSÕES</div>
+      </div>
+      <div style="min-height:360px;max-height:420px;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:7px">
+        <sc-if value="{{ feedEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:60px 20px;text-align:center;color:var(--mut);font-family:'Space Mono';font-size:12px;letter-spacing:.08em">A PARTIDA VAI COMEÇAR…</div>
+        </sc-if>
+        <sc-for list="{{ feed }}" as="ev" hint-placeholder-count="4">
+          <div style="display:flex;gap:13px;padding:11px 12px;border-radius:10px;background:{{ ev.bg }};border:1px solid {{ ev.bd }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:40px;flex:0 0 auto">
+              <span style="font-family:'Anton';font-size:18px;color:{{ ev.minColor }}">{{ ev.min }}'</span>
+              <span style="width:9px;height:9px;border-radius:50%;background:{{ ev.dot }}"></span>
+            </div>
+            <div style="flex:1">
+              <sc-if value="{{ ev.isGoal }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                  <span style="font-family:'Space Mono';font-size:10px;font-weight:700;letter-spacing:.08em;color:#0a0b09;background:var(--lime);padding:3px 8px;border-radius:5px">GOL</span>
+                  <span style="font-family:'Space Mono';font-size:10px;font-weight:700;color:var(--ink)">{{ ev.scorer }}</span>
+                  <span style="font-family:'Space Mono';font-size:10px;color:var(--mut)">{{ ev.teamTag }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ ev.isRed }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                  <span style="font-family:'Space Mono';font-size:10px;font-weight:700;letter-spacing:.08em;color:#fff;background:var(--red);padding:3px 8px;border-radius:5px">EXPULSÃO</span>
+                  <span style="font-family:'Space Mono';font-size:10px;font-weight:700;color:var(--ink)">{{ ev.scorer }}</span>
+                  <span style="font-family:'Space Mono';font-size:10px;color:var(--mut)">{{ ev.teamTag }}</span>
+                </div>
+              </sc-if>
+              <div style="font-size:13px;color:var(--ink);line-height:1.4">{{ ev.txt }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div style="flex:2 1 250px;min-width:0;display:flex;flex-direction:column;gap:18px">
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px">
+        <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut);margin-bottom:14px">SIMULAÇÃO</div>
+        <sc-if value="{{ notFinal }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ toggle }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--lime);color:#0a0b09;border:none;border-radius:11px;padding:15px;font-family:'Anton';font-size:19px;letter-spacing:.02em;cursor:pointer;margin-bottom:12px">{{ playLabel }}</button>
+        </sc-if>
+        <sc-if value="{{ isFinal }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ openChamp }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--lime);color:#0a0b09;border:none;border-radius:11px;padding:15px;font-family:'Anton';font-size:17px;letter-spacing:.02em;cursor:pointer;margin-bottom:9px;animation:onzePulse 2.4s infinite">🏆 VENCEU! VER DESFECHO</button>
+          <button onClick="{{ openElim }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:11px;padding:11px;font-family:'Space Mono';font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;margin-bottom:12px">PRÉVIA: TELA DE ELIMINADO</button>
+        </sc-if>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onClick="{{ restart }}" style="flex:0 0 auto;background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:11px 14px;font-weight:700;font-size:13px;cursor:pointer">↻</button>
+          <div style="flex:1;display:flex;gap:6px;background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:4px">
+            <sc-for list="{{ speeds }}" as="sp" hint-placeholder-count="3">
+              <button onClick="{{ sp.onPick }}" style="flex:1;background:{{ sp.bg }};color:{{ sp.fg }};border:none;border-radius:6px;padding:8px 0;font-family:'Space Mono';font-size:12px;font-weight:700;cursor:pointer">{{ sp.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== OUTCOME DRAWER (Eliminado / Campeão) ===== -->
+  <sc-if value="{{ outcomeOpen }}" hint-placeholder-val="{{ true }}">
+    <div onClick="{{ closeOutcome }}" style="position:fixed;inset:0;background:rgba(6,7,5,.78);backdrop-filter:blur(4px);z-index:30;animation:fadeIn .25s ease"></div>
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:31;display:flex;justify-content:center;animation:sheetUp .32s cubic-bezier(.2,.9,.3,1)">
+      <div style="width:100%;max-width:600px;max-height:92vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-bottom:none;border-radius:22px 22px 0 0;box-shadow:0 -30px 60px -20px rgba(0,0,0,.7)">
+
+        <!-- banner -->
+        <div style="padding:24px clamp(18px,5vw,28px) 20px;border-bottom:1px solid var(--line);background:{{ oBannerBg }};position:relative">
+          <div style="width:44px;height:5px;border-radius:5px;background:rgba(255,255,255,.25);margin:0 auto 18px"></div>
+          <button onClick="{{ closeOutcome }}" style="position:absolute;top:20px;right:20px;background:rgba(0,0,0,.3);border:1px solid var(--line);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer">✕</button>
+          <div style="text-align:center">
+            <div style="font-size:46px;line-height:1;margin-bottom:8px">{{ oEmoji }}</div>
+            <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.18em;color:{{ oAccent }};margin-bottom:4px">{{ oKicker }}</div>
+            <h2 style="font-family:'Anton';font-size:40px;margin:0;line-height:.92;color:{{ oTitleColor }}">{{ oTitle }}</h2>
+            <div style="font-family:'Space Mono';font-size:12px;color:var(--mut);margin-top:8px">{{ oSub }}</div>
+          </div>
+        </div>
+
+        <div style="padding:22px clamp(18px,5vw,28px) 30px">
+          <!-- team chosen -->
+          <div style="display:flex;align-items:center;gap:14px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+            <div style="width:44px;height:44px;border-radius:10px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:20px;color:#0a0b09">⚄</div>
+            <div style="flex:1">
+              <div style="font-family:'Anton';font-size:22px;line-height:.95">SEU XI</div>
+              <div style="font-family:'Space Mono';font-size:10px;color:var(--mut);letter-spacing:.08em;margin-top:2px">4-3-3 · OFENSIVO · 11 SELEÇÕES NO TIME</div>
+            </div>
+            <div style="text-align:right"><div style="font-family:'Space Mono';font-size:9px;color:var(--mut)">OVR</div><div style="font-family:'Anton';font-size:26px;color:var(--lime)">86</div></div>
+          </div>
+
+          <!-- tournament stats -->
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut);margin-bottom:12px">CAMPANHA NO TORNEIO</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px">
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:13px 8px;text-align:center"><div style="font-family:'Anton';font-size:26px;color:var(--lime)">{{ stJogos }}</div><div style="font-family:'Space Mono';font-size:9px;color:var(--mut);letter-spacing:.06em;margin-top:2px">JOGOS</div></div>
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:13px 8px;text-align:center"><div style="font-family:'Anton';font-size:26px">{{ stRec }}</div><div style="font-family:'Space Mono';font-size:9px;color:var(--mut);letter-spacing:.06em;margin-top:2px">V-E-D</div></div>
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:13px 8px;text-align:center"><div style="font-family:'Anton';font-size:26px;color:var(--lime)">{{ stGols }}</div><div style="font-family:'Space Mono';font-size:9px;color:var(--mut);letter-spacing:.06em;margin-top:2px">GOLS PRÓ</div></div>
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:13px 8px;text-align:center"><div style="font-family:'Anton';font-size:26px">{{ stSaldo }}</div><div style="font-family:'Space Mono';font-size:9px;color:var(--mut);letter-spacing:.06em;margin-top:2px">SALDO</div></div>
+          </div>
+
+          <!-- artilheiros -->
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut);margin-bottom:12px">ARTILHEIROS DA EQUIPE</div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:8px">
+            <sc-for list="{{ scorers }}" as="p" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:clamp(8px,2vw,12px)">
+                <div style="width:24px;flex-shrink:0;font-family:'Anton';font-size:16px;color:var(--mut);text-align:center">{{ p.rank }}</div>
+                <div style="width:30px;height:21px;border-radius:4px;background:{{ p.flag }};flex:0 0 auto;border:1px solid rgba(255,255,255,.12)"></div>
+                <div style="flex:1 1 70px;min-width:0"><div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</div></div>
+                <div style="flex:0 1 120px;min-width:48px;height:8px;border-radius:6px;background:var(--surface2);overflow:hidden"><div style="width:{{ p.w }};height:100%;background:var(--lime)"></div></div>
+                <div style="font-family:'Anton';font-size:20px;color:var(--lime);width:28px;flex-shrink:0;text-align:right">{{ p.goals }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- SOCIAL (champion only) -->
+          <sc-if value="{{ isChamp }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px">
+              <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut);margin-bottom:12px">COMPARTILHE A CONQUISTA</div>
+              <!-- share card preview -->
+              <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(212,255,61,.3);background:radial-gradient(120% 90% at 80% 0%,rgba(212,255,61,.16),transparent 60%),#101310;padding:20px;margin-bottom:14px;position:relative">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                  <div style="display:flex;align-items:center;gap:8px"><div style="width:24px;height:24px;border-radius:6px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:12px;color:#0a0b09">⚄</div><span style="font-family:'Anton';font-size:16px">ONZE 26</span></div>
+                  <span style="font-size:24px">🏆</span>
+                </div>
+                <div style="font-family:'Anton';font-size:30px;line-height:.95;margin-bottom:6px">SEU XI É<br><span style="color:var(--lime)">CAMPEÃO DO MUNDO</span></div>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:14px">
+                  <div style="display:flex;align-items:center;gap:7px"><span style="font-family:'Space Mono';font-size:11px;color:var(--mut)">FINAL</span><span style="font-family:'Anton';font-size:24px;color:var(--lime)">7</span><span style="font-family:'Anton';font-size:16px;color:var(--mut)">—</span><span style="font-family:'Anton';font-size:24px">0</span></div>
+                  <div style="width:1px;height:24px;background:var(--line)"></div>
+                  <div style="font-family:'Space Mono';font-size:11px;color:var(--mut)">ARTILHEIRO <b style="color:var(--ink)">ENDRICK · 9</b></div>
+                </div>
+              </div>
+              <!-- share buttons -->
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px">
+                <button style="background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:13px 0;font-family:'Space Mono';font-size:11px;font-weight:700;cursor:pointer">𝕏</button>
+                <button style="background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:13px 0;font-family:'Space Mono';font-size:11px;font-weight:700;cursor:pointer">WHATS</button>
+                <button style="background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:13px 0;font-family:'Space Mono';font-size:11px;font-weight:700;cursor:pointer">STORIES</button>
+                <button style="background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:13px 0;font-family:'Space Mono';font-size:11px;font-weight:700;cursor:pointer">COPIAR</button>
+              </div>
+              <button style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--lime);color:#0a0b09;border:none;border-radius:11px;padding:15px;font-family:'Anton';font-size:18px;letter-spacing:.02em;cursor:pointer">⬇ BAIXAR CARD DE CAMPEÃO</button>
+            </div>
+          </sc-if>
+
+          <!-- actions -->
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <a href="ONZE%20-%20Escalacao.dc.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:{{ oCtaBg }};color:{{ oCtaFg }};border:1px solid {{ oCtaBd }};border-radius:11px;padding:15px;font-family:'Anton';font-size:17px;letter-spacing:.02em;cursor:pointer">{{ oCtaLabel }}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.EVENTS = [
+      {min:8, kind:'goal', scorer:'VINÍCIUS JR.', team:'A', score:[1,0], txt:'Vini Jr. corta pro meio e finaliza no canto.'},
+      {min:19, kind:'goal', scorer:'RAPHINHA', team:'A', score:[2,0], txt:'Raphinha empurra pro fundo no contra-ataque.'},
+      {min:24, kind:'goal', scorer:'BRUNO G.', team:'A', score:[3,0], txt:'Pênalti convertido por Bruno Guimarães.'},
+      {min:42, kind:'goal', scorer:'ENDRICK', team:'A', score:[4,0], txt:'Endrick rouba e bate cruzado antes do intervalo.'},
+      {min:58, kind:'goal', scorer:'VINÍCIUS JR.', team:'A', score:[5,0], txt:'Vini Jr. de novo: dribla dois e define.'},
+      {min:63, kind:'red', scorer:'OTAMENDI', team:'B', txt:'Otamendi recebe o cartão vermelho direto.'},
+      {min:70, kind:'goal', scorer:'PAQUETÁ', team:'A', score:[6,0], txt:'Paquetá completa o cruzamento na área.'},
+      {min:84, kind:'goal', scorer:'ENDRICK', team:'A', score:[7,0], txt:'Endrick fecha em 7 a 0!'}
+    ];
+    this.SPEEDS = [{label:'1×',v:1},{label:'2×',v:2},{label:'4×',v:4}];
+    this.SCORERS = [
+      {name:'Endrick', flag:'linear-gradient(135deg,#1c9b4b,#f5d11e)', goals:9},
+      {name:'Vinícius Jr.', flag:'linear-gradient(135deg,#1c9b4b,#f5d11e)', goals:7},
+      {name:'Raphinha', flag:'linear-gradient(135deg,#1c9b4b,#f5d11e)', goals:5},
+      {name:'Bruno Guimarães', flag:'linear-gradient(135deg,#1c9b4b,#f5d11e)', goals:3},
+      {name:'Paquetá', flag:'linear-gradient(135deg,#1c9b4b,#f5d11e)', goals:2}
+    ];
+    this.state = { minute:0, playing:false, speed:2, flash:0, outcome:null };
+  }
+  componentDidMount(){ this.play(); }
+  componentWillUnmount(){ clearInterval(this._iv); }
+  tick(){
+    this.setState(s=>{
+      if(s.minute>=90){ clearInterval(this._iv); return {playing:false}; }
+      const nm = s.minute+1;
+      const justGoal = this.EVENTS.some(e=>e.min===nm && e.kind==='goal');
+      return { minute:nm, flash: justGoal ? s.flash+1 : s.flash };
+    });
+  }
+  play(){
+    if(this.state.minute>=90) return;
+    clearInterval(this._iv);
+    this._iv = setInterval(()=>this.tick(), 360/this.state.speed);
+    this.setState({playing:true});
+  }
+  pause(){ clearInterval(this._iv); this.setState({playing:false}); }
+  toggle(){ this.state.playing ? this.pause() : this.play(); }
+  restart(){ clearInterval(this._iv); this.setState({minute:0, playing:false, flash:0}, ()=>this.play()); }
+  setSpeed(v){ this.setState({speed:v}, ()=>{ if(this.state.playing) this.play(); }); }
+  openOutcome(t){ clearInterval(this._iv); this.setState({outcome:t, playing:false}); }
+  closeOutcome(){ this.setState({outcome:null}); }
+  renderVals(){
+    const m=this.state.minute;
+    const revealed = this.EVENTS.filter(e=>e.min<=m);
+    const lastGoal = [...revealed].reverse().find(e=>e.kind==='goal');
+    const scoreA = lastGoal ? lastGoal.score[0] : 0;
+    const scoreB = lastGoal ? lastGoal.score[1] : 0;
+    const dotFor=(k)=> k==='goal'?'var(--lime)': k==='red'?'#ff3b3b':'#888c80';
+    const feed = [...revealed].reverse().map(e=>({
+      min:e.min, txt:e.txt, isGoal:e.kind==='goal', isRed:e.kind==='red',
+      scorer:e.scorer||'', teamTag: e.team==='A'?'SEU XI':(e.team==='B'?'ARG':''),
+      dot:dotFor(e.kind), minColor: e.kind==='goal'?'var(--lime)':(e.kind==='red'?'#ff3b3b':'var(--ink)'),
+      bg: e.kind==='goal'?'rgba(212,255,61,.07)':(e.kind==='red'?'rgba(255,59,59,.07)':'var(--surface2)'),
+      bd: e.kind==='goal'?'rgba(212,255,61,.3)':(e.kind==='red'?'rgba(255,59,59,.3)':'var(--line)')
+    }));
+    const markers = this.EVENTS.map(e=>({ left:(e.min/90*100)+'%', color: e.kind==='red'?'#ff3b3b':'#0a0b09' })).filter((x,i)=>this.EVENTS[i].kind==='goal'||this.EVENTS[i].kind==='red');
+    const isFinal = m>=90;
+    let statusLabel='1º TEMPO';
+    if(m===0) statusLabel="APITO INICIAL";
+    else if(m>=90) statusLabel='ENCERRADO';
+    else if(m>45) statusLabel='2º TEMPO';
+    else if(m===45||m===46) statusLabel='INTERVALO';
+    const speeds = this.SPEEDS.map(sp=>({ label:sp.label, onPick:()=>this.setSpeed(sp.v),
+      bg: this.state.speed===sp.v?'var(--lime)':'transparent', fg: this.state.speed===sp.v?'#0a0b09':'var(--mut)' }));
+
+    const o = this.state.outcome;
+    const isChamp = o==='champ';
+    const isElim = o==='elim';
+    const maxG = Math.max.apply(null, this.SCORERS.map(s=>s.goals));
+    const scorers = this.SCORERS.map((s,i)=>({ rank:i+1, name:s.name, flag:s.flag, goals:s.goals, w:(s.goals/maxG*100)+'%' }));
+
+    return {
+      scoreA, scoreB,
+      clockText: isFinal ? "90'" : (m+"'"),
+      statusLabel, pct: (Math.min(m,90)/90*100)+'%', flashKey: this.state.flash,
+      markers, feed, feedEmpty: feed.length===0,
+      isFinal, notFinal:!isFinal,
+      playLabel: this.state.playing ? '❚❚ PAUSAR' : (m>0?'▶ CONTINUAR':'▶ SIMULAR'),
+      speeds,
+      toggle:()=>this.toggle(), restart:()=>this.restart(),
+      openChamp:()=>this.openOutcome('champ'), openElim:()=>this.openOutcome('elim'), closeOutcome:()=>this.closeOutcome(),
+      outcomeOpen: !!o, isChamp, isElim,
+      oEmoji: isChamp?'🏆':'🥀',
+      oKicker: isChamp?'COPA 2026 · DECISÃO':'COPA 2026 · FIM DE LINHA',
+      oTitle: isChamp?'CAMPEÃO':'ELIMINADO',
+      oTitleColor: isChamp?'#0a0b09':'var(--ink)',
+      oSub: isChamp?'Seu time levantou a taça com 7 a 0 na final.':'Seu time caiu na semifinal. Quase lá.',
+      oAccent: isChamp?'rgba(10,11,9,.7)':'var(--red)',
+      oBannerBg: isChamp?'radial-gradient(130% 100% at 50% 0%, #d4ff3d, #a9d11e)':'linear-gradient(180deg,#1a1012,#141613)',
+      stJogos: isChamp?8:7,
+      stRec: isChamp?'8-0-0':'6-0-1',
+      stGols: isChamp?31:24,
+      stSaldo: isChamp?'+26':'+19',
+      scorers,
+      oCtaLabel: isChamp?'JOGAR DE NOVO →':'TENTAR DE NOVO →',
+      oCtaBg:'var(--surface2)', oCtaFg:'var(--ink)', oCtaBd:'var(--line)'
+    };
+  }
+}
+</script>
+</body>
+</html>

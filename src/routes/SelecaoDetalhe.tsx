@@ -22,7 +22,7 @@ export function SelecaoDetalhe() {
         <p className="text-ink-soft mb-6">
           O código <code className="font-mono text-ink">{code}</code> não bate com nenhuma das 48 seleções.
         </p>
-        <Link to="/selecoes" className="text-clay hover:underline">
+        <Link to="/teams" className="text-clay hover:underline">
           ← Ver todas as seleções
         </Link>
       </div>
@@ -39,7 +39,7 @@ export function SelecaoDetalhe() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
       <div className="mb-3">
-        <Link to="/selecoes" className="text-xs text-ink-soft hover:text-ink">
+        <Link to="/teams" className="text-xs text-ink-soft hover:text-ink">
           ← Todas as seleções
         </Link>
       </div>

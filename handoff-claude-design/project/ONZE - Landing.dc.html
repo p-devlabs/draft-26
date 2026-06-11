@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0b09}
+  a{text-decoration:none}
+  @keyframes onzeSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  @keyframes onzePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,255,61,.45)}50%{box-shadow:0 0 0 9px rgba(212,255,61,0)}}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:#0a0b09}
+  ::-webkit-scrollbar-thumb{background:#2a2e26;border-radius:8px}
+  @media (max-width:760px){
+    .lp-hero-grid{grid-template-columns:1fr !important;gap:34px !important}
+    .lp-hero-art{order:-1;align-items:flex-start !important}
+    .lp-hero-art > div:first-child{width:104px !important;height:104px !important;padding:24px !important}
+  }
+  @media (max-width:480px){
+    .lp-hero-stats{gap:18px 22px !important}
+    .lp-path-card{flex-basis:100% !important}
+  }
+</style>
+</helmet>
+<div style="--bg:#0a0b09;--surface:#141613;--surface2:#1b1e19;--line:#2a2e26;--ink:#f3f4ec;--mut:#888c80;--lime:#d4ff3d;--red:#ff3b3b;background:#0a0b09;min-height:100vh;color:#f3f4ec;font-family:'Archivo',sans-serif">
+
+  <!-- ===== TOP BAR ===== -->
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px clamp(20px,5vw,56px);border-bottom:1px solid var(--line);background:rgba(10,11,9,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20">
+    <div style="display:flex;align-items:center;gap:13px">
+      <div style="width:36px;height:36px;border-radius:9px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;padding:7px;flex:0 0 auto">
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+        <span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:center"></span><span></span>
+        <span style="width:4px;height:4px;border-radius:50%;background:#0a0b09"></span><span></span><span style="width:4px;height:4px;border-radius:50%;background:#0a0b09;justify-self:end"></span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:7px"><span style="font-family:'Anton';font-size:24px;letter-spacing:.02em">DRAFT</span><span style="font-family:'Space Mono';font-size:11px;color:var(--lime);font-weight:700">26</span></div>
+    </div>
+    <a href="ONZE%20-%20Escalacao.dc.html" style="display:flex;align-items:center;gap:9px;background:var(--lime);color:#0a0b09;border-radius:10px;padding:11px 18px;font-family:'Anton';font-size:15px;letter-spacing:.02em">
+      JOGAR <span style="font-family:'Space Mono';font-size:11px;font-weight:700">→</span>
+    </a>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <div style="border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101310,#0a0b09);padding:clamp(40px,7vw,84px) clamp(20px,5vw,56px)">
+    <div class="lp-hero-grid" style="max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(32px,5vw,64px);align-items:center">
+      <div>
+        <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.2em;color:var(--lime);margin-bottom:18px">COPA 2026 · UM JOGO NO DADO</div>
+        <h1 style="font-family:'Anton';font-weight:400;font-size:clamp(40px,8.5vw,72px);line-height:.94;margin:0 0 20px">ROLE O DADO.<br>FAÇA O DRAFT.<br><span style="color:var(--lime)">CONQUISTE O MUNDO.</span></h1>
+        <p style="max-width:480px;font-size:17px;line-height:1.6;color:var(--mut);margin:0 0 30px">Sorteie seu time no dado entre os 26 convocados de cada uma das 48 seleções, atravesse a fase de grupos e o mata-mata — e seja <span style="color:var(--ink);font-weight:700">campeão do mundo</span>.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <a href="ONZE%20-%20Escalacao.dc.html" style="display:flex;align-items:center;gap:11px;background:var(--lime);color:#0a0b09;border-radius:12px;padding:16px 26px;font-family:'Anton';font-size:19px;letter-spacing:.02em;animation:onzePulse 2.6s ease-out infinite">
+            <span style="display:inline-grid;grid-template-columns:1fr 1fr 1fr;gap:2px;width:17px;height:17px"><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09;justify-self:end"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09;justify-self:center"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09;justify-self:end"></i></span>
+            COMEÇAR A ESCALAR
+          </a>
+          <a href="#como" style="display:flex;align-items:center;gap:8px;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:15px 22px;font-weight:700;font-size:14px">Como funciona</a>
+        </div>
+        <div class="lp-hero-stats" style="display:flex;gap:26px;margin-top:34px;flex-wrap:wrap">
+          <div><div style="font-family:'Anton';font-size:30px;color:var(--lime);line-height:1">48</div><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.12em;color:var(--mut);margin-top:3px">SELEÇÕES</div></div>
+          <div><div style="font-family:'Anton';font-size:30px;line-height:1">26</div><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.12em;color:var(--mut);margin-top:3px">CONVOCADOS/SEL.</div></div>
+          <div><div style="font-family:'Anton';font-size:30px;line-height:1">11</div><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.12em;color:var(--mut);margin-top:3px">NO DADO</div></div>
+          <div><div style="font-family:'Anton';font-size:30px;color:var(--lime);line-height:1">1</div><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.12em;color:var(--mut);margin-top:3px">TAÇA · O OBJETIVO</div></div>
+        </div>
+      </div>
+
+      <!-- hero art: dado -->
+      <div class="lp-hero-art" style="display:flex;flex-direction:column;align-items:center;gap:20px">
+        <div style="width:128px;height:128px;border-radius:26px;background:var(--lime);display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:30px;animation:onzeSpin 3.4s linear infinite;box-shadow:0 0 60px -6px rgba(212,255,61,.5)">
+          <span style="width:14px;height:14px;border-radius:50%;background:#0a0b09"></span><span style="width:14px;height:14px;border-radius:50%;background:#0a0b09"></span>
+          <span style="width:14px;height:14px;border-radius:50%;background:#0a0b09"></span><span style="width:14px;height:14px;border-radius:50%;background:#0a0b09"></span>
+        </div>
+        <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.14em;color:var(--mut);text-align:center">O DADO ESCALA<br><span style="color:var(--lime)">VOCÊ COMANDA</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:0 clamp(20px,5vw,56px)">
+
+    <!-- ===== COMO FUNCIONA ===== -->
+    <section id="como" style="padding:clamp(48px,7vw,80px) 0;border-bottom:1px solid var(--line)">
+      <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.18em;color:var(--lime);margin-bottom:8px">COMO FUNCIONA</div>
+      <h2 style="font-family:'Anton';font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1;margin:0 0 8px">Quatro passos até a glória</h2>
+      <p style="color:var(--mut);font-size:15px;margin:0 0 38px;max-width:520px">Nada de escolher seu time a dedo. Aqui é o dado que manda — e você joga com o que ele te der.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><span style="font-family:'Anton';font-size:34px;color:var(--lime)">01</span><span style="width:40px;height:40px;border-radius:10px;background:var(--surface2);border:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;padding:9px"><i style="width:4px;height:4px;border-radius:50%;background:var(--lime)"></i><i></i><i style="width:4px;height:4px;border-radius:50%;background:var(--lime);justify-self:end"></i><i></i><i style="width:4px;height:4px;border-radius:50%;background:var(--lime);justify-self:center"></i><i></i><i style="width:4px;height:4px;border-radius:50%;background:var(--lime)"></i><i></i><i style="width:4px;height:4px;border-radius:50%;background:var(--lime);justify-self:end"></i></span></div>
+          <div style="font-weight:800;font-size:18px;margin-bottom:7px">Sorteie o XI</div>
+          <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0">Cada posição rola o dado: ele sorteia uma seleção e escala um convocado dela pra aquela vaga. Onze rolagens, onze craques.</p>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><span style="font-family:'Anton';font-size:34px;color:var(--lime)">02</span><span style="width:40px;height:40px;border-radius:10px;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:11px;font-weight:700;color:var(--mut)">12G</span></div>
+          <div style="font-weight:800;font-size:18px;margin-bottom:7px">Fase de grupos</div>
+          <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0">Seu time entra em um dos 12 grupos. Jogue os 3 jogos e brigue por uma vaga: top 2 de cada grupo, mais os 8 melhores terceiros.</p>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><span style="font-family:'Anton';font-size:34px;color:var(--lime)">03</span><span style="width:40px;height:40px;border-radius:10px;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:11px;font-weight:700;color:var(--mut)">×5</span></div>
+          <div style="font-weight:800;font-size:18px;margin-bottom:7px">Mata-mata</div>
+          <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0">32 classificados, 5 fases sem volta: 32-avos, oitavas, quartas, semis e final. Uma derrota e acabou.</p>
+        </div>
+        <div style="background:linear-gradient(160deg,rgba(212,255,61,.12),rgba(212,255,61,.02));border:1px solid rgba(212,255,61,.35);border-radius:16px;padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><span style="font-family:'Anton';font-size:34px;color:var(--lime)">04</span><span style="font-family:'Anton';font-size:26px;color:var(--lime)">★</span></div>
+          <div style="font-weight:800;font-size:18px;margin-bottom:7px">Conquiste o mundo</div>
+          <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0">Vença as cinco fases do mata-mata, ganhe a final e erga o caneco. O time que o dado te deu, campeão do mundo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== REGRAS DO DADO ===== -->
+    <section style="padding:clamp(48px,7vw,80px) 0;border-bottom:1px solid var(--line)">
+      <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.18em;color:var(--lime);margin-bottom:8px">AS REGRAS DO DADO</div>
+      <h2 style="font-family:'Anton';font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1;margin:0 0 8px">O acaso com método</h2>
+      <p style="color:var(--mut);font-size:15px;margin:0 0 38px;max-width:520px">Três regras impedem que você caia sempre na mesma seleção — e a dificuldade decide quanto controle você tem.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:16px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px">
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--lime);margin-bottom:12px">01 · TRAVA</div>
+          <div style="font-weight:800;font-size:17px;margin-bottom:6px">Posição preenchida não muda</div>
+          <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0">Sorteou e escalou? Aquela vaga está travada. Sem voltar atrás.</p>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px">
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--lime);margin-bottom:12px">02 · COOLDOWN</div>
+          <div style="font-weight:800;font-size:17px;margin-bottom:6px">Seleção descansa 5 rolagens</div>
+          <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0">Uma seleção já sorteada fica de fora dos próximos 5 sorteios. Times variados garantidos.</p>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px">
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--lime);margin-bottom:12px">03 · SKIP</div>
+          <div style="font-weight:800;font-size:17px;margin-bottom:6px">Não gostou? Re-sorteie</div>
+          <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0">Pular gasta 1 pulo e re-sorteia a seleção — que entra no cooldown. Os pulos são limitados.</p>
+        </div>
+      </div>
+
+      <!-- dificuldade -->
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <div style="flex:1 1 200px">
+          <div style="font-family:'Space Mono';font-size:11px;letter-spacing:.12em;color:var(--mut);margin-bottom:6px">PULOS POR DIFICULDADE</div>
+          <div style="color:var(--mut);font-size:14px;line-height:1.5">Quanto mais difícil, menos vezes você pode recusar o que o dado mandou.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="text-align:center;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:12px 18px;min-width:88px"><div style="font-family:'Anton';font-size:30px;color:var(--lime)">5</div><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.1em;color:var(--mut);margin-top:2px">FÁCIL</div></div>
+          <div style="text-align:center;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:12px 18px;min-width:88px"><div style="font-family:'Anton';font-size:30px">3</div><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.1em;color:var(--mut);margin-top:2px">MÉDIO</div></div>
+          <div style="text-align:center;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:12px 18px;min-width:88px"><div style="font-family:'Anton';font-size:30px;color:var(--red)">1</div><div style="font-family:'Space Mono';font-size:10px;letter-spacing:.1em;color:var(--mut);margin-top:2px">DIFÍCIL</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== O CAMINHO ===== -->
+    <section style="padding:clamp(48px,7vw,80px) 0;border-bottom:1px solid var(--line)">
+      <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.18em;color:var(--lime);margin-bottom:8px">O CAMINHO</div>
+      <h2 style="font-family:'Anton';font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1;margin:0 0 38px">Da escalação à goleada</h2>
+      <div style="display:flex;align-items:stretch;gap:10px;flex-wrap:wrap">
+        <a href="ONZE%20-%20Escalacao.dc.html" style="flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--ink);display:flex;flex-direction:column;gap:6px" style-hover="border-color:var(--lime)"><span style="font-family:'Space Mono';font-size:11px;color:var(--lime)">01</span><span style="font-family:'Anton';font-size:19px">ESCALAÇÃO</span><span style="font-size:12px;color:var(--mut)">Monte o XI no dado</span></a>
+        <a href="ONZE%20-%20Grupos.dc.html" style="flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--ink);display:flex;flex-direction:column;gap:6px"><span style="font-family:'Space Mono';font-size:11px;color:var(--lime)">02</span><span style="font-family:'Anton';font-size:19px">GRUPOS</span><span style="font-size:12px;color:var(--mut)">Jogue os 3 jogos</span></a>
+        <a href="ONZE%20-%20Chaveamento.dc.html" style="flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--ink);display:flex;flex-direction:column;gap:6px"><span style="font-family:'Space Mono';font-size:11px;color:var(--lime)">03</span><span style="font-family:'Anton';font-size:19px">CHAVEAMENTO</span><span style="font-size:12px;color:var(--mut)">5 fases de mata-mata</span></a>
+        <a href="ONZE%20-%20Partida.dc.html" style="flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--ink);display:flex;flex-direction:column;gap:6px"><span style="font-family:'Space Mono';font-size:11px;color:var(--lime)">04</span><span style="font-family:'Anton';font-size:19px">PARTIDA</span><span style="font-size:12px;color:var(--mut)">Simule e faça 7 a 0</span></a>
+      </div>
+    </section>
+
+    <!-- ===== 48 SELEÇÕES ===== -->
+    <section style="padding:clamp(48px,7vw,80px) 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px">
+        <div>
+          <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.18em;color:var(--lime);margin-bottom:8px">48 SELEÇÕES</div>
+          <h2 style="font-family:'Anton';font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1;margin:0">Cor e código, sem bandeira</h2>
+        </div>
+        <p style="color:var(--mut);font-size:14px;line-height:1.55;margin:0;max-width:340px">Cada seleção é um par de cores e um código de três letras. Limpo, rápido de ler e funciona pras 48.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        <div style="width:64px;height:44px;border-radius:8px;background:linear-gradient(135deg,#1c9b4b 50%,#f5d11e 50%);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">BRA</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:linear-gradient(180deg,#6ea8ff 33%,#fff 33%,#fff 66%,#6ea8ff 66%);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">ARG</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:linear-gradient(90deg,#1b3a8f 33%,#fff 33%,#fff 66%,#e2483d 66%);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">FRA</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:#e2483d;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">ESP</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:linear-gradient(180deg,#111 50%,#e2483d 50%);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">GER</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:linear-gradient(90deg,#0a7d3a 33%,#fff 33%,#fff 66%,#0a7d3a 66%);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">POR</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:linear-gradient(180deg,#e2483d 50%,#fff 50%);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">ENG</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:#5aa0ff;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)"><span style="position:absolute;left:0;right:0;bottom:0;padding:8px 7px 4px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));font-family:'Space Mono';font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)">URU</span></div>
+        <div style="width:64px;height:44px;border-radius:8px;background:var(--surface2);border:1px dashed var(--line);position:relative;display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:12px;font-weight:700;color:var(--mut)">+40</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===== CTA FINAL ===== -->
+  <div style="padding:clamp(56px,9vw,110px) clamp(20px,5vw,56px);text-align:center;background:linear-gradient(180deg,#0a0b09,#101310)">
+    <div style="max-width:680px;margin:0 auto">
+      <div style="font-family:'Space Mono';font-size:12px;letter-spacing:.2em;color:var(--lime);margin-bottom:16px">SEU DADO ESTÁ ESPERANDO</div>
+      <h2 style="font-family:'Anton';font-weight:400;font-size:clamp(36px,8vw,64px);line-height:.96;margin:0 0 26px">PRONTO PRA<br><span style="color:var(--lime)">CONQUISTAR O MUNDO?</span></h2>
+      <a href="ONZE%20-%20Escalacao.dc.html" style="display:inline-flex;align-items:center;gap:12px;background:var(--lime);color:#0a0b09;border-radius:13px;padding:18px 34px;font-family:'Anton';font-size:22px;letter-spacing:.02em;animation:onzePulse 2.6s ease-out infinite">
+        <span style="display:inline-grid;grid-template-columns:1fr 1fr 1fr;gap:2px;width:19px;height:19px"><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09;justify-self:end"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09;justify-self:center"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09"></i><i></i><i style="width:3px;height:3px;border-radius:50%;background:#0a0b09;justify-self:end"></i></span>
+        JOGAR AGORA
+      </a>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div style="border-top:1px solid var(--line);padding:24px clamp(20px,5vw,56px);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;align-items:baseline;gap:7px"><span style="font-family:'Anton';font-size:18px">DRAFT</span><span style="font-family:'Space Mono';font-size:10px;color:var(--lime);font-weight:700">26</span></div>
+    <div style="font-family:'Space Mono';font-size:11px;color:var(--mut);letter-spacing:.08em">JOGO NO DADO · COPA 2026 · 48 SELEÇÕES</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,29 +1,28 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { MatchCard } from '../components/MatchCard'
-import { StandingsTable } from '../components/StandingsTable'
-import { EliminationDrawer } from '../components/EliminationDrawer'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { features } from '../lib/features'
 import {
   createGroupStage,
   findTeam,
   nextRound,
-  parallelMatches,
   standings,
-  userMatches,
   USER_TEAM_CODE,
+  type GroupMatch,
   type GroupStage,
+  type GroupTeam,
+  type Standing,
 } from '../lib/groups'
 import { autoFillXI } from '../lib/autofill'
 import { createDraft, isComplete, type DraftState } from '../lib/draft'
 import { loadDraft, saveStage, loadStage, clearStage } from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
 
+const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
+
 export function Copa() {
   const navigate = useNavigate()
   const [stage, setStage] = useState<GroupStage | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
-  const [showElim, setShowElim] = useState(false)
 
   useEffect(() => {
     const persisted = loadStage()
@@ -32,7 +31,6 @@ export function Copa() {
       setDraft(persisted.draft)
       return
     }
-
     const fromDraft = loadDraft()
     if (fromDraft && isComplete(fromDraft)) {
       const newStage = createGroupStage(fromDraft)
@@ -42,8 +40,6 @@ export function Copa() {
       void createRun({ draft: fromDraft, stage: newStage })
       return
     }
-
-    // demo mode: gera um XI automaticamente
     const isDemo =
       new URLSearchParams(window.location.search).get('demo') === '1' || features.dev
     if (isDemo) {
@@ -55,11 +51,9 @@ export function Copa() {
       void createRun({ draft: demoDraft, stage: newStage })
       return
     }
-
     navigate('/draft', { replace: true })
   }, [navigate])
 
-  // Mirror do stage no Supabase a cada mudança (fire-and-forget; localStorage é fonte primária)
   useEffect(() => {
     if (!stage) return
     const finishedNow = nextRound(stage) == null
@@ -78,20 +72,45 @@ export function Copa() {
 
   if (!stage || !draft) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-20 text-center text-ink-soft">
-        Carregando fase de grupos…
+      <div className="d26-scope" style={{ minHeight: '100vh' }}>
+        <AppBar phaseLabel="" onReset={undefined} />
+        <div
+          style={{
+            padding: 60,
+            textAlign: 'center',
+            color: 'var(--color-d-mut)',
+            fontFamily: 'Space Mono',
+            fontSize: 12,
+            letterSpacing: '0.12em',
+          }}
+        >
+          CARREGANDO FASE DE GRUPOS…
+        </div>
       </div>
     )
   }
 
   const round = nextRound(stage)
   const finished = round == null
-  const userM = userMatches(stage)
-  const otherM = parallelMatches(stage)
+  const sortedStandings = standings(stage)
+  const userPos = sortedStandings.findIndex((s) => s.team.isUser) + 1
+  const userStanding = sortedStandings.find((s) => s.team.isUser) ?? null
+  const playedRoundsCount = roundsPlayed(stage)
+  const phaseLabel = finished
+    ? 'FASE DE GRUPOS · ENCERRADA'
+    : `FASE DE GRUPOS · JOGO ${playedRoundsCount + 1}/3`
 
-  const handlePlay = (matchRound: 1 | 2 | 3) => {
+  const userMatchInRound = round
+    ? stage.matches.find(
+        (m) =>
+          m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
+      ) ?? null
+    : null
+
+  const handlePlay = () => {
+    if (!round) return
     saveStage(draft, stage)
-    navigate(`/copa/partida?round=${matchRound}`)
+    navigate(`/match?round=${round}`)
   }
 
   const handleReset = () => {
@@ -101,133 +120,1192 @@ export function Copa() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <header className="mb-8">
-        <p className="text-sm uppercase tracking-[0.18em] text-clay mb-2">
-          Fase de grupos · Grupo {stage.letter}
-        </p>
-        <h1 className="font-display text-3xl md:text-4xl tracking-tight text-ink mb-2">
-          Seu XI substituiu {stage.replacedTeam.flag} {stage.replacedTeam.name}
-        </h1>
-        <p className="text-ink-soft text-sm">
-          Três jogos pra decidir se você avança. Top 2 vão pro mata-mata.
-        </p>
-      </header>
-
-      <section className="mb-10">
-        <h2 className="font-display text-xl text-ink mb-3">Classificação</h2>
-        <StandingsTable standings={standings(stage)} />
-        <p className="text-[11px] text-ink-soft mt-2">
-          <span className="text-moss font-bold">1, 2</span> avançam · 3º vai pra fase de play-in (não implementada)
-        </p>
-      </section>
-
-      <div className="grid md:grid-cols-2 gap-10">
-        <section>
-          <h2 className="font-display text-xl text-ink mb-3">Seus jogos</h2>
-          <div className="space-y-3">
-            {userM.map((m) => {
-              const home = findTeam(stage, m.homeCode)!
-              const away = findTeam(stage, m.awayCode)!
-              const isPlayed = m.result != null
-              const isCurrent = !isPlayed && m.round === round
-              const isFuture = !isPlayed && !isCurrent
-              return (
-                <MatchCard
-                  key={`${m.round}-${m.homeCode}-${m.awayCode}`}
-                  match={m}
-                  home={home}
-                  away={away}
-                  highlight={
-                    home.code === USER_TEAM_CODE || away.code === USER_TEAM_CODE
-                  }
-                  isCurrent={isCurrent}
-                  isFuture={isFuture}
-                  onPlay={isCurrent ? () => handlePlay(m.round) : undefined}
-                />
-              )
-            })}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="font-display text-xl text-ink mb-3">Outros jogos do grupo</h2>
-          <div className="space-y-3">
-            {otherM.map((m) => {
-              const home = findTeam(stage, m.homeCode)!
-              const away = findTeam(stage, m.awayCode)!
-              const isPlayed = m.result != null
-              const isFuture = !isPlayed && m.round !== round
-              return (
-                <MatchCard
-                  key={`${m.round}-${m.homeCode}-${m.awayCode}`}
-                  match={m}
-                  home={home}
-                  away={away}
-                  isFuture={isFuture}
-                />
-              )
-            })}
-          </div>
-        </section>
+    <div className="d26-scope" style={{ position: 'relative', overflowX: 'hidden' }}>
+      <AppBar phaseLabel={phaseLabel} onReset={handleReset} />
+      <GroupSelector userLetter={stage.letter} />
+      <div
+        style={{
+          maxWidth: 1180,
+          margin: '0 auto',
+          padding: 'clamp(20px, 3.5vw, 30px) clamp(16px, 4vw, 28px) 60px',
+        }}
+      >
+        <Masthead
+          letter={stage.letter}
+          userStanding={userStanding}
+          userPos={userPos}
+          playedRounds={playedRoundsCount}
+          finished={finished}
+        />
+        {userMatchInRound && !userMatchInRound.result && (
+          <NextMatchBanner
+            stage={stage}
+            match={userMatchInRound}
+            round={round!}
+            onPlay={handlePlay}
+          />
+        )}
+        <StandingsSection standings={sortedStandings} round={round} finished={finished} />
+        <RoundsGrid stage={stage} currentRound={round} />
+        <FooterNav finished={finished} userPos={userPos} />
       </div>
+    </div>
+  )
+}
 
-      {finished && (() => {
-        const sorted = standings(stage)
-        const userPos = sorted.findIndex((s) => s.team.isUser) + 1
-        const qualified = userPos > 0 && userPos <= 2
-        return (
-          <div className="mt-10 border-t border-rule pt-8 text-center">
-            <p className="text-sm uppercase tracking-[0.18em] text-clay mb-2">
-              {qualified ? 'Classificado' : 'Eliminado'}
-            </p>
-            <h3 className="font-display text-3xl text-ink mb-2">
-              {userPos === 1
-                ? 'Primeiro lugar no grupo 🏆'
-                : userPos === 2
-                  ? 'Segundo lugar — vai pro mata-mata'
-                  : `${userPos}º lugar — parou na fase de grupos`}
-            </h3>
-            <p className="text-sm text-ink-soft mb-6 max-w-md mx-auto">
-              {qualified
-                ? 'Próximo passo: 16 avos. O mata-mata é eliminação direta.'
-                : 'Olhe o que aconteceu nos três jogos e prepare-se pro próximo draft.'}
-            </p>
-            <div className="flex gap-3 justify-center flex-wrap">
-              {qualified ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/mata-mata')}
-                  className="h-12 px-8 rounded-md bg-ink text-paper text-sm font-medium hover:bg-clay transition-colors"
-                >
-                  Avançar pro mata-mata →
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowElim(true)}
-                  className="h-12 px-8 rounded-md bg-ink text-paper text-sm font-medium hover:bg-clay transition-colors"
-                >
-                  Ver desempenho
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={handleReset}
-                className="h-12 px-6 rounded-md border border-rule text-ink text-sm hover:bg-sand transition-colors"
+function roundsPlayed(stage: GroupStage): number {
+  let played = 0
+  for (const r of [1, 2, 3] as const) {
+    const matchesOfRound = stage.matches.filter((m) => m.round === r)
+    if (matchesOfRound.every((m) => m.result)) played++
+  }
+  return played
+}
+
+// ============================================================
+// App bar
+// ============================================================
+
+function AppBar({ phaseLabel, onReset }: { phaseLabel: string; onReset?: () => void }) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 30,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+        padding: '12px clamp(16px, 4vw, 28px)',
+        borderBottom: '1px solid var(--color-d-line)',
+        background: 'linear-gradient(180deg, #101310, #0d0f0c)',
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <DiceMark />
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+          <span style={{ fontFamily: 'Anton', fontSize: 23, letterSpacing: '0.02em' }}>DRAFT</span>
+          <span
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 11,
+              color: 'var(--color-d-lime)',
+              fontWeight: 700,
+            }}
+          >
+            26
+          </span>
+        </div>
+      </Link>
+      <nav
+        style={{
+          display: 'flex',
+          gap: 4,
+          background: 'var(--color-d-bg)',
+          border: '1px solid var(--color-d-line)',
+          borderRadius: 11,
+          padding: 5,
+          overflowX: 'auto',
+          maxWidth: '100%',
+          order: 3,
+          flex: '1 1 320px',
+          justifyContent: 'center',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        <NavPill to="/draft" label="ESCALAÇÃO" />
+        <NavPill active label="GRUPOS" />
+        <NavPill to="/bracket" label="CHAVEAMENTO" />
+        <NavPill to="/match" label="PARTIDA" />
+      </nav>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-lime)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {phaseLabel}
+        </div>
+        {onReset && (
+          <button
+            type="button"
+            onClick={onReset}
+            title="Recomeçar"
+            style={{
+              background: 'var(--color-d-surface2)',
+              border: '1px solid var(--color-d-line)',
+              color: 'var(--color-d-mut)',
+              borderRadius: 8,
+              width: 30,
+              height: 30,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            ↻
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function NavPill({ to, label, active }: { to?: string; label: string; active?: boolean }) {
+  const base: CSSProperties = {
+    fontFamily: 'Space Mono',
+    fontSize: 12,
+    padding: '8px 13px',
+    borderRadius: 8,
+    whiteSpace: 'nowrap',
+  }
+  if (active) {
+    return (
+      <span
+        style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}
+      >
+        {label}
+      </span>
+    )
+  }
+  return (
+    <Link to={to ?? '#'} style={{ ...base, color: 'var(--color-d-mut)' }}>
+      {label}
+    </Link>
+  )
+}
+
+function DiceMark() {
+  const dot = (justify?: 'end' | 'center'): CSSProperties => {
+    const s: CSSProperties = { width: 4, height: 4, borderRadius: '50%', background: 'var(--color-d-bg)' }
+    if (justify === 'end') s.justifySelf = 'end'
+    if (justify === 'center') s.justifySelf = 'center'
+    return s
+  }
+  return (
+    <div
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        background: 'var(--color-d-lime)',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 3,
+        padding: 7,
+      }}
+    >
+      <span style={dot()} />
+      <span />
+      <span style={dot('end')} />
+      <span />
+      <span style={dot('center')} />
+      <span />
+      <span style={dot()} />
+      <span />
+      <span style={dot('end')} />
+    </div>
+  )
+}
+
+// ============================================================
+// Group selector
+// ============================================================
+
+function GroupSelector({ userLetter }: { userLetter: string }) {
+  return (
+    <div style={{ borderBottom: '1px solid var(--color-d-line)', background: '#0c0e0b' }}>
+      <div
+        style={{
+          maxWidth: 1180,
+          margin: '0 auto',
+          padding: '11px clamp(16px, 4vw, 28px)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            color: 'var(--color-d-mut)',
+            flexShrink: 0,
+          }}
+        >
+          GRUPO
+        </span>
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: 1,
+          }}
+        >
+          {GROUP_LETTERS.map((g) => {
+            const on = g === userLetter
+            return (
+              <span
+                key={g}
+                title={on ? 'Seu grupo' : 'Grupo sem dados ainda'}
+                style={{
+                  fontFamily: 'Anton',
+                  fontSize: 14,
+                  width: 30,
+                  height: 30,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 8,
+                  flexShrink: 0,
+                  background: on ? 'var(--color-d-lime)' : 'var(--color-d-surface2)',
+                  color: on ? 'var(--color-d-bg)' : 'var(--color-d-mut)',
+                  border: `1px solid ${on ? 'var(--color-d-lime)' : 'var(--color-d-line)'}`,
+                  cursor: 'default',
+                  opacity: on ? 1 : 0.6,
+                }}
               >
-                Novo draft
-              </button>
-            </div>
-            <EliminationDrawer
-              open={showElim}
-              onClose={() => setShowElim(false)}
-              draft={draft}
-              stage={stage}
+                {g}
+              </span>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Masthead
+// ============================================================
+
+function Masthead({
+  letter,
+  userStanding,
+  userPos,
+  playedRounds,
+  finished,
+}: {
+  letter: string
+  userStanding: Standing | null
+  userPos: number
+  playedRounds: number
+  finished: boolean
+}) {
+  const status = computeStatusPill(userStanding, userPos, finished)
+  const pct = (playedRounds / 3) * 100
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 14,
+        marginBottom: 22,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 6, height: 54, borderRadius: 4, background: 'var(--color-d-lime)' }} />
+        <div>
+          <div
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 11,
+              letterSpacing: '0.16em',
+              color: 'var(--color-d-lime)',
+              marginBottom: 5,
+            }}
+          >
+            SEU GRUPO · COPA 2026
+          </div>
+          <h1
+            style={{
+              fontFamily: 'Anton',
+              fontSize: 'clamp(34px, 7vw, 52px)',
+              margin: 0,
+              lineHeight: 0.9,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            GRUPO {letter}
+          </h1>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9 }}>
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            fontWeight: 700,
+            padding: '6px 13px',
+            borderRadius: 8,
+            background: status.bg,
+            color: status.fg,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {status.label}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-mut)' }}>
+            PROGRESSO
+          </span>
+          <span style={{ fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-lime)' }}>
+            {playedRounds}
+          </span>
+          <span style={{ fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-mut)' }}>/3</span>
+          <div
+            style={{
+              width: 96,
+              height: 7,
+              borderRadius: 6,
+              background: 'var(--color-d-surface2)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{ width: `${pct}%`, height: '100%', background: 'var(--color-d-lime)', transition: 'width .4s' }}
             />
           </div>
-        )
-      })()}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function computeStatusPill(
+  s: Standing | null,
+  pos: number,
+  finished: boolean,
+): { label: string; bg: string; fg: string } {
+  if (!s || pos === 0) {
+    return { label: 'CARREGANDO…', bg: 'var(--color-d-surface2)', fg: 'var(--color-d-mut)' }
+  }
+  if (finished) {
+    if (pos === 1)
+      return { label: `1º LUGAR · ${s.points} PTS`, bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
+    if (pos === 2)
+      return { label: `CLASSIFICADO · ${s.points} PTS`, bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
+    return { label: `ELIMINADO · ${pos}º LUGAR`, bg: 'var(--color-d-red)', fg: '#fff' }
+  }
+  const labels: Record<number, string> = {
+    1: 'LÍDER PARCIAL',
+    2: 'EM ZONA · 2º LUGAR',
+    3: '3º LUGAR',
+    4: '4º LUGAR',
+  }
+  const tone = pos <= 2
+    ? { bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
+    : { bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' }
+  return { label: `${labels[pos] ?? `${pos}º`} · ${s.points} PTS`, ...tone }
+}
+
+// ============================================================
+// Next match banner
+// ============================================================
+
+function NextMatchBanner({
+  stage,
+  match,
+  round,
+  onPlay,
+}: {
+  stage: GroupStage
+  match: GroupMatch
+  round: 1 | 2 | 3
+  onPlay: () => void
+}) {
+  const home = findTeam(stage, match.homeCode)!
+  const away = findTeam(stage, match.awayCode)!
+  return (
+    <div
+      style={{
+        background: 'linear-gradient(120deg, #1a1e16, #141613 70%)',
+        border: '1.5px solid rgba(212,255,61,0.4)',
+        borderRadius: 16,
+        padding: 'clamp(16px, 2.5vw, 22px)',
+        marginBottom: 26,
+        boxShadow: '0 18px 50px -28px rgba(212,255,61,0.5)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+          flexWrap: 'wrap',
+          gap: 8,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: 'var(--color-d-lime)',
+              animation: 'd26-blink 1.3s infinite',
+            }}
+          />
+          <span
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 11,
+              letterSpacing: '0.14em',
+              color: 'var(--color-d-lime)',
+              fontWeight: 700,
+            }}
+          >
+            SUA VEZ · RODADA {round}
+          </span>
+        </div>
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 10,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.1em',
+          }}
+        >
+          VENÇA PARA CARIMBAR A VAGA
+        </span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(14px, 3vw, 28px)', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'clamp(12px, 2.5vw, 22px)',
+            flex: '1 1 280px',
+            minWidth: 240,
+          }}
+        >
+          <BannerTeam team={home} />
+          <span style={{ fontFamily: 'Anton', fontSize: 'clamp(20px, 3vw, 26px)', color: 'var(--color-d-mut)' }}>
+            VS
+          </span>
+          <BannerTeam team={away} />
+        </div>
+        <button
+          type="button"
+          onClick={onPlay}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            background: 'var(--color-d-lime)',
+            color: 'var(--color-d-bg)',
+            border: 'none',
+            padding: '16px 24px',
+            borderRadius: 12,
+            fontFamily: 'Anton',
+            fontSize: 'clamp(17px, 2.4vw, 21px)',
+            letterSpacing: '0.02em',
+            cursor: 'pointer',
+            flex: '1 1 220px',
+            animation: 'd26-pulse 2.6s infinite',
+          }}
+        >
+          JOGAR PARTIDA →
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function BannerTeam({ team }: { team: GroupTeam }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, flex: 1 }}>
+      <BadgeLarge team={team} />
+      <div
+        style={{
+          fontFamily: 'Anton',
+          fontSize: 'clamp(16px, 2.4vw, 20px)',
+          color: team.isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
+          textAlign: 'center',
+          lineHeight: 1,
+        }}
+      >
+        {team.isUser ? 'SEU XI' : team.name.toUpperCase()}
+      </div>
+    </div>
+  )
+}
+
+function BadgeLarge({ team }: { team: GroupTeam }) {
+  if (team.isUser) {
+    return (
+      <div
+        style={{
+          width: 54,
+          height: 38,
+          borderRadius: 8,
+          background: 'var(--color-d-lime)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'Anton',
+          fontSize: 18,
+          color: 'var(--color-d-bg)',
+          boxShadow: '0 6px 16px -6px rgba(212,255,61,0.5)',
+        }}
+      >
+        XI
+      </div>
+    )
+  }
+  return <BadgeChip code={team.code} width={54} height={38} fontSize={13} />
+}
+
+function BadgeChip({
+  code,
+  width,
+  height,
+  fontSize,
+}: {
+  code: string
+  width: number
+  height: number
+  fontSize: number
+}) {
+  const c = code.toUpperCase()
+  return (
+    <div
+      style={{
+        width,
+        height,
+        borderRadius: 6,
+        background: gradientFor(c),
+        position: 'relative',
+        border: '1px solid rgba(255,255,255,0.14)',
+        flex: '0 0 auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize,
+          fontWeight: 700,
+          color: '#fff',
+          textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {c}
+      </span>
+    </div>
+  )
+}
+
+function gradientFor(code: string): string {
+  let h = 0
+  for (const c of code) h = (h * 31 + c.charCodeAt(0)) | 0
+  const h1 = Math.abs(h) % 360
+  const h2 = (h1 + 95) % 360
+  return `linear-gradient(135deg, hsl(${h1} 65% 42%), hsl(${h2} 70% 52%))`
+}
+
+// ============================================================
+// Standings
+// ============================================================
+
+function StandingsSection({
+  standings,
+  round,
+  finished,
+}: {
+  standings: Standing[]
+  round: 1 | 2 | 3 | null
+  finished: boolean
+}) {
+  const subtitle = finished
+    ? 'FINAL'
+    : round
+      ? `APÓS RODADA ${(round as number) - 1}`
+      : 'INICIAL'
+  return (
+    <>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 10,
+          marginBottom: 13,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <h2 style={{ fontFamily: 'Anton', fontSize: 22, margin: 0, letterSpacing: '0.01em' }}>
+            CLASSIFICAÇÃO
+          </h2>
+          <span
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 10,
+              color: 'var(--color-d-mut)',
+              letterSpacing: '0.1em',
+            }}
+          >
+            {subtitle}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <LegendDot color="var(--color-d-lime)" label="CLASSIFICADO" />
+          <LegendDot color="var(--color-d-warn)" label="MELHORES 3ºS" />
+        </div>
+      </div>
+      <div
+        style={{
+          background: 'var(--color-d-surface)',
+          border: '1px solid var(--color-d-line)',
+          borderRadius: 14,
+          overflow: 'hidden',
+          marginBottom: 34,
+        }}
+      >
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ minWidth: 480 }}>
+            <StandingsHeader />
+            {standings.map((s, i) => (
+              <StandingsRow key={s.team.code} standing={s} pos={i + 1} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 7,
+        fontFamily: 'Space Mono',
+        fontSize: 10,
+        color: 'var(--color-d-mut)',
+      }}
+    >
+      <span style={{ width: 9, height: 9, borderRadius: 3, background: color }} />
+      {label}
+    </span>
+  )
+}
+
+const ROW_GRID =
+  '38px minmax(120px, 1fr) 46px 34px 34px 34px 34px 52px'
+
+function StandingsHeader() {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: ROW_GRID,
+        gap: 6,
+        padding: '12px 16px',
+        fontFamily: 'Space Mono',
+        fontSize: 10,
+        color: 'var(--color-d-mut)',
+        letterSpacing: '0.06em',
+        borderBottom: '1px solid var(--color-d-line)',
+      }}
+    >
+      <span style={{ textAlign: 'center' }}>#</span>
+      <span>SELEÇÃO</span>
+      <span style={{ textAlign: 'center', color: 'var(--color-d-ink)' }}>PTS</span>
+      <span style={{ textAlign: 'center' }}>J</span>
+      <span style={{ textAlign: 'center' }}>V</span>
+      <span style={{ textAlign: 'center' }}>E</span>
+      <span style={{ textAlign: 'center' }}>D</span>
+      <span style={{ textAlign: 'center' }}>SG</span>
+    </div>
+  )
+}
+
+function StandingsRow({ standing, pos }: { standing: Standing; pos: number }) {
+  const isUser = standing.team.isUser
+  const zone = pos <= 2 ? 'var(--color-d-lime)' : pos === 3 ? 'var(--color-d-warn)' : 'transparent'
+  const rowBg = isUser ? 'rgba(212,255,61,0.08)' : 'transparent'
+  const accent = isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)'
+  const sg = standing.goalsFor - standing.goalsAgainst
+  const sgFormatted = sg > 0 ? `+${sg}` : String(sg)
+  const sgColor = sg > 0 ? 'var(--color-d-lime)' : sg < 0 ? 'var(--color-d-mut)' : 'var(--color-d-ink)'
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: ROW_GRID,
+        gap: 6,
+        alignItems: 'center',
+        padding: '13px 16px',
+        background: rowBg,
+        borderBottom: '1px solid var(--color-d-line)',
+      }}
+    >
+      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        <span style={{ width: 4, height: 22, borderRadius: 3, background: zone }} />
+        <span style={{ fontFamily: 'Anton', fontSize: 16, color: accent }}>{pos}</span>
+      </span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <SmallBadge team={standing.team} />
+        <b
+          style={{
+            fontSize: 14,
+            color: accent,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {isUser ? 'SEU XI' : standing.team.name.toUpperCase()}
+        </b>
+      </span>
+      <span
+        style={{ fontFamily: 'Anton', fontSize: 18, color: accent, textAlign: 'center' }}
+      >
+        {standing.points}
+      </span>
+      <Cell value={standing.played} muted />
+      <Cell value={standing.wins} />
+      <Cell value={standing.draws} muted />
+      <Cell value={standing.losses} muted />
+      <span
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 13,
+          textAlign: 'center',
+          color: sgColor,
+        }}
+      >
+        {sgFormatted}
+      </span>
+    </div>
+  )
+}
+
+function Cell({ value, muted }: { value: number; muted?: boolean }) {
+  return (
+    <span
+      style={{
+        fontFamily: 'Space Mono',
+        fontSize: 13,
+        textAlign: 'center',
+        color: muted ? 'var(--color-d-mut)' : 'var(--color-d-ink)',
+      }}
+    >
+      {value}
+    </span>
+  )
+}
+
+function SmallBadge({ team }: { team: GroupTeam }) {
+  if (team.isUser) {
+    return (
+      <div
+        style={{
+          width: 30,
+          height: 21,
+          borderRadius: 5,
+          background: 'var(--color-d-lime)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'Space Mono',
+          fontSize: 9,
+          fontWeight: 700,
+          color: 'var(--color-d-bg)',
+          flexShrink: 0,
+        }}
+      >
+        XI
+      </div>
+    )
+  }
+  return <BadgeChip code={team.code} width={30} height={21} fontSize={9} />
+}
+
+// ============================================================
+// Rounds grid
+// ============================================================
+
+function RoundsGrid({
+  stage,
+  currentRound,
+}: {
+  stage: GroupStage
+  currentRound: 1 | 2 | 3 | null
+}) {
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 15 }}>
+        <h2 style={{ fontFamily: 'Anton', fontSize: 22, margin: 0, letterSpacing: '0.01em' }}>
+          JOGOS DO GRUPO
+        </h2>
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 10,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.1em',
+          }}
+        >
+          3 RODADAS
+        </span>
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
+          gap: 16,
+        }}
+      >
+        {([1, 2, 3] as const).map((r) => (
+          <RoundCard key={r} stage={stage} round={r} currentRound={currentRound} />
+        ))}
+      </div>
+    </>
+  )
+}
+
+function RoundCard({
+  stage,
+  round,
+  currentRound,
+}: {
+  stage: GroupStage
+  round: 1 | 2 | 3
+  currentRound: 1 | 2 | 3 | null
+}) {
+  const matches = stage.matches.filter((m) => m.round === round)
+  const allPlayed = matches.every((m) => m.result)
+  const state: 'done' | 'live' | 'next' = allPlayed
+    ? 'done'
+    : currentRound === round
+      ? 'live'
+      : 'next'
+
+  const meta = {
+    done: {
+      cardBorder: 'var(--color-d-line)',
+      headBg: 'transparent',
+      titleColor: 'var(--color-d-ink)',
+      tag: 'ENCERRADA',
+      tagBg: 'var(--color-d-surface2)',
+      tagColor: 'var(--color-d-mut)',
+    },
+    live: {
+      cardBorder: 'rgba(212,255,61,0.4)',
+      headBg: 'rgba(212,255,61,0.06)',
+      titleColor: 'var(--color-d-lime)',
+      tag: 'EM ANDAMENTO',
+      tagBg: 'var(--color-d-lime)',
+      tagColor: 'var(--color-d-bg)',
+    },
+    next: {
+      cardBorder: 'var(--color-d-line)',
+      headBg: 'transparent',
+      titleColor: 'var(--color-d-mut)',
+      tag: 'A SEGUIR',
+      tagBg: 'transparent',
+      tagColor: 'var(--color-d-mut)',
+    },
+  }[state]
+
+  return (
+    <div
+      style={{
+        background: 'var(--color-d-surface)',
+        border: `1px solid ${meta.cardBorder}`,
+        borderRadius: 14,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 15px',
+          borderBottom: '1px solid var(--color-d-line)',
+          background: meta.headBg,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 15,
+            color: meta.titleColor,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          RODADA {round}
+        </span>
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            padding: '4px 9px',
+            borderRadius: 6,
+            background: meta.tagBg,
+            color: meta.tagColor,
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            border:
+              state === 'next'
+                ? '1px solid var(--color-d-line)'
+                : '1px solid transparent',
+          }}
+        >
+          {meta.tag}
+        </span>
+      </div>
+      <div style={{ padding: '9px 11px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {matches.map((m) => (
+          <MatchRow key={`${m.homeCode}-${m.awayCode}`} match={m} stage={stage} state={state} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MatchRow({
+  match,
+  stage,
+  state,
+}: {
+  match: GroupMatch
+  stage: GroupStage
+  state: 'done' | 'live' | 'next'
+}) {
+  const home = findTeam(stage, match.homeCode)!
+  const away = findTeam(stage, match.awayCode)!
+  const userIn = home.isUser || away.isUser
+  const played = match.result != null
+  const hWin = played && match.result!.homeGoals > match.result!.awayGoals
+  const aWin = played && match.result!.awayGoals > match.result!.homeGoals
+
+  let rowBg = 'var(--color-d-surface2)'
+  let rowBorder = 'var(--color-d-line)'
+  if (userIn && state === 'live') {
+    rowBg = 'rgba(212,255,61,0.08)'
+    rowBorder = 'rgba(212,255,61,0.35)'
+  } else if (userIn && played) {
+    rowBg = 'rgba(212,255,61,0.05)'
+    rowBorder = 'rgba(212,255,61,0.22)'
+  } else if (state === 'next') {
+    rowBg = 'transparent'
+  }
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
+        alignItems: 'center',
+        gap: 10,
+        padding: 11,
+        borderRadius: 10,
+        background: rowBg,
+        border: `1px solid ${rowBorder}`,
+      }}
+    >
+      <SideCell team={home} played={played} winner={hWin} alignRight />
+      <ScoreCell match={match} home={home} away={away} hWin={hWin} aWin={aWin} played={played} />
+      <SideCell team={away} played={played} winner={aWin} />
+    </div>
+  )
+}
+
+function SideCell({
+  team,
+  played,
+  winner,
+  alignRight,
+}: {
+  team: GroupTeam
+  played: boolean
+  winner: boolean
+  alignRight?: boolean
+}) {
+  const color = team.isUser
+    ? 'var(--color-d-lime)'
+    : played
+      ? 'var(--color-d-ink)'
+      : 'var(--color-d-mut)'
+  const opacity = played && !winner && !team.isUser ? 0.7 : 1
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        minWidth: 0,
+        justifyContent: alignRight ? 'flex-end' : 'flex-start',
+        flexDirection: alignRight ? 'row' : 'row-reverse',
+      }}
+    >
+      <SmallBadge team={team} />
+      <b
+        style={{
+          fontSize: 12,
+          color,
+          opacity,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          textAlign: alignRight ? 'right' : 'left',
+        }}
+      >
+        {team.isUser ? 'SEU XI' : team.code.toUpperCase()}
+      </b>
+    </div>
+  )
+}
+
+function ScoreCell({
+  match,
+  home,
+  away,
+  hWin,
+  aWin,
+  played,
+}: {
+  match: GroupMatch
+  home: GroupTeam
+  away: GroupTeam
+  hWin: boolean
+  aWin: boolean
+  played: boolean
+}) {
+  const hColor = !played
+    ? 'var(--color-d-mut)'
+    : hWin
+      ? home.isUser
+        ? 'var(--color-d-lime)'
+        : 'var(--color-d-ink)'
+      : 'var(--color-d-mut)'
+  const aColor = !played
+    ? 'var(--color-d-mut)'
+    : aWin
+      ? away.isUser
+        ? 'var(--color-d-lime)'
+        : 'var(--color-d-ink)'
+      : 'var(--color-d-mut)'
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 54,
+      }}
+    >
+      <span style={{ fontFamily: 'Anton', fontSize: 18, color: hColor }}>
+        {played ? match.result!.homeGoals : ''}
+      </span>
+      <span
+        style={{
+          fontFamily: 'Anton',
+          fontSize: 11,
+          color: 'var(--color-d-mut)',
+          margin: '0 5px',
+        }}
+      >
+        {played ? '—' : 'VS'}
+      </span>
+      <span style={{ fontFamily: 'Anton', fontSize: 18, color: aColor }}>
+        {played ? match.result!.awayGoals : ''}
+      </span>
+    </div>
+  )
+}
+
+// ============================================================
+// Footer nav
+// ============================================================
+
+function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }) {
+  const qualified = finished && userPos > 0 && userPos <= 2
+  const ctaLabel = qualified ? 'IR PRO MATA-MATA →' : 'VER MATA-MATA →'
+  const ctaStyle: CSSProperties = qualified
+    ? {
+        background: 'var(--color-d-lime)',
+        color: 'var(--color-d-bg)',
+        border: '1px solid var(--color-d-lime)',
+        animation: 'd26-pulse 2.6s infinite',
+      }
+    : {
+        background: 'transparent',
+        color: 'var(--color-d-mut)',
+        border: '1px solid var(--color-d-line)',
+      }
+  const note = finished
+    ? qualified
+      ? 'Você passou. O mata-mata começa nos 32-avos.'
+      : 'Sua campanha de grupos acabou. Tente outro draft.'
+    : 'Conclua os 3 jogos do grupo para liberar o mata-mata.'
+  return (
+    <div
+      style={{
+        marginTop: 34,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 14,
+        paddingTop: 22,
+        borderTop: '1px solid var(--color-d-line)',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 11,
+          color: 'var(--color-d-mut)',
+          maxWidth: 340,
+          lineHeight: 1.5,
+        }}
+      >
+        {note}
+      </span>
+      <Link
+        to="/bracket"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 9,
+          padding: '13px 22px',
+          borderRadius: 11,
+          fontFamily: qualified ? 'Anton' : 'Space Mono',
+          fontSize: qualified ? 17 : 12,
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textDecoration: 'none',
+          ...ctaStyle,
+        }}
+      >
+        {ctaLabel}
+      </Link>
     </div>
   )
 }
