@@ -66,8 +66,13 @@ export function loadStage(): { draft: DraftState; stage: GroupStage } | null {
   return { draft, stage }
 }
 
+/**
+ * Limpa só o stage da fase de grupos e o bracket (que é downstream).
+ * NÃO mexe no draft — quem quer reset completo do XI deve chamar `clearDraft()`
+ * separadamente. Esse split evita o bug clássico de chamar saveDraft seguido
+ * de clearStage e perder o draft recém-gravado.
+ */
 export function clearStage(): void {
-  clearDraft()
   clearBracket()
   try {
     window.localStorage.removeItem(KEY_STAGE)
