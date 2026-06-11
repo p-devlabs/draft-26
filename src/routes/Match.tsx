@@ -218,9 +218,11 @@ function buildGroupOutcomeContext(
   const scorers = computeGroupScorers(stage)
   const table = standings(stage)
   const userPos = table.findIndex((s) => s.team.code === USER_TEAM_CODE) + 1
+  const oppLabel = opp?.name?.slice(0, 3).toUpperCase() ?? 'OPP'
   return {
     phase: `FASE DE GRUPOS · ${round}/3`,
-    resultLine: `SEU XI ${userGoals}–${oppGoals} ${opp?.name?.slice(0, 3).toUpperCase() ?? 'OPP'}`,
+    resultLine: `SEU XI ${userGoals}–${oppGoals} ${oppLabel}`,
+    matchResult: { userGoals, oppGoals, oppLabel },
     draft,
     stats,
     scorers,
@@ -453,17 +455,26 @@ function buildKnockoutOutcomeContext(
   const stats = computeFullCampaign(stage, bracket)
   const scorers = computeFullScorers(stage, bracket)
   const roundLabel = ROUND_LABEL[match.round].toUpperCase()
-  let resultLine = `SEU XI ${userGoals}–${oppGoals} ${oppTeam?.code ?? 'OPP'}`
+  const oppLabel = oppTeam?.code ?? 'OPP'
+  let resultLine = `SEU XI ${userGoals}–${oppGoals} ${oppLabel}`
+  let normalizedPenalties: OutcomeContext['matchResult']['penalties']
   if (penalties) {
-    const ph = penalties.homeScored
-    const pa = penalties.awayScored
-    const userP = userIsHome ? ph : pa
-    const oppP = userIsHome ? pa : ph
+    const userP = userIsHome ? penalties.homeScored : penalties.awayScored
+    const oppP = userIsHome ? penalties.awayScored : penalties.homeScored
     resultLine += ` (${userP}–${oppP} pen)`
+    normalizedPenalties = {
+      userScored: userP,
+      oppScored: oppP,
+      sequence: penalties.sequence.map((k) => ({
+        isUser: userIsHome ? k.team === 'home' : k.team === 'away',
+        scored: k.scored,
+      })),
+    }
   }
   return {
     phase: `${roundLabel} · COPA 2026`,
     resultLine,
+    matchResult: { userGoals, oppGoals, oppLabel, penalties: normalizedPenalties },
     draft,
     stats,
     scorers,
@@ -570,6 +581,18 @@ type OutcomeKind =
 interface OutcomeContext {
   phase: string
   resultLine: string
+  matchResult: {
+    userGoals: number
+    oppGoals: number
+    oppLabel: string
+    /** Pênaltis (knockout) já normalizados na perspectiva do user. */
+    penalties?: {
+      userScored: number
+      oppScored: number
+      /** Cobranças em ordem cronológica — true = converteu. */
+      sequence: { isUser: boolean; scored: boolean }[]
+    }
+  }
   draft: DraftState
   stats: CampaignStats
   scorers: ScorerRow[]
@@ -1727,7 +1750,7 @@ function OutcomeDrawer({
         >
           <OutcomeBanner cfg={cfg} onClose={onClose} />
           <div style={{ padding: '22px clamp(18px, 5vw, 28px) 30px' }}>
-            <ResultChip phase={ctx.phase} result={ctx.resultLine} />
+            <MatchResultCard phase={ctx.phase} result={ctx.matchResult} />
             <TeamChosenCard draft={ctx.draft} />
             <CampaignStatsRow stats={ctx.stats} />
             {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
@@ -1832,27 +1855,179 @@ function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => vo
   )
 }
 
-function ResultChip({ phase, result }: { phase: string; result: string }) {
+function MatchResultCard({
+  phase,
+  result,
+}: {
+  phase: string
+  result: OutcomeContext['matchResult']
+}) {
+  const { userGoals, oppGoals, oppLabel, penalties } = result
+  const userWon = penalties
+    ? penalties.userScored > penalties.oppScored
+    : userGoals > oppGoals
+
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
         background: 'var(--color-d-surface2)',
         border: '1px solid var(--color-d-line)',
-        borderRadius: 11,
-        padding: '11px 14px',
+        borderRadius: 12,
+        padding: '14px 16px',
         marginBottom: 14,
       }}
     >
-      <span style={{ fontFamily: 'Space Mono', fontSize: 10, letterSpacing: '0.1em', color: 'var(--color-d-mut)' }}>
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.1em',
+          color: 'var(--color-d-mut)',
+          marginBottom: 10,
+        }}
+      >
         {phase}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          gap: 14,
+        }}
+      >
+        <div
+          style={{
+            textAlign: 'right',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-lime)',
+          }}
+        >
+          SEU XI
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 8,
+            fontFamily: 'Anton',
+            fontSize: 34,
+            lineHeight: 1,
+          }}
+        >
+          <span style={{ color: userWon ? 'var(--color-d-lime)' : 'var(--color-d-mut)' }}>
+            {userGoals}
+          </span>
+          <span style={{ fontSize: 22, color: 'var(--color-d-mut)' }}>—</span>
+          <span style={{ color: !userWon ? 'var(--color-d-ink)' : 'var(--color-d-mut)' }}>
+            {oppGoals}
+          </span>
+        </div>
+        <div
+          style={{
+            textAlign: 'left',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-ink)',
+          }}
+        >
+          {oppLabel}
+        </div>
+      </div>
+      {penalties && <PenaltyDots penalties={penalties} userWon={userWon} />}
+    </div>
+  )
+}
+
+function PenaltyDots({
+  penalties,
+  userWon,
+}: {
+  penalties: NonNullable<OutcomeContext['matchResult']['penalties']>
+  userWon: boolean
+}) {
+  const userKicks = penalties.sequence.filter((k) => k.isUser)
+  const oppKicks = penalties.sequence.filter((k) => !k.isUser)
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        paddingTop: 12,
+        borderTop: '1px solid var(--color-d-line)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.1em',
+          color: 'var(--color-d-mut)',
+          marginBottom: 8,
+        }}
+      >
+        <span>PÊNALTIS</span>
+        <span style={{ fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-ink)' }}>
+          <span style={{ color: userWon ? 'var(--color-d-lime)' : 'var(--color-d-mut)' }}>
+            {penalties.userScored}
+          </span>
+          <span style={{ color: 'var(--color-d-mut)', margin: '0 5px' }}>—</span>
+          <span style={{ color: !userWon ? 'var(--color-d-ink)' : 'var(--color-d-mut)' }}>
+            {penalties.oppScored}
+          </span>
+        </span>
+      </div>
+      <PenaltyRow label="SEU XI" kicks={userKicks} ours scoredColor="var(--color-d-lime)" />
+      <div style={{ height: 6 }} />
+      <PenaltyRow label={penalties.sequence.length ? 'OPP' : ''} kicks={oppKicks} scoredColor="var(--color-d-ink)" />
+    </div>
+  )
+}
+
+function PenaltyRow({
+  label,
+  kicks,
+  ours,
+  scoredColor,
+}: {
+  label: string
+  kicks: NonNullable<OutcomeContext['matchResult']['penalties']>['sequence']
+  ours?: boolean
+  scoredColor: string
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          color: ours ? 'var(--color-d-lime)' : 'var(--color-d-mut)',
+          width: 56,
+        }}
+      >
+        {label}
       </span>
-      <span style={{ fontFamily: 'Anton', fontSize: 18, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-        {result}
-      </span>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+        {kicks.map((k, i) => (
+          <span
+            key={i}
+            title={k.scored ? 'Convertida' : 'Perdida'}
+            style={{
+              width: 13,
+              height: 13,
+              borderRadius: '50%',
+              background: k.scored ? scoredColor : 'transparent',
+              border: `1.5px solid ${k.scored ? scoredColor : 'var(--color-d-mut)'}`,
+              opacity: k.scored ? 1 : 0.5,
+            }}
+          />
+        ))}
+      </div>
     </div>
   )
 }
