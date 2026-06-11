@@ -11,11 +11,13 @@
     "scrape:squads": "tsx scripts/scrape-squads.ts",
     "enrich:squads": "tsx scripts/enrich-squads.ts",
     "download:fifa": "tsx scripts/download-fifa-dataset.ts",
+    "download:transfermarkt": "tsx scripts/download-transfermarkt.ts",
     "enrich:fifa": "tsx scripts/enrich-with-fifa.ts",
-    "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa"
+    "enrich:transfermarkt": "tsx scripts/enrich-with-transfermarkt.ts",
+    "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa && pnpm download:transfermarkt && pnpm enrich:transfermarkt"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/supabase-js": "^2.108.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.0"
@@ -28,6 +30,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "cheerio": "^1.2.0",
     "papaparse": "^5.5.3",
+    "supabase": "^2.105.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.22.4",
     "typescript": "~5.7.2",

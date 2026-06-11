@@ -70,8 +70,9 @@ A pasta `data/` mistura curadoria manual e arquivos gerados:
 | `country-codes.json`        | curadoria manual                | ✅            |
 | `tactics.json`              | curadoria manual                | ✅            |
 | `squads.json`               | `pnpm scrape:squads` (Wikipedia)| ✅ (referência) |
-| `squads-enriched.json`      | `pnpm enrich:squads` + `enrich:fifa` | ✅ (consumido pelo app) |
+| `squads-enriched.json`      | `pnpm enrich:squads` + `enrich:fifa` + `enrich:transfermarkt` | ✅ (consumido pelo app) |
 | `eafc26-players.csv`        | `pnpm download:fifa` (10 MB)    | ❌ (gitignored)|
+| `transfermarkt-players.csv` | `pnpm download:transfermarkt` (4 MB extraído de ZIP de 222 MB) | ❌ (gitignored)|
 
 Pra reconstruir tudo do zero:
 
@@ -81,8 +82,15 @@ pnpm data:rebuild
 
 (equivale a `scrape:squads → enrich:squads → download:fifa → enrich:fifa`)
 
-Match com EA FC 26 pega ~71% dos convocados; o resto (Irã, Jordânia, Uzbequistão
+Match com EA FC 26 pega ~70% dos convocados; o resto (Irã, Jordânia, Uzbequistão
 e outros mal cobertos pelo EA) cai numa heurística por tier do clube + caps + idade.
+Transfermarkt cobre outros ~58% (cross-reference de valor de mercado, sem
+sobrescrever rating ou posição do EA). Quando os dois divergem (Alisson EA €51M / TM €17M,
+CR7 ausente no EA / TM €15M), os dois valores ficam disponíveis no jogador.
+
+A desambiguação de match entre múltiplos jogadores com mesmo nome usa
+score por (bucket posicional, clube, idade). Sem isso, o Alisson Becker (GK Liverpool)
+era confundido com outro Alisson brasileiro que joga de RW no Shakhtar.
 
 ## Próximos passos
 

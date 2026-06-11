@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { findSquad, POSITION_LABEL, type Player, type Position } from '../data/squads'
+import { findSquad, POSITION_LABEL, playerValue, type Player, type Position } from '../data/squads'
 
 function formatValue(eur: number | null | undefined): string {
   if (!eur || eur <= 0) return '—'
@@ -95,9 +95,13 @@ export function SelecaoDetalhe() {
         <a href="https://github.com/ismailoksuz/EAFC26-DataHub" className="underline hover:text-ink">
           EAFC26-DataHub
         </a>
-        ). Jogadores não encontrados no dataset (Irã, Jordânia e outros menos cobertos pelo EA)
-        usam heurística — marcados com <span className="text-clay">✦</span>.
-        Formações curadas manualmente para as principais seleções; demais herdam{' '}
+        ); valor de mercado complementado pelo{' '}
+        <a href="https://github.com/dcaribou/transfermarkt-datasets" className="underline hover:text-ink">
+          Transfermarkt
+        </a>
+        . Jogadores não encontrados no EA FC (Irã, Jordânia e outros menos cobertos) usam
+        heurística — marcados com <span className="text-clay">✦</span>. Formações curadas
+        manualmente para as principais seleções; demais herdam{' '}
         <code className="font-mono">4-3-3</code> como padrão.
       </p>
     </div>
@@ -133,11 +137,11 @@ function PlayerTable({ players }: { players: Player[] }) {
             <tr key={`${p.name}-${p.shirt ?? 'x'}`} className="hover:bg-sand/40">
               <td className="px-3 py-2 tabular-nums text-ink-soft">{p.shirt ?? '—'}</td>
               <td className="px-3 py-2 font-mono text-xs">
-                {(p.positions && p.positions.length > 0) ? (
+                {p.primaryPosition ? (
                   <>
-                    <span className="text-ink">{p.positions[0]}</span>
-                    {p.positions.length > 1 && (
-                      <span className="text-ink-soft">·{p.positions.slice(1).join('·')}</span>
+                    <span className="text-ink">{p.primaryPosition}</span>
+                    {p.altPositions && p.altPositions.length > 0 && (
+                      <span className="text-ink-soft">·{p.altPositions.join('·')}</span>
                     )}
                   </>
                 ) : (
@@ -155,7 +159,12 @@ function PlayerTable({ players }: { players: Player[] }) {
               <td className="px-3 py-2 text-ink-soft hidden md:table-cell truncate max-w-xs">{p.club}</td>
               <td className="px-3 py-2 text-right tabular-nums text-ink-soft hidden lg:table-cell">{p.age ?? '—'}</td>
               <td className="px-3 py-2 text-right tabular-nums text-ink-soft hidden md:table-cell">
-                {formatValue(p.value_eur)}
+                <div className="text-ink text-xs">{formatValue(playerValue(p))}</div>
+                {p.value_eur != null && p.value_eur_tm != null && p.value_eur !== p.value_eur_tm && (
+                  <div className="text-[10px] text-ink-soft/70">
+                    TM {formatValue(p.value_eur_tm)}
+                  </div>
+                )}
               </td>
               <td className="px-3 py-2 text-right tabular-nums font-medium text-ink">
                 {p.overall}
