@@ -166,7 +166,7 @@ function BracketColumn({
                 lineHeight: 0.9,
               }}
             >
-              FAÇA<br />7 A 0
+              CAMPEÃO<br />DO MUNDO
             </div>
           </div>
         )}

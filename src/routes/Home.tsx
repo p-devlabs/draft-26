@@ -730,7 +730,7 @@ function CaminhoSection() {
         <PathCard num="01" title="ESCALAÇÃO" sub="Monte o XI no dado" to="/draft" />
         <PathCard num="02" title="GRUPOS" sub="Jogue os 3 jogos" to="/groups" />
         <PathCard num="03" title="CHAVEAMENTO" sub="5 fases de mata-mata" to="/bracket" />
-        <PathCard num="04" title="PARTIDA" sub="Simule e faça 7 a 0" to="/match" />
+        <PathCard num="04" title="PARTIDA" sub="Simule e seja campeão" to="/match" />
       </div>
     </Section>
   )
