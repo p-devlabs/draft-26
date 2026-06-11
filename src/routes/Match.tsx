@@ -23,6 +23,7 @@ import {
 import { rosterForKnockout } from '../lib/rosters'
 import { narrateMatch } from '../lib/narrate'
 import { loadBracket, loadStage, saveBracket, saveStage } from '../lib/persistence'
+import { nationGradient } from '../lib/nation-colors'
 import type { MatchEvent } from '../lib/narrate'
 import type { DraftState } from '../lib/draft'
 
@@ -996,7 +997,7 @@ function TeamBadge({ team }: { team: SideTeam }) {
     <div
       style={{
         ...sizeStyle,
-        background: gradientFor(team.code),
+        background: nationGradient(team.code),
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -1024,13 +1025,6 @@ function TeamBadge({ team }: { team: SideTeam }) {
   )
 }
 
-function gradientFor(code: string): string {
-  let h = 0
-  for (const c of code) h = (h * 31 + c.charCodeAt(0)) | 0
-  const h1 = Math.abs(h) % 360
-  const h2 = (h1 + 95) % 360
-  return `linear-gradient(135deg, hsl(${h1} 65% 42%), hsl(${h2} 70% 52%))`
-}
 
 // ---------- Body / Lances / Right Column ----------
 
@@ -1915,7 +1909,7 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
                 width: 30,
                 height: 21,
                 borderRadius: 4,
-                background: gradientFor(s.name),
+                background: nationGradient(s.name),
                 flex: '0 0 auto',
                 border: '1px solid rgba(255,255,255,0.12)',
               }}

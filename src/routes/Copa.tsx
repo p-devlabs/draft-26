@@ -16,6 +16,7 @@ import { autoFillXI } from '../lib/autofill'
 import { createDraft, isComplete, type DraftState } from '../lib/draft'
 import { loadDraft, saveStage, loadStage, clearStage } from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
+import { nationGradient } from '../lib/nation-colors'
 
 export function Copa() {
   const navigate = useNavigate()
@@ -638,7 +639,7 @@ function BadgeChip({
         width,
         height,
         borderRadius: 6,
-        background: gradientFor(c),
+        background: nationGradient(c),
         position: 'relative',
         border: '1px solid rgba(255,255,255,0.14)',
         flex: '0 0 auto',
@@ -663,13 +664,6 @@ function BadgeChip({
   )
 }
 
-function gradientFor(code: string): string {
-  let h = 0
-  for (const c of code) h = (h * 31 + c.charCodeAt(0)) | 0
-  const h1 = Math.abs(h) % 360
-  const h2 = (h1 + 95) % 360
-  return `linear-gradient(135deg, hsl(${h1} 65% 42%), hsl(${h2} 70% 52%))`
-}
 
 // ============================================================
 // Standings

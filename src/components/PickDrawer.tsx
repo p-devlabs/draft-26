@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { SLOT_LABEL } from '../lib/positions'
 import { rollUntilCompatible, useSkip, type DraftState } from '../lib/draft'
+import { nationGradient } from '../lib/nation-colors'
 import type { Player, Squad } from '../data/squads'
 
 interface PickDrawerProps {
@@ -482,7 +483,7 @@ function SquadBadge({ code }: { code: string }) {
         width: 52,
         height: 36,
         borderRadius: 6,
-        background: gradientFor(code),
+        background: nationGradient(code),
         position: 'relative',
         border: '1px solid rgba(255,255,255,0.14)',
         flex: '0 0 auto',
@@ -509,13 +510,6 @@ function SquadBadge({ code }: { code: string }) {
   )
 }
 
-function gradientFor(code: string): string {
-  let h = 0
-  for (const c of code) h = (h * 31 + c.charCodeAt(0)) | 0
-  const h1 = Math.abs(h) % 360
-  const h2 = (h1 + 95) % 360
-  return `linear-gradient(135deg, hsl(${h1} 65% 42%), hsl(${h2} 70% 52%))`
-}
 
 function CandidateRow({ player, onPick }: { player: Player; onPick: () => void }) {
   return (
