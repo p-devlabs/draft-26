@@ -1,13 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
 
 const url = import.meta.env.VITE_SUPABASE_URL
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!url || !anon) {
+if (!url || !anonKey) {
   console.warn(
-    '[supabase] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY ausentes — copie .env.example para .env e preencha.',
+    '[supabase] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY ausentes — copie .env.example para .env.local e preencha.',
   )
 }
 
-export const supabase = createClient<Database>(url ?? '', anon ?? '')
+export const supabase = createClient(url ?? '', anonKey ?? '', {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: 'tv26:supabase.auth',
+  },
+})
+
+export const isSupabaseConfigured = Boolean(url && anonKey)

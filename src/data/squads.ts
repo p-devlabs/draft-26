@@ -6,8 +6,12 @@ export type RatingSource = 'fifa' | 'fifa-fuzzy' | 'heuristic'
 
 export interface Player {
   shirt: number | null
+  /** Bucket grosso vindo da Wikipedia: GK / DEF / MID / FWD */
   position: Position
-  positions?: string[] // posições granulares estilo FIFA: ['CB', 'LB'] ou ['ST', 'CF']
+  /** Posição principal granular estilo FIFA: 'GK', 'CB', 'LW', 'ST' */
+  primaryPosition?: string
+  /** Posições alternativas, ordenadas por relevância */
+  altPositions?: string[]
   name: string
   isCaptain: boolean
   dateOfBirth: string | null
@@ -17,8 +21,23 @@ export interface Player {
   club: string
   clubCountry: string | null
   overall: number
+  /** Valor de mercado segundo EA FC 26 */
   value_eur?: number | null
+  /** Valor de mercado atual no Transfermarkt */
+  value_eur_tm?: number | null
+  /** Pico histórico de valor no Transfermarkt */
+  value_eur_tm_peak?: number | null
   ratingSource?: RatingSource
+}
+
+/** Valor de mercado consolidado — usa EA FC com fallback pro TM atual. */
+export function playerValue(p: Player): number | null {
+  return p.value_eur ?? p.value_eur_tm ?? null
+}
+
+/** Helper: todas as posições do jogador (principal + alternativas) */
+export function allPositions(p: Player): string[] {
+  return [p.primaryPosition, ...(p.altPositions ?? [])].filter(Boolean) as string[]
 }
 
 export interface Squad {

@@ -38,14 +38,17 @@ interface FifaRow {
   value_eur: string
   nationality_name: string
   age: string
+  club_name: string
 }
 
+type Bucket = 'GK' | 'DEF' | 'MID' | 'FWD'
 type RatingSource = 'fifa' | 'fifa-fuzzy' | 'heuristic'
 
 interface PlayerEnriched {
   shirt: number | null
-  position: 'GK' | 'DEF' | 'MID' | 'FWD'
-  positions?: string[]
+  position: Bucket
+  primaryPosition?: string // ex: 'GK', 'CB', 'LW', 'ST'
+  altPositions?: string[] // ex: ['CF', 'RW']
   name: string
   isCaptain: boolean
   dateOfBirth: string | null
@@ -57,6 +60,32 @@ interface PlayerEnriched {
   overall: number
   value_eur?: number | null
   ratingSource?: RatingSource
+}
+
+// Mapeia posição FIFA granular pro bucket Wikipedia (GK/DEF/MID/FWD)
+const POSITION_BUCKET: Record<string, Bucket> = {
+  GK: 'GK',
+  CB: 'DEF',
+  LB: 'DEF',
+  RB: 'DEF',
+  LWB: 'DEF',
+  RWB: 'DEF',
+  CDM: 'MID',
+  CM: 'MID',
+  CAM: 'MID',
+  LM: 'MID',
+  RM: 'MID',
+  LW: 'FWD',
+  RW: 'FWD',
+  LF: 'FWD',
+  RF: 'FWD',
+  CF: 'FWD',
+  ST: 'FWD',
+}
+
+function fifaBucket(positions: string): Bucket | null {
+  const first = positions.split(',')[0]?.trim()
+  return first ? (POSITION_BUCKET[first] ?? null) : null
 }
 
 interface SquadEnriched {
@@ -144,31 +173,25 @@ async function main() {
 
     for (const player of squad.players) {
       const wantedName = normalize(player.name)
-      let match: FifaRow | undefined
-      let isFuzzy = false
+      const wantedClub = normalize(player.club)
 
-      // 1. exact long_name
-      match = candidates.find((x) => normalize(x.long_name) === wantedName)
+      // 1. Junta TODOS os candidatos viáveis (por nome) sem escolher ainda
+      const viable: { row: FifaRow; nameScore: number; isFuzzy: boolean }[] = []
 
-      // 2. exact short_name
-      if (!match) match = candidates.find((x) => normalize(x.short_name) === wantedName)
+      for (const x of candidates) {
+        const ln = normalize(x.long_name)
+        const sn = normalize(x.short_name)
 
-      // 3. containment (qualquer direção)
-      if (!match) {
-        match = candidates.find((x) => {
-          const ln = normalize(x.long_name)
-          const sn = normalize(x.short_name)
-          return ln.includes(wantedName) || wantedName.includes(ln) || sn.includes(wantedName)
-        })
+        if (ln === wantedName) viable.push({ row: x, nameScore: 100, isFuzzy: false })
+        else if (sn === wantedName) viable.push({ row: x, nameScore: 90, isFuzzy: false })
+        else if (ln.includes(wantedName) || wantedName.includes(ln) || sn.includes(wantedName))
+          viable.push({ row: x, nameScore: 70, isFuzzy: false })
+        else if (tokensMatch(wantedName, ln))
+          viable.push({ row: x, nameScore: 60, isFuzzy: false })
       }
 
-      // 3.5 token-based: todos tokens do nome wiki batem no long_name
-      if (!match) {
-        match = candidates.find((x) => tokensMatch(wantedName, normalize(x.long_name)))
-      }
-
-      // 4. fuzzy Levenshtein
-      if (!match) {
+      // 2. Se nada por nome direto, tenta fuzzy
+      if (viable.length === 0) {
         let best: FifaRow | undefined
         let bestDist = Infinity
         for (const x of candidates) {
@@ -181,28 +204,59 @@ async function main() {
             best = x
           }
         }
-        // tolerância: 2 chars ou 15% do nome, o que for maior
         const threshold = Math.max(2, Math.floor(wantedName.length * 0.15))
         if (best && bestDist <= threshold) {
-          match = best
-          isFuzzy = true
+          viable.push({ row: best, nameScore: 40, isFuzzy: true })
         }
       }
 
-      if (match) {
-        player.overall = parseInt(match.overall, 10)
-        player.positions = match.player_positions
+      // 3. Desambiguação: pra cada viável, soma bônus por bucket/clube/idade
+      let bestMatch: { row: FifaRow; isFuzzy: boolean; score: number } | undefined
+      for (const v of viable) {
+        let score = v.nameScore
+
+        // Bucket de posição bate (GK na Wiki = GK no FIFA)
+        const bucket = fifaBucket(v.row.player_positions)
+        if (bucket === player.position) score += 50
+        else if (bucket && bucket !== player.position) score -= 30 // penaliza fortemente
+
+        // Clube bate
+        if (wantedClub && normalize(v.row.club_name) === wantedClub) score += 30
+        else if (
+          wantedClub &&
+          (normalize(v.row.club_name).includes(wantedClub) ||
+            wantedClub.includes(normalize(v.row.club_name)))
+        )
+          score += 15
+
+        // Idade próxima (±1)
+        if (player.age != null && v.row.age) {
+          const fifaAge = parseInt(v.row.age, 10)
+          if (Math.abs(fifaAge - player.age) <= 1) score += 10
+        }
+
+        if (!bestMatch || score > bestMatch.score) {
+          bestMatch = { row: v.row, isFuzzy: v.isFuzzy, score }
+        }
+      }
+
+      if (bestMatch && bestMatch.score >= 50) {
+        const positions = bestMatch.row.player_positions
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean)
-        const val = parseInt(match.value_eur, 10)
+        player.overall = parseInt(bestMatch.row.overall, 10)
+        player.primaryPosition = positions[0]
+        player.altPositions = positions.slice(1)
+        const val = parseInt(bestMatch.row.value_eur, 10)
         player.value_eur = Number.isFinite(val) ? val : null
-        player.ratingSource = isFuzzy ? 'fifa-fuzzy' : 'fifa'
-        if (isFuzzy) stats.fuzzy++
+        player.ratingSource = bestMatch.isFuzzy ? 'fifa-fuzzy' : 'fifa'
+        if (bestMatch.isFuzzy) stats.fuzzy++
         else stats.matched++
         c.matched++
       } else {
-        player.positions = [defaultDetailedPos(player.position)]
+        player.primaryPosition = defaultDetailedPos(player.position)
+        player.altPositions = []
         player.value_eur = null
         player.ratingSource = 'heuristic'
         stats.missed++

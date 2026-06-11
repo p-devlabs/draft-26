@@ -18,12 +18,22 @@ export function AppLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-rule">
-        <div className="mx-auto max-w-6xl px-6 py-6 text-xs text-ink-soft flex justify-between">
-          <span>48 seleções · 26 convocados · 1 verão</span>
-          <span>v0.0.1</span>
-        </div>
-      </footer>
+      <FooterMini />
     </div>
   )
 }
+
+function FooterMini() {
+  const { pathname } = window.location
+  // Na home a landing já tem créditos próprios; nas outras rotas o mini-footer aparece
+  if (pathname === '/' || pathname === '') return null
+  return (
+    <footer className="border-t border-rule">
+      <div className="mx-auto max-w-6xl px-6 py-6 text-xs text-ink-soft flex justify-between">
+        <span>48 seleções · 26 convocados · 1 verão</span>
+        <span>v0.1</span>
+      </div>
+    </footer>
+  )
+}
+
