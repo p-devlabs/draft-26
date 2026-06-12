@@ -14,7 +14,7 @@ import {
 } from '../lib/groups'
 import { autoFillXI } from '../lib/autofill'
 import { createDraft, isComplete, type DraftState } from '../lib/draft'
-import { loadDraft, saveStage, loadStage, clearStage } from '../lib/persistence'
+import { loadDraft, saveStage, loadStage, clearStage, clearDraft } from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
 import { nationGradient } from '../lib/nation-colors'
 
@@ -114,6 +114,7 @@ export function Copa() {
 
   const handleReset = () => {
     clearStage()
+    clearDraft()
     clearLocalRunId()
     navigate('/draft', { replace: true })
   }

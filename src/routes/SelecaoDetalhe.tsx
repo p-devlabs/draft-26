@@ -1,5 +1,14 @@
+import type { CSSProperties, ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { findSquad, POSITION_LABEL, playerValue, type Player, type Position } from '../data/squads'
+import {
+  findSquad,
+  POSITION_LABEL,
+  POSITION_SHORT,
+  playerValue,
+  type Player,
+  type Position,
+} from '../data/squads'
+import { NATION_GRADIENTS } from '../lib/nation-colors'
 
 function formatValue(eur: number | null | undefined): string {
   if (!eur || eur <= 0) return '—'
@@ -8,7 +17,7 @@ function formatValue(eur: number | null | undefined): string {
   return `€${eur}`
 }
 
-const POSITION_ORDER: Record<Position, number> = { GK: 0, DEF: 1, MID: 2, FWD: 3 }
+const POSITIONS: Position[] = ['GK', 'DEF', 'MID', 'FWD']
 
 export function SelecaoDetalhe() {
   const { code } = useParams<{ code: string }>()
@@ -16,175 +25,686 @@ export function SelecaoDetalhe() {
 
   if (!squad) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-20 text-center">
-        <p className="text-sm uppercase tracking-[0.18em] text-clay mb-3">404</p>
-        <h1 className="font-display text-3xl text-ink mb-3">Seleção não encontrada</h1>
-        <p className="text-ink-soft mb-6">
-          O código <code className="font-mono text-ink">{code}</code> não bate com nenhuma das 48 seleções.
-        </p>
-        <Link to="/teams" className="text-clay hover:underline">
-          ← Ver todas as seleções
-        </Link>
+      <div className="d26-scope">
+        <TopBar />
+        <div
+          style={{
+            maxWidth: 720,
+            margin: '0 auto',
+            padding: '96px clamp(20px, 5vw, 56px)',
+            textAlign: 'center',
+          }}
+        >
+          <Kicker>404</Kicker>
+          <h1
+            style={{
+              fontFamily: 'Anton',
+              fontWeight: 400,
+              fontSize: 'clamp(32px, 6vw, 48px)',
+              lineHeight: 0.96,
+              margin: '0 0 14px',
+            }}
+          >
+            SELEÇÃO NÃO ENCONTRADA
+          </h1>
+          <p style={{ color: 'var(--color-d-mut)', marginBottom: 24 }}>
+            O código <code style={{ fontFamily: 'Space Mono' }}>{code}</code> não bate com nenhuma
+            das 48.
+          </p>
+          <Link
+            to="/teams"
+            style={{
+              display: 'inline-block',
+              fontFamily: 'Space Mono',
+              fontSize: 12,
+              color: 'var(--color-d-lime)',
+              letterSpacing: '0.1em',
+              textDecoration: 'underline',
+            }}
+          >
+            ← VER TODAS AS SELEÇÕES
+          </Link>
+        </div>
       </div>
     )
   }
 
-  const grouped = (['GK', 'DEF', 'MID', 'FWD'] as Position[]).map((pos) => ({
+  const grouped = POSITIONS.map((pos) => ({
     position: pos,
     players: [...squad.players]
       .filter((p) => p.position === pos)
       .sort((a, b) => (a.shirt ?? 99) - (b.shirt ?? 99)),
   }))
 
+  const gradient = NATION_GRADIENTS[squad.code] ?? 'var(--color-d-surface2)'
+
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
-      <div className="mb-3">
-        <Link to="/teams" className="text-xs text-ink-soft hover:text-ink">
-          ← Todas as seleções
+    <div className="d26-scope">
+      <TopBar />
+      <Hero squad={squad} gradient={gradient} />
+      <div
+        style={{
+          maxWidth: 1120,
+          margin: '0 auto',
+          padding: '40px clamp(20px, 5vw, 56px) 80px',
+        }}
+      >
+        <StatsStrip squad={squad} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 36, marginTop: 48 }}>
+          {grouped.map(({ position, players }) => (
+            <PositionSection key={position} position={position} players={players} />
+          ))}
+        </div>
+        <Footnote />
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Top bar + Wordmark
+// ============================================================
+
+function TopBar() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 18,
+        padding: '16px clamp(20px, 5vw, 56px)',
+        borderBottom: '1px solid var(--color-d-line)',
+        background: 'rgba(10, 11, 9, 0.85)',
+        backdropFilter: 'blur(8px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+      }}
+    >
+      <Link to="/" style={{ textDecoration: 'none', color: 'var(--color-d-ink)' }}>
+        <Wordmark />
+      </Link>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Link
+          to="/teams"
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.08em',
+            textDecoration: 'none',
+          }}
+        >
+          ← SELEÇÕES
+        </Link>
+        <Link
+          to="/draft"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 9,
+            background: 'var(--color-d-lime)',
+            color: 'var(--color-d-bg)',
+            borderRadius: 10,
+            padding: '11px 18px',
+            fontFamily: 'Anton',
+            fontSize: 15,
+            letterSpacing: '0.02em',
+            textDecoration: 'none',
+          }}
+        >
+          JOGAR <span style={{ fontFamily: 'Space Mono', fontSize: 11, fontWeight: 700 }}>→</span>
         </Link>
       </div>
+    </div>
+  )
+}
 
-      <header className="border-b border-rule pb-8 mb-8">
-        <div className="flex items-start gap-6">
-          <span className="text-6xl leading-none">{squad.flag}</span>
-          <div className="flex-1">
-            <p className="text-sm uppercase tracking-[0.18em] text-clay mb-2">
-              Grupo {squad.group} · {squad.code}
-            </p>
-            <h1 className="font-display text-4xl md:text-5xl tracking-tight text-ink mb-2">
+function Wordmark() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+      <DiceMark />
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+        <span style={{ fontFamily: 'Anton', fontSize: 24, letterSpacing: '0.02em' }}>DRAFT</span>
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-lime)',
+            fontWeight: 700,
+          }}
+        >
+          26
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function DiceMark() {
+  const dot = (justify?: 'end' | 'center'): CSSProperties => {
+    const s: CSSProperties = {
+      width: 4,
+      height: 4,
+      borderRadius: '50%',
+      background: 'var(--color-d-bg)',
+    }
+    if (justify === 'end') s.justifySelf = 'end'
+    if (justify === 'center') s.justifySelf = 'center'
+    return s
+  }
+  return (
+    <div
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 9,
+        background: 'var(--color-d-lime)',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 3,
+        padding: 7,
+        flex: '0 0 auto',
+      }}
+    >
+      <span style={dot()} />
+      <span />
+      <span style={dot('end')} />
+      <span />
+      <span style={dot('center')} />
+      <span />
+      <span style={dot()} />
+      <span />
+      <span style={dot('end')} />
+    </div>
+  )
+}
+
+function Kicker({ children, color }: { children: ReactNode; color?: string }) {
+  return (
+    <div
+      style={{
+        fontFamily: 'Space Mono',
+        fontSize: 12,
+        letterSpacing: '0.18em',
+        color: color ?? 'var(--color-d-lime)',
+        marginBottom: 10,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+// ============================================================
+// Hero
+// ============================================================
+
+function Hero({ squad, gradient }: { squad: ReturnType<typeof findSquad>; gradient: string }) {
+  if (!squad) return null
+  return (
+    <div
+      style={{
+        position: 'relative',
+        borderBottom: '1px solid var(--color-d-line)',
+        background: 'linear-gradient(180deg, #101310, #0a0b09)',
+      }}
+    >
+      {/* Faixa de cor da bandeira full-bleed atrás */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: gradient,
+          opacity: 0.18,
+          mixBlendMode: 'screen',
+          maskImage: 'linear-gradient(180deg, #000 0%, transparent 75%)',
+          WebkitMaskImage: 'linear-gradient(180deg, #000 0%, transparent 75%)',
+        }}
+      />
+      <div
+        style={{
+          position: 'relative',
+          maxWidth: 1120,
+          margin: '0 auto',
+          padding: 'clamp(48px, 7vw, 80px) clamp(20px, 5vw, 56px) clamp(40px, 6vw, 60px)',
+        }}
+      >
+        <Kicker>
+          GRUPO {squad.group} · {squad.code}
+        </Kicker>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            gap: 24,
+            alignItems: 'end',
+          }}
+        >
+          <div>
+            {/* Badge da bandeira em destaque */}
+            <div
+              style={{
+                width: 96,
+                height: 64,
+                borderRadius: 10,
+                background: gradient,
+                marginBottom: 18,
+                position: 'relative',
+                boxShadow: '0 8px 32px -8px rgba(0,0,0,0.6)',
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'flex-start',
+                  padding: '8px 10px',
+                  fontFamily: 'Space Mono',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#fff',
+                  letterSpacing: '0.06em',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+                }}
+              >
+                {squad.code}
+              </span>
+            </div>
+            <h1
+              style={{
+                fontFamily: 'Anton',
+                fontWeight: 400,
+                fontSize: 'clamp(40px, 8vw, 72px)',
+                lineHeight: 0.94,
+                margin: '0 0 12px',
+                textTransform: 'uppercase',
+              }}
+            >
               {squad.country}
             </h1>
-            <p className="text-ink-soft">
-              Técnico: <span className="text-ink">{squad.coach ?? '—'}</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-[0.14em] text-ink-soft mb-1">Rating médio</p>
-            <p className="font-display text-5xl text-ink tabular-nums leading-none">
-              {squad.averageOverall.toFixed(1)}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8 pt-6 border-t border-rule/60">
-          <Stat label="Convocados" value={squad.players.length.toString()} />
-          <Stat label="Formação base" value={squad.formation.primary} />
-          <Stat label="Formação alt" value={squad.formation.alternative} />
-          <Stat
-            label="Curadoria tática"
-            value={squad.formation.source === 'curated' ? 'Manual' : 'Default 4-3-3'}
-            soft={squad.formation.source === 'default'}
-          />
-        </div>
-      </header>
-
-      <div className="space-y-8">
-        {grouped.map(({ position, players }) => (
-          <section key={position}>
-            <div className="flex items-baseline gap-3 mb-3">
-              <h2 className="font-display text-xl text-ink">{POSITION_LABEL[position]}</h2>
-              <span className="text-xs text-ink-soft tabular-nums">{players.length}</span>
+            <div
+              style={{
+                fontSize: 14,
+                color: 'var(--color-d-mut)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexWrap: 'wrap',
+              }}
+            >
+              <span style={{ color: 'var(--color-d-mut)' }}>TÉCNICO</span>
+              <span style={{ color: 'var(--color-d-ink)', fontWeight: 700 }}>
+                {squad.coach ?? '—'}
+              </span>
             </div>
-            <PlayerTable players={players} />
-          </section>
-        ))}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 10,
+                letterSpacing: '0.16em',
+                color: 'var(--color-d-mut)',
+                marginBottom: 4,
+              }}
+            >
+              RATING MÉDIO
+            </div>
+            <div
+              style={{
+                fontFamily: 'Anton',
+                fontSize: 'clamp(56px, 11vw, 96px)',
+                lineHeight: 0.9,
+                color: 'var(--color-d-lime)',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {squad.averageOverall.toFixed(1)}
+            </div>
+          </div>
+        </div>
       </div>
-
-      <p className="mt-12 text-xs text-ink-soft border-t border-rule pt-6">
-        Ratings e posições do EA FC 26 (via{' '}
-        <a href="https://github.com/ismailoksuz/EAFC26-DataHub" className="underline hover:text-ink">
-          EAFC26-DataHub
-        </a>
-        ); valor de mercado complementado pelo{' '}
-        <a href="https://github.com/dcaribou/transfermarkt-datasets" className="underline hover:text-ink">
-          Transfermarkt
-        </a>
-        . Jogadores não encontrados no EA FC (Irã, Jordânia e outros menos cobertos) usam
-        heurística — marcados com <span className="text-clay">✦</span>. Formações curadas
-        manualmente para as principais seleções; demais herdam{' '}
-        <code className="font-mono">4-3-3</code> como padrão.
-      </p>
     </div>
   )
 }
 
-function Stat({ label, value, soft }: { label: string; value: string; soft?: boolean }) {
+// ============================================================
+// Stats strip
+// ============================================================
+
+function StatsStrip({ squad }: { squad: NonNullable<ReturnType<typeof findSquad>> }) {
+  return (
+    <div
+      style={{
+        background: 'var(--color-d-surface)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 14,
+        padding: '20px clamp(18px, 3vw, 28px)',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+        gap: 18,
+      }}
+    >
+      <Stat label="CONVOCADOS" value={squad.players.length.toString()} />
+      <Stat label="FORMAÇÃO BASE" value={squad.formation.primary} highlight />
+      <Stat label="ALTERNATIVA" value={squad.formation.alternative} />
+      <Stat
+        label="CURADORIA"
+        value={squad.formation.source === 'curated' ? 'MANUAL' : 'DEFAULT'}
+        soft={squad.formation.source !== 'curated'}
+      />
+    </div>
+  )
+}
+
+function Stat({
+  label,
+  value,
+  highlight,
+  soft,
+}: {
+  label: string
+  value: string
+  highlight?: boolean
+  soft?: boolean
+}) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-[0.14em] text-ink-soft mb-1">{label}</p>
-      <p className={`font-display text-lg ${soft ? 'text-ink-soft' : 'text-ink'}`}>{value}</p>
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.14em',
+          color: 'var(--color-d-mut)',
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: 'Anton',
+          fontSize: 24,
+          lineHeight: 1,
+          color: highlight
+            ? 'var(--color-d-lime)'
+            : soft
+              ? 'var(--color-d-mut)'
+              : 'var(--color-d-ink)',
+        }}
+      >
+        {value}
+      </div>
     </div>
   )
 }
 
-function PlayerTable({ players }: { players: Player[] }) {
+// ============================================================
+// Position sections
+// ============================================================
+
+function PositionSection({ position, players }: { position: Position; players: Player[] }) {
   return (
-    <div className="overflow-hidden border border-rule rounded-md">
-      <table className="w-full text-sm">
-        <thead className="bg-sand/60 text-xs uppercase tracking-[0.1em] text-ink-soft">
-          <tr>
-            <th className="text-left px-3 py-2 w-12">#</th>
-            <th className="text-left px-3 py-2 w-20">Pos</th>
-            <th className="text-left px-3 py-2">Jogador</th>
-            <th className="text-left px-3 py-2 hidden md:table-cell">Clube</th>
-            <th className="text-right px-3 py-2 w-16 hidden lg:table-cell">Idade</th>
-            <th className="text-right px-3 py-2 w-20 hidden md:table-cell">Valor</th>
-            <th className="text-right px-3 py-2 w-16">Rating</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-rule">
-          {players.sort((a, b) => POSITION_ORDER[a.position] - POSITION_ORDER[b.position]).map((p) => (
-            <tr key={`${p.name}-${p.shirt ?? 'x'}`} className="hover:bg-sand/40">
-              <td className="px-3 py-2 tabular-nums text-ink-soft">{p.shirt ?? '—'}</td>
-              <td className="px-3 py-2 font-mono text-xs">
-                {p.primaryPosition ? (
-                  <>
-                    <span className="text-ink">{p.primaryPosition}</span>
-                    {p.altPositions && p.altPositions.length > 0 && (
-                      <span className="text-ink-soft">·{p.altPositions.join('·')}</span>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-ink-soft">{p.position}</span>
-                )}
-              </td>
-              <td className="px-3 py-2">
-                <span className="text-ink">{p.name}</span>
-                {p.isCaptain && (
-                  <span className="ml-2 inline-block text-[10px] uppercase tracking-wider text-clay border border-clay/30 rounded px-1 py-px">
-                    cap
-                  </span>
-                )}
-              </td>
-              <td className="px-3 py-2 text-ink-soft hidden md:table-cell truncate max-w-xs">{p.club}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-ink-soft hidden lg:table-cell">{p.age ?? '—'}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-ink-soft hidden md:table-cell">
-                <div className="text-ink text-xs">{formatValue(playerValue(p))}</div>
-                {p.value_eur != null && p.value_eur_tm != null && p.value_eur !== p.value_eur_tm && (
-                  <div className="text-[10px] text-ink-soft/70">
-                    TM {formatValue(p.value_eur_tm)}
-                  </div>
-                )}
-              </td>
-              <td className="px-3 py-2 text-right tabular-nums font-medium text-ink">
-                {p.overall}
-                {p.ratingSource && p.ratingSource !== 'fifa' && p.ratingSource !== 'fifa-fuzzy' && (
-                  <span
-                    className="text-clay ml-0.5"
-                    title={
-                      p.ratingSource === 'tm'
-                        ? 'Não encontrado no EA FC 26 — overall estimado por valor de mercado (Transfermarkt)'
-                        : 'Não encontrado no EA FC 26 nem no Transfermarkt — overall estimado por tier do clube'
-                    }
-                  >
-                    ✦
-                  </span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <section>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 14,
+          marginBottom: 14,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-ink)',
+            textTransform: 'uppercase',
+          }}
+        >
+          {POSITION_LABEL[position]}
+        </span>
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.08em',
+          }}
+        >
+          {POSITION_SHORT[position]} · {players.length}
+        </span>
+      </div>
+      <div
+        style={{
+          background: 'var(--color-d-surface)',
+          border: '1px solid var(--color-d-line)',
+          borderRadius: 14,
+          overflow: 'hidden',
+        }}
+      >
+        {players.map((p, idx) => (
+          <PlayerRow key={`${p.name}-${p.shirt ?? idx}`} player={p} isLast={idx === players.length - 1} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function PlayerRow({ player: p, isLast }: { player: Player; isLast: boolean }) {
+  const isHeur = p.ratingSource && p.ratingSource !== 'fifa' && p.ratingSource !== 'fifa-fuzzy'
+  const heurTitle =
+    p.ratingSource === 'tm'
+      ? 'Não encontrado no EA FC 26 — overall estimado por valor de mercado (Transfermarkt)'
+      : 'Não encontrado no EA FC 26 nem no Transfermarkt — overall estimado por tier do clube'
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '52px minmax(0, 1fr) auto',
+        alignItems: 'center',
+        gap: 14,
+        padding: '14px clamp(14px, 2.5vw, 22px)',
+        borderBottom: isLast ? 'none' : '1px solid var(--color-d-line)',
+      }}
+    >
+      {/* Camisa em badge */}
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          background: 'var(--color-d-surface2)',
+          border: '1px solid var(--color-d-line)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'Anton',
+          fontSize: 18,
+          color: 'var(--color-d-ink)',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {p.shirt ?? '—'}
+      </div>
+
+      {/* Nome, posição, clube */}
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 4,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-d-ink)' }}>
+            {p.name}
+          </span>
+          {p.isCaptain && (
+            <span
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 9,
+                letterSpacing: '0.12em',
+                color: 'var(--color-d-lime)',
+                border: '1px solid var(--color-d-lime)',
+                borderRadius: 4,
+                padding: '2px 5px',
+                lineHeight: 1,
+              }}
+            >
+              CAP
+            </span>
+          )}
+        </div>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.04em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ color: 'var(--color-d-ink)' }}>
+            {p.primaryPosition ?? p.position}
+            {p.altPositions && p.altPositions.length > 0 && (
+              <span style={{ color: 'var(--color-d-mut)' }}>·{p.altPositions.join('·')}</span>
+            )}
+          </span>
+          <span style={{ color: 'var(--color-d-line)' }}>|</span>
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              fontFamily: 'inherit',
+            }}
+          >
+            {p.club}
+          </span>
+          {p.age != null && (
+            <>
+              <span style={{ color: 'var(--color-d-line)' }}>|</span>
+              <span>{p.age}A</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Valor + Overall */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ textAlign: 'right', minWidth: 60 }}>
+          <div
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 10,
+              letterSpacing: '0.1em',
+              color: 'var(--color-d-mut)',
+            }}
+          >
+            VALOR
+          </div>
+          <div
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 13,
+              color: 'var(--color-d-ink)',
+              fontWeight: 700,
+            }}
+          >
+            {formatValue(playerValue(p))}
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 52,
+            height: 52,
+            borderRadius: 11,
+            background: isHeur ? 'var(--color-d-surface2)' : 'var(--color-d-lime)',
+            color: isHeur ? 'var(--color-d-ink)' : 'var(--color-d-bg)',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            fontVariantNumeric: 'tabular-nums',
+            position: 'relative',
+          }}
+        >
+          {p.overall}
+          {isHeur && (
+            <span
+              title={heurTitle}
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                fontSize: 11,
+                color: 'var(--color-d-lime)',
+                background: 'var(--color-d-bg)',
+                borderRadius: '50%',
+                width: 16,
+                height: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid var(--color-d-lime)',
+                cursor: 'help',
+              }}
+            >
+              ✦
+            </span>
+          )}
+        </div>
+      </div>
     </div>
+  )
+}
+
+// ============================================================
+// Footnote
+// ============================================================
+
+function Footnote() {
+  return (
+    <p
+      style={{
+        marginTop: 48,
+        paddingTop: 24,
+        borderTop: '1px solid var(--color-d-line)',
+        fontSize: 12,
+        lineHeight: 1.6,
+        color: 'var(--color-d-mut)',
+        maxWidth: 720,
+      }}
+    >
+      Ratings e posições do EA FC 26 (via{' '}
+      <a
+        href="https://github.com/ismailoksuz/EAFC26-DataHub"
+        style={{ color: 'var(--color-d-ink)', textDecoration: 'underline' }}
+      >
+        EAFC26-DataHub
+      </a>
+      ). Valor de mercado complementado pelo{' '}
+      <a
+        href="https://github.com/dcaribou/transfermarkt-datasets"
+        style={{ color: 'var(--color-d-ink)', textDecoration: 'underline' }}
+      >
+        Transfermarkt
+      </a>
+      . Jogadores não encontrados no EA FC viram estimativa por valor de mercado ou tier do clube —
+      marcados com <span style={{ color: 'var(--color-d-lime)' }}>✦</span>.
+    </p>
   )
 }
