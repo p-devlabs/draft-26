@@ -96,7 +96,8 @@
         "overall": 73,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 2100000,
         "ratingSource": "fifa",
@@ -156,7 +157,10 @@
         "clubCountry": "Football Association of the Czech Republic",
         "overall": 72,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CDM",
+          "CAM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 400000,
@@ -280,7 +284,8 @@
         "overall": 73,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 4099999,
         "ratingSource": "fifa",
@@ -584,7 +589,8 @@
         "overall": 73,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 0,
         "ratingSource": "fifa",
@@ -684,8 +690,11 @@
         "club": "Guadalajara",
         "clubCountry": "Mexican Football Federation",
         "overall": 70,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CB",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -703,8 +712,10 @@
         "club": "Real Betis",
         "clubCountry": "Royal Spanish Football Federation",
         "overall": 75,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 7000000,
@@ -839,8 +850,11 @@
         "club": "América",
         "clubCountry": "Mexican Football Federation",
         "overall": 63,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -925,8 +939,12 @@
         "club": "Tijuana",
         "clubCountry": "Mexican Football Federation",
         "overall": 58,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "LW",
+          "RW",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -946,7 +964,8 @@
         "overall": 72,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 4500000,
         "ratingSource": "fifa",
@@ -1009,7 +1028,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "LM",
-          "LW"
+          "LW",
+          "LWB"
         ],
         "value_eur": 0,
         "ratingSource": "fifa",
@@ -1028,8 +1048,10 @@
         "club": "Dynamo Moscow",
         "clubCountry": "Russian Football Union",
         "overall": 76,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 9000000,
@@ -1069,8 +1091,11 @@
         "club": "Guadalajara",
         "clubCountry": "Mexican Football Federation",
         "overall": 67,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "LM",
+        "altPositions": [
+          "CAM",
+          "LW"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1122,8 +1147,11 @@
         "club": "Polokwane City",
         "clubCountry": "South African Football Association",
         "overall": 59,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1160,8 +1188,10 @@
         "club": "Mamelodi Sundowns",
         "clubCountry": "South African Football Association",
         "overall": 65,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1198,8 +1228,11 @@
         "club": "Mamelodi Sundowns",
         "clubCountry": "South African Football Association",
         "overall": 63,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1217,8 +1250,10 @@
         "club": "Orlando Pirates",
         "clubCountry": "South African Football Association",
         "overall": 63,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1236,8 +1271,10 @@
         "club": "Orlando Pirates",
         "clubCountry": "South African Football Association",
         "overall": 62,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1277,8 +1314,10 @@
         "club": "Orlando Pirates",
         "clubCountry": "South African Football Association",
         "overall": 59,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1434,7 +1473,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 1100000,
         "ratingSource": "fifa",
@@ -1472,8 +1512,11 @@
         "club": "Mamelodi Sundowns",
         "clubCountry": "South African Football Association",
         "overall": 62,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1567,8 +1610,10 @@
         "club": "Orlando Pirates",
         "clubCountry": "South African Football Association",
         "overall": 59,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -1704,7 +1749,9 @@
         "altPositions": [
           "RB",
           "CB",
-          "RM"
+          "RM",
+          "LWB",
+          "LM"
         ],
         "value_eur": 925000,
         "ratingSource": "fifa",
@@ -1871,7 +1918,8 @@
         "overall": 69,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 2100000,
         "ratingSource": "fifa",
@@ -1911,7 +1959,8 @@
         "overall": 69,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 1200000,
         "ratingSource": "fifa",
@@ -2297,7 +2346,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 6000000,
         "ratingSource": "fifa",
@@ -2435,8 +2485,10 @@
         "club": "Pafos",
         "clubCountry": "Cyprus Football Association",
         "overall": 62,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -2732,7 +2784,8 @@
         "overall": 78,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 17000000,
         "ratingSource": "fifa",
@@ -2858,7 +2911,9 @@
         "clubCountry": "Italian Football Federation",
         "overall": 72,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CDM"
+        ],
         "value_eur": 4700000,
         "ratingSource": "fifa",
         "value_eur_tm": 14000000,
@@ -3077,7 +3132,8 @@
         "overall": 84,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 53500000,
         "ratingSource": "fifa",
@@ -3144,7 +3200,8 @@
         "primaryPosition": "RM",
         "altPositions": [
           "RB",
-          "LM"
+          "LM",
+          "RW"
         ],
         "value_eur": 2300000,
         "ratingSource": "fifa",
@@ -3167,7 +3224,8 @@
         "altPositions": [
           "CDM",
           "RW",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 3400000,
         "ratingSource": "fifa",
@@ -3286,7 +3344,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 0,
         "ratingSource": "fifa",
@@ -3387,7 +3446,9 @@
         "clubCountry": "Qatar Football Association",
         "overall": 64,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "RW"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -3512,8 +3573,11 @@
         "club": "Al-Gharafa",
         "clubCountry": "Qatar Football Association",
         "overall": 58,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -3533,7 +3597,8 @@
         "overall": 68,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 0,
         "ratingSource": "fifa",
@@ -3616,8 +3681,11 @@
         "club": "Al-Duhail",
         "clubCountry": "Qatar Football Association",
         "overall": 68,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -3656,8 +3724,10 @@
         "club": "Al-Arabi",
         "clubCountry": "Qatar Football Association",
         "overall": 62,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -3734,8 +3804,10 @@
         "club": "Al-Duhail",
         "clubCountry": "Qatar Football Association",
         "overall": 62,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -3828,7 +3900,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 6000000,
         "ratingSource": "fifa",
@@ -3849,7 +3922,8 @@
         "overall": 72,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 1600000,
         "ratingSource": "fifa",
@@ -4055,7 +4129,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 2900000,
         "ratingSource": "fifa",
@@ -4378,8 +4453,11 @@
         "club": "Atalanta",
         "clubCountry": "Italian Football Federation",
         "overall": 82,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RM",
+          "RWB"
+        ],
         "value_eur": 40000000,
         "ratingSource": "fifa",
         "value_eur_tm": 40000000,
@@ -4456,8 +4534,12 @@
         "club": "Flamengo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 80,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM",
+          "CB"
+        ],
         "value_eur": 26500000,
         "ratingSource": "fifa-fuzzy",
         "value_eur_tm": 2000000,
@@ -4521,7 +4603,8 @@
         "primaryPosition": "CAM",
         "altPositions": [
           "LW",
-          "ST"
+          "ST",
+          "CM"
         ],
         "value_eur": 45000000,
         "ratingSource": "fifa",
@@ -4540,8 +4623,13 @@
         "club": "Santos",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 88,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "CAM",
+          "ST",
+          "CF",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 50000000,
@@ -4599,8 +4687,12 @@
         "club": "Flamengo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 79,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "CB",
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2500000,
@@ -4656,8 +4748,11 @@
         "club": "Zenit Saint Petersburg",
         "clubCountry": "Russian Football Union",
         "overall": 76,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 8000000,
@@ -4696,8 +4791,10 @@
         "club": "Botafogo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 78,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 22000000,
@@ -4840,7 +4937,9 @@
         "clubCountry": "The Football Association",
         "overall": 75,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "CF"
+        ],
         "value_eur": 8000000,
         "ratingSource": "fifa",
         "value_eur_tm": 25000000,
@@ -4858,8 +4957,11 @@
         "club": "Bournemouth",
         "clubCountry": "The Football Association",
         "overall": 62,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "ST",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -4913,7 +5015,8 @@
         "overall": 71,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 1600000,
         "ratingSource": "fifa",
@@ -5032,7 +5135,8 @@
         "overall": 62,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 475000,
         "ratingSource": "fifa",
@@ -5170,8 +5274,12 @@
         "club": "Almere City",
         "clubCountry": "Royal Dutch Football Association",
         "overall": 68,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "RW",
+          "ST",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 300000,
@@ -5286,8 +5394,10 @@
         "club": "Auxerre",
         "clubCountry": "French Football Federation",
         "overall": 73,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 3500000,
@@ -5309,7 +5419,8 @@
         "altPositions": [
           "RB",
           "CB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 1800000,
         "ratingSource": "fifa",
@@ -5349,7 +5460,8 @@
         "overall": 55,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 160000,
         "ratingSource": "fifa",
@@ -5442,7 +5554,8 @@
         "overall": 89,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 111000000,
         "ratingSource": "fifa",
@@ -5464,7 +5577,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 22000000,
         "ratingSource": "fifa",
@@ -5524,8 +5638,10 @@
         "club": "Lille",
         "clubCountry": "French Football Federation",
         "overall": 78,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 40000000,
@@ -5674,7 +5790,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "RM",
-          "RW"
+          "RW",
+          "RWB"
         ],
         "value_eur": 14500000,
         "ratingSource": "fifa",
@@ -5694,7 +5811,9 @@
         "clubCountry": "The Football Association",
         "overall": 78,
         "primaryPosition": "CB",
-        "altPositions": [],
+        "altPositions": [
+          "CDM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 10000000,
@@ -5790,8 +5909,11 @@
         "club": "Al Ahly",
         "clubCountry": "Egyptian Football Association",
         "overall": 62,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -5930,8 +6052,11 @@
         "club": "PSV Eindhoven",
         "clubCountry": "Royal Dutch Football Association",
         "overall": 76,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 12000000,
@@ -5985,7 +6110,8 @@
         "overall": 74,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 6000000,
         "ratingSource": "fifa",
@@ -6006,7 +6132,8 @@
         "overall": 82,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 22000000,
         "ratingSource": "fifa",
@@ -6068,7 +6195,8 @@
         "overall": 77,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 9500000,
         "ratingSource": "fifa",
@@ -6091,7 +6219,8 @@
         "altPositions": [
           "RM",
           "CAM",
-          "LB"
+          "LB",
+          "LW"
         ],
         "value_eur": 25000000,
         "ratingSource": "fifa",
@@ -6111,7 +6240,9 @@
         "clubCountry": "The Football Association",
         "overall": 70,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CDM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -6391,7 +6522,8 @@
         "overall": 71,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 2600000,
         "ratingSource": "fifa",
@@ -6434,7 +6566,8 @@
         "overall": 71,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 2300000,
         "ratingSource": "fifa",
@@ -6569,7 +6702,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "LM",
-          "RM"
+          "RM",
+          "LWB"
         ],
         "value_eur": 825000,
         "ratingSource": "fifa",
@@ -6590,7 +6724,8 @@
         "overall": 69,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 3000000,
         "ratingSource": "fifa",
@@ -6609,8 +6744,12 @@
         "club": "Albirex Niigata",
         "clubCountry": "Japan Football Association",
         "overall": 61,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "CB",
+          "RM",
+          "RWB"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -6823,7 +6962,8 @@
         "overall": 67,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 375000,
         "ratingSource": "fifa",
@@ -6903,8 +7043,11 @@
         "club": "Sassuolo",
         "clubCountry": "Italian Football Federation",
         "overall": 72,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM",
+          "RW"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 4500000,
@@ -7118,8 +7261,11 @@
         "club": "Dynamo Moscow",
         "clubCountry": "Russian Football Union",
         "overall": 73,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 4000000,
@@ -7175,8 +7321,11 @@
         "club": "Palmeiras",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 76,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM",
+          "RW"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 11000000,
@@ -7257,7 +7406,9 @@
         "clubCountry": "Brazilian Football Confederation",
         "overall": 65,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CDM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -7418,7 +7569,8 @@
         "altPositions": [
           "LM",
           "RM",
-          "ST"
+          "ST",
+          "CM"
         ],
         "value_eur": 7000000,
         "ratingSource": "fifa",
@@ -7560,7 +7712,8 @@
         "overall": 58,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 475000,
         "ratingSource": "fifa",
@@ -7616,7 +7769,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "RM",
-          "CB"
+          "CB",
+          "RWB"
         ],
         "value_eur": 7000000,
         "ratingSource": "fifa",
@@ -7844,7 +7998,8 @@
         "overall": 75,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 8000000,
         "ratingSource": "fifa",
@@ -7952,7 +8107,8 @@
         "altPositions": [
           "LB",
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 4800000,
         "ratingSource": "fifa",
@@ -7997,7 +8153,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 20000000,
         "ratingSource": "fifa",
@@ -8041,7 +8198,9 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "CDM"
+          "CDM",
+          "RWB",
+          "RM"
         ],
         "value_eur": 6500000,
         "ratingSource": "fifa",
@@ -8180,7 +8339,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 23500000,
         "ratingSource": "fifa",
@@ -8241,7 +8401,8 @@
         "overall": 82,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 29500000,
         "ratingSource": "fifa",
@@ -8473,7 +8634,10 @@
         "clubCountry": "Royal Spanish Football Federation",
         "overall": 65,
         "primaryPosition": "RB",
-        "altPositions": [],
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": 1600000,
         "ratingSource": "fifa",
         "value_eur_tm": null,
@@ -8581,7 +8745,8 @@
         "overall": 77,
         "primaryPosition": "RM",
         "altPositions": [
-          "RB"
+          "RB",
+          "RW"
         ],
         "value_eur": 12500000,
         "ratingSource": "fifa",
@@ -8623,7 +8788,8 @@
         "altPositions": [
           "CB",
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 5500000,
         "ratingSource": "fifa",
@@ -8738,7 +8904,8 @@
         "overall": 68,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 2300000,
         "ratingSource": "fifa",
@@ -8798,7 +8965,9 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "LM"
+          "LM",
+          "RWB",
+          "RM"
         ],
         "value_eur": 925000,
         "ratingSource": "fifa",
@@ -8862,7 +9031,8 @@
         "altPositions": [
           "CB",
           "CDM",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 950000,
         "ratingSource": "fifa",
@@ -8901,7 +9071,10 @@
         "clubCountry": "Turkish Football Federation",
         "overall": 63,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CDM",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -9001,7 +9174,8 @@
         "overall": 64,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 1300000,
         "ratingSource": "fifa",
@@ -9372,7 +9546,8 @@
         "overall": 79,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 18500000,
         "ratingSource": "fifa",
@@ -9535,8 +9710,10 @@
         "club": "UNAM",
         "clubCountry": "Mexican Football Federation",
         "overall": 62,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -9614,8 +9791,10 @@
         "club": "Flamengo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 74,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 5000000,
@@ -9655,8 +9834,11 @@
         "club": "Atlético Mineiro",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 71,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM",
+          "CB"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -9755,7 +9937,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "LW",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 3700000,
         "ratingSource": "fifa",
@@ -10145,7 +10328,8 @@
         "overall": 77,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 22500000,
         "ratingSource": "fifa",
@@ -10228,7 +10412,8 @@
         "overall": 82,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 32000000,
         "ratingSource": "fifa",
@@ -10384,7 +10569,8 @@
         "overall": 72,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 2100000,
         "ratingSource": "fifa",
@@ -10403,8 +10589,10 @@
         "club": "Maribor",
         "clubCountry": "Football Association of Slovenia",
         "overall": 62,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -10507,7 +10695,9 @@
         "clubCountry": "Italian Football Federation",
         "overall": 73,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "CF"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -10571,7 +10761,10 @@
         "clubCountry": "French Football Federation",
         "overall": 65,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "CF",
+          "RW"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -10591,7 +10784,8 @@
         "overall": 74,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 3800000,
         "ratingSource": "fifa",
@@ -10674,7 +10868,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 15000000,
         "ratingSource": "fifa",
@@ -10917,7 +11112,8 @@
         "overall": 74,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 5500000,
         "ratingSource": "fifa",
@@ -10976,8 +11172,11 @@
         "club": "FC Tokyo",
         "clubCountry": "Japan Football Association",
         "overall": 76,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 300000,
@@ -11080,7 +11279,8 @@
         "primaryPosition": "RM",
         "altPositions": [
           "CAM",
-          "RB"
+          "RB",
+          "RW"
         ],
         "value_eur": 32500000,
         "ratingSource": "fifa",
@@ -11225,7 +11425,8 @@
         "overall": 71,
         "primaryPosition": "CAM",
         "altPositions": [
-          "ST"
+          "ST",
+          "CM"
         ],
         "value_eur": 4200000,
         "ratingSource": "fifa",
@@ -11325,8 +11526,13 @@
         "club": "Ajax",
         "clubCountry": "Royal Dutch Football Association",
         "overall": 79,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "CB",
+          "LB",
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 12000000,
@@ -11877,7 +12083,8 @@
         "overall": 84,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 37000000,
         "ratingSource": "fifa",
@@ -11938,7 +12145,9 @@
         "overall": 78,
         "primaryPosition": "LB",
         "altPositions": [
-          "CB"
+          "CB",
+          "LWB",
+          "LM"
         ],
         "value_eur": 29000000,
         "ratingSource": "fifa",
@@ -12073,7 +12282,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "LM",
-          "CB"
+          "CB",
+          "LWB"
         ],
         "value_eur": 11500000,
         "ratingSource": "fifa",
@@ -12094,7 +12304,8 @@
         "overall": 70,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 1700000,
         "ratingSource": "fifa",
@@ -12138,7 +12349,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CM",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 15000000,
         "ratingSource": "fifa",
@@ -12466,7 +12678,8 @@
         "overall": 71,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 2800000,
         "ratingSource": "fifa",
@@ -12563,7 +12776,8 @@
         "overall": 76,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 5500000,
         "ratingSource": "fifa",
@@ -12767,7 +12981,8 @@
         "altPositions": [
           "RM",
           "LM",
-          "RW"
+          "RW",
+          "LWB"
         ],
         "value_eur": 1200000,
         "ratingSource": "fifa",
@@ -12786,8 +13001,10 @@
         "club": "Union Berlin",
         "clubCountry": "German Football Association",
         "overall": 72,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2000000,
@@ -12927,7 +13144,8 @@
         "altPositions": [
           "CB",
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 2300000,
         "ratingSource": "fifa",
@@ -12987,7 +13205,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "RM",
-          "RW"
+          "RW",
+          "RWB"
         ],
         "value_eur": 1000000,
         "ratingSource": "fifa",
@@ -13167,7 +13386,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "RB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 31000000,
         "ratingSource": "fifa",
@@ -13376,7 +13596,8 @@
         "overall": 76,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 3900000,
         "ratingSource": "fifa",
@@ -13439,7 +13660,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 7000000,
         "ratingSource": "fifa",
@@ -13461,7 +13683,8 @@
         "primaryPosition": "LM",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "LW"
         ],
         "value_eur": 16500000,
         "ratingSource": "fifa",
@@ -13503,7 +13726,8 @@
         "overall": 76,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 6500000,
         "ratingSource": "fifa",
@@ -13679,8 +13903,11 @@
         "club": "Al Ahly",
         "clubCountry": "Egyptian Football Association",
         "overall": 63,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -13755,8 +13982,11 @@
         "club": "Al Ahly",
         "clubCountry": "Egyptian Football Association",
         "overall": 74,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "RW",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 4500000,
@@ -13774,8 +14004,10 @@
         "club": "Al Ahly",
         "clubCountry": "Egyptian Football Association",
         "overall": 71,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2000000,
@@ -13852,8 +14084,12 @@
         "club": "Oviedo",
         "clubCountry": "Royal Spanish Football Federation",
         "overall": 70,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "RW",
+          "ST",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1500000,
@@ -13871,8 +14107,11 @@
         "club": "Zamalek",
         "clubCountry": "Egyptian Football Association",
         "overall": 63,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -13890,8 +14129,10 @@
         "club": "Al-Wakrah",
         "clubCountry": "Qatar Football Association",
         "overall": 64,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -13909,8 +14150,11 @@
         "club": "Pyramids",
         "clubCountry": "Egyptian Football Association",
         "overall": 68,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 600000,
@@ -13966,8 +14210,10 @@
         "club": "Al-Najma",
         "clubCountry": "Saudi Arabian Football Federation",
         "overall": 62,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -14004,8 +14250,11 @@
         "club": "Nordsjælland",
         "clubCountry": "Danish Football Association",
         "overall": 63,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "LW",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -14102,8 +14351,12 @@
         "club": "Al Ahly",
         "clubCountry": "Egyptian Football Association",
         "overall": 74,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "CAM",
+          "RW",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 5000000,
@@ -14174,8 +14427,11 @@
         "club": "Esteghlal",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 62,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RM",
+          "RWB"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -14193,8 +14449,12 @@
         "club": "Sepahan",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 69,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LM",
+          "CB",
+          "LWB"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 275000,
@@ -14231,8 +14491,11 @@
         "club": "Persepolis",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 74,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LM",
+          "LWB"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1300000,
@@ -14250,8 +14513,10 @@
         "club": "Shabab Al Ahli",
         "clubCountry": "United Arab Emirates Football Association",
         "overall": 69,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 900000,
@@ -14269,8 +14534,11 @@
         "club": "Dender",
         "clubCountry": "Royal Belgian Football Association",
         "overall": 77,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM",
+          "LW"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 3000000,
@@ -14288,8 +14556,12 @@
         "club": "Rostov",
         "clubCountry": "Russian Football Union",
         "overall": 73,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "LW",
+          "ST",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 3500000,
@@ -14326,8 +14598,11 @@
         "club": "Al Nasr",
         "clubCountry": "United Arab Emirates Football Association",
         "overall": 63,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "ST",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -14402,8 +14677,11 @@
         "club": "Kalba",
         "clubCountry": "United Arab Emirates Football Association",
         "overall": 74,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "RM",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2000000,
@@ -14440,8 +14718,11 @@
         "club": "Tractor",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 64,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "RM",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -14478,8 +14759,12 @@
         "club": "Tractor",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 68,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "CAM",
+          "ST",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 700000,
@@ -14535,8 +14820,10 @@
         "club": "Al Wahda",
         "clubCountry": "United Arab Emirates Football Association",
         "overall": 68,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 800000,
@@ -14573,8 +14860,11 @@
         "club": "Foolad",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 67,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RM",
+          "RWB"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 450000,
@@ -14685,7 +14975,8 @@
         "overall": 63,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 350000,
         "ratingSource": "fifa",
@@ -14706,7 +14997,8 @@
         "overall": 69,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 1200000,
         "ratingSource": "fifa",
@@ -14848,8 +15140,11 @@
         "club": "Wellington Phoenix",
         "clubCountry": "New Zealand Football",
         "overall": 68,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "RW",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 600000,
@@ -14912,7 +15207,8 @@
         "altPositions": [
           "LM",
           "CAM",
-          "LW"
+          "LW",
+          "LWB"
         ],
         "value_eur": 3300000,
         "ratingSource": "fifa",
@@ -15140,7 +15436,8 @@
         "overall": 62,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 475000,
         "ratingSource": "fifa",
@@ -15235,7 +15532,10 @@
         "clubCountry": "Portuguese Football Federation",
         "overall": 62,
         "primaryPosition": "CB",
-        "altPositions": [],
+        "altPositions": [
+          "LB",
+          "LWB"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -15414,8 +15714,11 @@
         "club": "Apollon Limassol",
         "clubCountry": "Cyprus Football Association",
         "overall": 72,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "RW",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 325000,
@@ -15455,7 +15758,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 1800000,
         "ratingSource": "fifa",
@@ -15493,8 +15797,10 @@
         "club": "Puskás Akadémia",
         "clubCountry": "Hungarian Football Federation",
         "overall": 71,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1000000,
@@ -15512,8 +15818,10 @@
         "club": "Farense",
         "clubCountry": "Portuguese Football Federation",
         "overall": 68,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 50000,
@@ -15592,8 +15900,11 @@
         "club": "Iğdır",
         "clubCountry": "Turkish Football Federation",
         "overall": 71,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "LW",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 700000,
@@ -15672,7 +15983,8 @@
         "overall": 72,
         "primaryPosition": "RM",
         "altPositions": [
-          "RB"
+          "RB",
+          "RW"
         ],
         "value_eur": 5500000,
         "ratingSource": "fifa",
@@ -15710,8 +16022,10 @@
         "club": "Maccabi Tel Aviv",
         "clubCountry": "Israel Football Association",
         "overall": 71,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1200000,
@@ -15765,7 +16079,8 @@
         "overall": 70,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 2200000,
         "ratingSource": "fifa",
@@ -15973,7 +16288,8 @@
         "overall": 75,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 7000000,
         "ratingSource": "fifa",
@@ -15995,7 +16311,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "RB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 1200000,
         "ratingSource": "fifa",
@@ -16016,7 +16333,9 @@
         "overall": 71,
         "primaryPosition": "LB",
         "altPositions": [
-          "CB"
+          "CB",
+          "LWB",
+          "LM"
         ],
         "value_eur": 1300000,
         "ratingSource": "fifa",
@@ -16226,7 +16545,8 @@
         "overall": 67,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 1400000,
         "ratingSource": "fifa",
@@ -16269,7 +16589,8 @@
         "overall": 67,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 2200000,
         "ratingSource": "fifa",
@@ -16324,7 +16645,8 @@
         "overall": 73,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 6500000,
         "ratingSource": "fifa",
@@ -16391,7 +16713,9 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CM",
-          "RM"
+          "RM",
+          "CDM",
+          "RWB"
         ],
         "value_eur": 36500000,
         "ratingSource": "fifa",
@@ -16543,7 +16867,8 @@
         "overall": 82,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 37000000,
         "ratingSource": "fifa",
@@ -16790,7 +17115,10 @@
         "clubCountry": "The Football Association",
         "overall": 84,
         "primaryPosition": "LB",
-        "altPositions": [],
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": 45500000,
         "ratingSource": "fifa",
         "value_eur_tm": 50000000,
@@ -16831,7 +17159,9 @@
         "clubCountry": "Royal Spanish Football Federation",
         "overall": 80,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "CF"
+        ],
         "value_eur": 17000000,
         "ratingSource": "fifa",
         "value_eur_tm": 5000000,
@@ -16984,8 +17314,11 @@
         "club": "Flamengo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 69,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -17044,8 +17377,11 @@
         "club": "Flamengo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 70,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM",
+          "LW"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -17104,8 +17440,11 @@
         "club": "Flamengo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 70,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2000000,
@@ -17123,8 +17462,11 @@
         "club": "Fluminense",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 68,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM",
+          "CAM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -17164,7 +17506,10 @@
         "clubCountry": "Italian Football Federation",
         "overall": 78,
         "primaryPosition": "LB",
-        "altPositions": [],
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": 13500000,
         "ratingSource": "fifa",
         "value_eur_tm": 18000000,
@@ -17182,8 +17527,11 @@
         "club": "River Plate",
         "clubCountry": "Argentine Football Association",
         "overall": 76,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 10000000,
@@ -17201,8 +17549,10 @@
         "club": "América",
         "clubCountry": "Mexican Football Federation",
         "overall": 68,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 50000,
@@ -17280,8 +17630,11 @@
         "club": "Palmeiras",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 68,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -17337,8 +17690,11 @@
         "club": "Real Salt Lake",
         "clubCountry": "United States Soccer Federation",
         "overall": 76,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 7000000,
@@ -17414,7 +17770,8 @@
         "overall": 79,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 25000000,
         "ratingSource": "fifa",
@@ -17435,7 +17792,8 @@
         "overall": 80,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 15500000,
         "ratingSource": "fifa",
@@ -17476,7 +17834,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 85500000,
         "ratingSource": "fifa",
@@ -17765,7 +18124,8 @@
         "overall": 84,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 44500000,
         "ratingSource": "fifa",
@@ -17983,8 +18343,11 @@
         "club": "Pogoń Szczecin",
         "clubCountry": "Polish Football Association",
         "overall": 68,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 400000,
@@ -18059,8 +18422,10 @@
         "club": "AEK Larnaca",
         "clubCountry": "Cyprus Football Association",
         "overall": 63,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -18139,8 +18504,10 @@
         "club": "Nashville SC",
         "clubCountry": "United States Soccer Federation",
         "overall": 59,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -18199,7 +18566,8 @@
         "primaryPosition": "CDM",
         "altPositions": [
           "CM",
-          "CB"
+          "CB",
+          "CAM"
         ],
         "value_eur": 2600000,
         "ratingSource": "fifa",
@@ -18239,7 +18607,8 @@
         "overall": 65,
         "primaryPosition": "CM",
         "altPositions": [
-          "CDM"
+          "CDM",
+          "CAM"
         ],
         "value_eur": 750000,
         "ratingSource": "fifa",
@@ -18383,7 +18752,8 @@
         "overall": 68,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 1500000,
         "ratingSource": "fifa",
@@ -18402,8 +18772,10 @@
         "club": "Al-Talaba",
         "clubCountry": "Iraq Football Association",
         "overall": 61,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -18421,8 +18793,11 @@
         "club": "Al-Shorta",
         "clubCountry": "Iraq Football Association",
         "overall": 62,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -18515,7 +18890,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 6000000,
         "ratingSource": "fifa",
@@ -18555,7 +18931,8 @@
         "overall": 73,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 4300000,
         "ratingSource": "fifa",
@@ -18761,7 +19138,8 @@
         "overall": 74,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 4500000,
         "ratingSource": "fifa",
@@ -18782,7 +19160,8 @@
         "overall": 72,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 3000000,
         "ratingSource": "fifa",
@@ -18995,7 +19374,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 18500000,
         "ratingSource": "fifa",
@@ -19297,7 +19677,8 @@
         "overall": 75,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 7000000,
         "ratingSource": "fifa",
@@ -19418,8 +19799,12 @@
         "club": "Paris Saint-Germain",
         "clubCountry": "French Football Federation",
         "overall": 77,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "ST",
+          "RW",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 25000000,
@@ -19522,7 +19907,8 @@
         "overall": 75,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 10500000,
         "ratingSource": "fifa",
@@ -19656,7 +20042,9 @@
         "clubCountry": "Algerian Football Federation",
         "overall": 71,
         "primaryPosition": "CB",
-        "altPositions": [],
+        "altPositions": [
+          "RB"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1200000,
@@ -19823,7 +20211,8 @@
         "overall": 69,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 3000000,
         "ratingSource": "fifa",
@@ -19865,7 +20254,8 @@
         "overall": 81,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 34500000,
         "ratingSource": "fifa",
@@ -19906,7 +20296,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 1600000,
         "ratingSource": "fifa",
@@ -19969,8 +20360,11 @@
         "club": "Al-Duhail",
         "clubCountry": "Qatar Football Association",
         "overall": 68,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "LW",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -19991,7 +20385,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 15000000,
         "ratingSource": "fifa",
@@ -20073,7 +20468,10 @@
         "clubCountry": "Italian Football Federation",
         "overall": 59,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "RW",
+          "LW"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -20146,7 +20544,8 @@
         "overall": 78,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 9500000,
         "ratingSource": "fifa",
@@ -20167,7 +20566,8 @@
         "overall": 78,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 12500000,
         "ratingSource": "fifa",
@@ -20251,7 +20651,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "LM",
-          "CM"
+          "CM",
+          "LWB"
         ],
         "value_eur": 12000000,
         "ratingSource": "fifa",
@@ -20521,10 +20922,9 @@
         "club": "Palmeiras",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 70,
-        "primaryPosition": "CDM",
+        "primaryPosition": "ST",
         "altPositions": [
-          "CM",
-          "CB"
+          "CF"
         ],
         "value_eur": 1900000,
         "ratingSource": "fifa",
@@ -20627,7 +21027,8 @@
         "overall": 79,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 18500000,
         "ratingSource": "fifa",
@@ -20741,7 +21142,8 @@
         "overall": 79,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 16000000,
         "ratingSource": "fifa",
@@ -20783,7 +21185,11 @@
         "clubCountry": "Football Association of Serbia",
         "overall": 79,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "LW",
+          "CF",
+          "CAM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2500000,
@@ -20963,7 +21369,8 @@
         "overall": 76,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 5500000,
         "ratingSource": "fifa",
@@ -20983,7 +21390,9 @@
         "clubCountry": "German Football Association",
         "overall": 78,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CAM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 25000000,
@@ -21049,7 +21458,8 @@
         "altPositions": [
           "CDM",
           "CM",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 27500000,
         "ratingSource": "fifa",
@@ -21072,7 +21482,8 @@
         "altPositions": [
           "RW",
           "LM",
-          "ST"
+          "ST",
+          "CM"
         ],
         "value_eur": 16500000,
         "ratingSource": "fifa",
@@ -21095,7 +21506,8 @@
         "altPositions": [
           "LM",
           "CM",
-          "LW"
+          "LW",
+          "LWB"
         ],
         "value_eur": 5500000,
         "ratingSource": "fifa",
@@ -21133,8 +21545,12 @@
         "club": "PSV Eindhoven",
         "clubCountry": "Royal Dutch Football Association",
         "overall": 74,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM",
+          "LW",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 14000000,
@@ -21227,8 +21643,11 @@
         "club": "Al-Karma",
         "clubCountry": "Iraq Football Association",
         "overall": 64,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -21440,8 +21859,11 @@
         "club": "Al-Hussein",
         "clubCountry": "Jordan Football Association",
         "overall": 64,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM",
+          "CAM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -21592,8 +22014,11 @@
         "club": "Qatar SC",
         "clubCountry": "Qatar Football Association",
         "overall": 63,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM",
+          "CAM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -21630,8 +22055,11 @@
         "club": "Al-Hussein",
         "clubCountry": "Jordan Football Association",
         "overall": 65,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -21649,8 +22077,10 @@
         "club": "Al-Shabab",
         "clubCountry": "Saudi Arabian Football Federation",
         "overall": 69,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -21742,7 +22172,8 @@
         "overall": 81,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 22500000,
         "ratingSource": "fifa",
@@ -21780,8 +22211,11 @@
         "club": "Independiente",
         "clubCountry": "Argentine Football Association",
         "overall": 76,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RM",
+          "RWB"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2500000,
@@ -21863,8 +22297,11 @@
         "club": "Flamengo",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 76,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 9000000,
@@ -21905,8 +22342,11 @@
         "club": "Minnesota United FC",
         "clubCountry": "United States Soccer Federation",
         "overall": 83,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "RM",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 6000000,
@@ -22053,7 +22493,8 @@
         "overall": 78,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 9500000,
         "ratingSource": "fifa",
@@ -22092,7 +22533,10 @@
         "clubCountry": "Royal Spanish Football Federation",
         "overall": 79,
         "primaryPosition": "ST",
-        "altPositions": [],
+        "altPositions": [
+          "CAM",
+          "CF"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 18000000,
@@ -22156,7 +22600,8 @@
         "overall": 76,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 5500000,
         "ratingSource": "fifa",
@@ -22232,8 +22677,11 @@
         "club": "Vasco da Gama",
         "clubCountry": "Brazilian Football Confederation",
         "overall": 73,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM",
+          "LW"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 5000000,
@@ -22287,7 +22735,8 @@
         "overall": 80,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 22000000,
         "ratingSource": "fifa",
@@ -22327,7 +22776,9 @@
         "overall": 73,
         "primaryPosition": "RB",
         "altPositions": [
-          "CB"
+          "CB",
+          "RWB",
+          "RM"
         ],
         "value_eur": 3200000,
         "ratingSource": "fifa",
@@ -22408,8 +22859,10 @@
         "club": "Atromitos",
         "clubCountry": "Hellenic Football Federation",
         "overall": 74,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1200000,
@@ -22449,8 +22902,11 @@
         "club": "Spartak Moscow",
         "clubCountry": "Russian Football Union",
         "overall": 73,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "LM",
+          "RW"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 5000000,
@@ -22468,8 +22924,12 @@
         "club": "AEL",
         "clubCountry": "Hellenic Football Federation",
         "overall": 72,
-        "primaryPosition": "ST",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "LW",
+          "LM",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1800000,
@@ -22490,7 +22950,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 3600000,
         "ratingSource": "fifa",
@@ -22553,8 +23014,10 @@
         "club": "Kilmarnock",
         "clubCountry": "Scottish Football Association",
         "overall": 71,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 450000,
@@ -22726,8 +23189,12 @@
         "club": "Aris Limassol",
         "clubCountry": "Cyprus Football Association",
         "overall": 73,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "CB",
+          "RM",
+          "RWB"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 3500000,
@@ -22768,7 +23235,8 @@
         "overall": 75,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 4099999,
         "ratingSource": "fifa",
@@ -22823,7 +23291,8 @@
         "overall": 77,
         "primaryPosition": "RB",
         "altPositions": [
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 7500000,
         "ratingSource": "fifa",
@@ -22886,7 +23355,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 20000000,
         "ratingSource": "fifa",
@@ -22908,7 +23378,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CM",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 19000000,
         "ratingSource": "fifa",
@@ -23013,7 +23484,8 @@
         "altPositions": [
           "LW",
           "LM",
-          "ST"
+          "ST",
+          "CM"
         ],
         "value_eur": 23000000,
         "ratingSource": "fifa",
@@ -23116,7 +23588,8 @@
         "altPositions": [
           "RM",
           "RW",
-          "ST"
+          "ST",
+          "CM"
         ],
         "value_eur": 38000000,
         "ratingSource": "fifa",
@@ -23204,7 +23677,10 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "LWB",
+          "RWB",
+          "LM"
         ],
         "value_eur": 30500000,
         "ratingSource": "fifa",
@@ -23308,7 +23784,8 @@
         "overall": 86,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 86000000,
         "ratingSource": "fifa",
@@ -23385,7 +23862,9 @@
         "clubCountry": "The Football Association",
         "overall": 77,
         "primaryPosition": "CB",
-        "altPositions": [],
+        "altPositions": [
+          "RB"
+        ],
         "value_eur": 22000000,
         "ratingSource": "fifa",
         "value_eur_tm": 35000000,
@@ -23404,7 +23883,9 @@
         "clubCountry": "Uzbekistan Football Association",
         "overall": 63,
         "primaryPosition": "CB",
-        "altPositions": [],
+        "altPositions": [
+          "RB"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -23422,8 +23903,11 @@
         "club": "Neftchi Fergana",
         "clubCountry": "Uzbekistan Football Association",
         "overall": 60,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -23480,7 +23964,9 @@
         "clubCountry": "United Arab Emirates Football Association",
         "overall": 72,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CDM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1600000,
@@ -23498,8 +23984,10 @@
         "club": "Neftchi Fergana",
         "clubCountry": "Uzbekistan Football Association",
         "overall": 62,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -23536,8 +24024,12 @@
         "club": "Esteghlal",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 72,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CAM",
+        "altPositions": [
+          "LW",
+          "RW",
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1700000,
@@ -23555,8 +24047,11 @@
         "club": "Persepolis",
         "clubCountry": "Football Federation Islamic Republic of Iran",
         "overall": 71,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "LW",
+        "altPositions": [
+          "CAM",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1000000,
@@ -23593,8 +24088,11 @@
         "club": "Nasaf",
         "clubCountry": "Uzbekistan Football Association",
         "overall": 63,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -23614,7 +24112,8 @@
         "overall": 74,
         "primaryPosition": "ST",
         "altPositions": [
-          "CAM"
+          "CAM",
+          "CF"
         ],
         "value_eur": 4099999,
         "ratingSource": "fifa",
@@ -23942,7 +24441,8 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CB",
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 53500000,
         "ratingSource": "fifa",
@@ -24472,7 +24972,9 @@
         "primaryPosition": "LB",
         "altPositions": [
           "CM",
-          "CAM"
+          "CAM",
+          "LWB",
+          "LM"
         ],
         "value_eur": 6500000,
         "ratingSource": "fifa",
@@ -24659,7 +25161,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 31500000,
         "ratingSource": "fifa",
@@ -24846,7 +25349,8 @@
         "primaryPosition": "CAM",
         "altPositions": [
           "LW",
-          "ST"
+          "ST",
+          "CM"
         ],
         "value_eur": 42000000,
         "ratingSource": "fifa",
@@ -24904,7 +25408,10 @@
         "clubCountry": "The Football Association",
         "overall": 81,
         "primaryPosition": "RB",
-        "altPositions": [],
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": 31500000,
         "ratingSource": "fifa",
         "value_eur_tm": 50000000,
@@ -24925,7 +25432,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "LB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 18500000,
         "ratingSource": "fifa",
@@ -25191,7 +25699,8 @@
         "primaryPosition": "RM",
         "altPositions": [
           "LM",
-          "RW"
+          "RW",
+          "CAM"
         ],
         "value_eur": 26500000,
         "ratingSource": "fifa",
@@ -25232,7 +25741,8 @@
         "primaryPosition": "LM",
         "altPositions": [
           "RM",
-          "LW"
+          "LW",
+          "CAM"
         ],
         "value_eur": 6500000,
         "ratingSource": "fifa",
@@ -25253,7 +25763,8 @@
         "overall": 74,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 4500000,
         "ratingSource": "fifa",
@@ -25314,7 +25825,8 @@
         "overall": 76,
         "primaryPosition": "LB",
         "altPositions": [
-          "LM"
+          "LM",
+          "LWB"
         ],
         "value_eur": 6500000,
         "ratingSource": "fifa",
@@ -25495,8 +26007,11 @@
         "club": "Auxerre",
         "clubCountry": "French Football Federation",
         "overall": 72,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 3000000,
@@ -25548,8 +26063,11 @@
         "club": "Slovan Bratislava",
         "clubCountry": "Slovak Football Association",
         "overall": 63,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "RB",
+        "altPositions": [
+          "RWB",
+          "RM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -25624,8 +26142,10 @@
         "club": "Ironi Kiryat Shmona",
         "clubCountry": "Israel Football Association",
         "overall": 65,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "CDM",
+        "altPositions": [
+          "CM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -25643,8 +26163,11 @@
         "club": "Juárez",
         "clubCountry": "Mexican Football Federation",
         "overall": 72,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "RW",
+        "altPositions": [
+          "RM",
+          "LW"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 2000000,
@@ -25663,7 +26186,10 @@
         "clubCountry": "Mexican Football Federation",
         "overall": 65,
         "primaryPosition": "CM",
-        "altPositions": [],
+        "altPositions": [
+          "CDM",
+          "CAM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -25700,8 +26226,11 @@
         "club": "León",
         "clubCountry": "Mexican Football Federation",
         "overall": 72,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "ST",
+        "altPositions": [
+          "CAM",
+          "CF"
+        ],
         "value_eur": null,
         "ratingSource": "tm",
         "value_eur_tm": 1000000,
@@ -25719,8 +26248,12 @@
         "club": "Mazatlán",
         "clubCountry": "Mexican Football Federation",
         "overall": 64,
-        "primaryPosition": "CM",
-        "altPositions": [],
+        "primaryPosition": "RM",
+        "altPositions": [
+          "LM",
+          "CAM",
+          "RW"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -25799,8 +26332,11 @@
         "club": "Plaza Amador",
         "clubCountry": "Panamanian Football Federation",
         "overall": 62,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
@@ -25959,7 +26495,8 @@
         "primaryPosition": "RB",
         "altPositions": [
           "CB",
-          "RM"
+          "RM",
+          "RWB"
         ],
         "value_eur": 6500000,
         "ratingSource": "fifa",
@@ -26019,8 +26556,11 @@
         "club": "Deportivo La Guaira",
         "clubCountry": "Venezuelan Football Federation",
         "overall": 62,
-        "primaryPosition": "CB",
-        "altPositions": [],
+        "primaryPosition": "LB",
+        "altPositions": [
+          "LWB",
+          "LM"
+        ],
         "value_eur": null,
         "ratingSource": "club-tier",
         "value_eur_tm": null,
