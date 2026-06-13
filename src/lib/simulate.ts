@@ -13,23 +13,57 @@
  * scripts/calibrate-sim.ts contra ~5800 jogos competitivos de seleção pós-2018
  * (martj42/international_results). Pra recalibrar: `pnpm calibrate:sim`.
  *
+ * Rubber-band (opcional, ativado quando `opts.difficulty` é passado):
+ *   Quando um dos times tem `isUser:true`, o overall efetivo dele é puxado
+ *   pra longe do adversário: `effective = user - intensity * (opp - user)`.
+ *   Assim adversários mais fortes ficam ainda mais fortes ANTES de virar λ,
+ *   e adversários fracos ficam mais fracos — só nos jogos do usuário.
+ *   `intensity = rubberBand.base * rubberBand.byDifficulty[difficulty]`.
+ *   Jogos CPU vs CPU continuam usando o modelo puro calibrado.
+ *
  * Referência: Dixon &amp; Coles (1997), "Modelling Association Football Scores...".
  */
 import simParams from '../../data/sim-params.json'
+import type { Difficulty } from './formations'
 
 const AVG_GOALS_PER_MATCH = simParams.avgGoalsPerMatch
 const HOME_ADVANTAGE = simParams.homeAdvantage
 const DC_RHO = simParams.rho
+const RUBBER_BAND = simParams.rubberBand as {
+  base: number
+  byDifficulty: Record<Difficulty, number>
+}
+
+/**
+ * Países-sede da Copa 2026 — só eles recebem mando de campo. A label "home"
+ * no chaveamento é arbitrária; pra todos os outros pares o jogo é tratado
+ * como neutro (sem bônus). USA/MEX vs USA/MEX cancela (improvável: só na
+ * final no formato 2026, e dependeria do bracket caindo assim).
+ */
+const HOST_NATIONS = new Set(['USA', 'MEX', 'CAN'])
 
 const MAX_GOALS = 8 // teto do grid de amostragem; P(x ≥ 8 | λ ≤ 3) ≈ 0
 
 export interface Team {
   averageOverall: number
+  /** Código do país (ex: 'BRA', 'USA') — usado pra detectar país-sede. */
+  code?: string
+  /** Marca o XI do usuário pra aplicar o rubber-band assimétrico. */
+  isUser?: boolean
 }
 
 export interface MatchResult {
   homeGoals: number
   awayGoals: number
+}
+
+export interface SimOptions {
+  /**
+   * Dificuldade do draft do usuário. Quando presente E um dos times é o XI
+   * (isUser:true), aplica o rubber-band. Quando omitida, sim segue o modelo
+   * calibrado puro (sem assimetria).
+   */
+  difficulty?: Difficulty
 }
 
 /** RNG seedeável (Mulberry32). Padrão é Math.random. */
@@ -63,10 +97,39 @@ function dixonColesTau(x: number, y: number, lambda: number, mu: number, rho: nu
   return 1
 }
 
+/**
+ * Aplica o rubber-band ao overall do XI do user, baseado no gap com o adversário.
+ * Gap positivo (oponente mais forte) puxa o user PRA BAIXO; negativo, pra cima.
+ */
+function rubberBandOverall(
+  userOverall: number,
+  opponentOverall: number,
+  difficulty: Difficulty,
+): number {
+  const intensity = RUBBER_BAND.base * RUBBER_BAND.byDifficulty[difficulty]
+  const gap = opponentOverall - userOverall
+  return userOverall - intensity * gap
+}
+
 /** Converte overall do par (mandante, visitante) em (λ, μ) da Poisson. */
-function rates(home: Team, away: Team): { lambda: number; mu: number } {
-  const homeStr = home.averageOverall + HOME_ADVANTAGE
-  const awayStr = away.averageOverall
+function rates(home: Team, away: Team, opts?: SimOptions): { lambda: number; mu: number } {
+  // Rubber-band: só ativa quando difficulty foi passada E um dos times é o user.
+  // Ajuste é simétrico em direção (puxa pra longe do adversário) mas só atinge
+  // o lado do user — o adversário fica intacto.
+  let homeBase = home.averageOverall
+  let awayBase = away.averageOverall
+  if (opts?.difficulty) {
+    if (home.isUser) homeBase = rubberBandOverall(homeBase, awayBase, opts.difficulty)
+    if (away.isUser) awayBase = rubberBandOverall(awayBase, homeBase, opts.difficulty)
+  }
+  // Mando: só pra países-sede. Pares neutros não recebem bônus. Quando os
+  // dois são hosts (caso de borda), o bônus cancela e o jogo vira neutro.
+  const homeHosts = home.code ? HOST_NATIONS.has(home.code) : false
+  const awayHosts = away.code ? HOST_NATIONS.has(away.code) : false
+  const homeBoost = homeHosts && !awayHosts ? HOME_ADVANTAGE : 0
+  const awayBoost = awayHosts && !homeHosts ? HOME_ADVANTAGE : 0
+  const homeStr = homeBase + homeBoost
+  const awayStr = awayBase + awayBoost
   const homeWeight = Math.pow(homeStr / 50, 1.5)
   const awayWeight = Math.pow(awayStr / 50, 1.5)
   const total = homeWeight + awayWeight
@@ -80,8 +143,9 @@ export function simulateMatch(
   home: Team,
   away: Team,
   rng: () => number = Math.random,
+  opts?: SimOptions,
 ): MatchResult {
-  const { lambda, mu } = rates(home, away)
+  const { lambda, mu } = rates(home, away, opts)
 
   // PMFs marginais (uma vez cada k)
   const homePmf: number[] = new Array(MAX_GOALS + 1)
