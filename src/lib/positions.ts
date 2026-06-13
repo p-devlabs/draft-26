@@ -1,33 +1,40 @@
 /**
- * Compatibilidade slot → posição principal do jogador.
+ * Compatibilidade slot → posições do jogador (primary + alternativas).
  *
- * Matching 1:1 estrito: cada slot só aceita jogadores cuja primaryPosition
- * é exatamente a do slot. Exceções pras posições com 0 jogadores na base
- * (data/squads-enriched.json não traz LWB/RWB/CF como primary):
+ * Um jogador serve num slot se sua primaryPosition OU qualquer altPosition
+ * está em COMPAT[slot]. Curadoria das alt vem do enrich:fifa (EA FC 26),
+ * enrich:alt-positions (TM sub_position + heurística) e data/position-overrides.json.
  *
- *   LWB → fallback LB
- *   RWB → fallback RB
- *   CF  → fallback ST
+ * Bridges padrão (slot → posições aceitas além de si mesmo):
+ *   LWB → LB        (poucos LWB primários na base)
+ *   RWB → RB        (idem)
+ *   CF  → ST        (poucos CF primários na base)
+ *   LB  → LWB       (LB moderno joga ala)
+ *   RB  → RWB
+ *   LW  → LM        (ponta também cobre meia-esquerda)
+ *   RW  → RM
+ *   LM  → LW        (e vice-versa)
+ *   RM  → RW
  *
- * As alternativas (altPositions[]) ficam de fora por enquanto — precisam
- * de curadoria antes de virar parte do match.
+ * Já o cruzamento CM/CDM/CAM vem do dado, não do bridge — evita transformar
+ * todo volante em camisa 10.
  */
 import type { SlotPosition } from './formations'
 
 const COMPAT: Record<SlotPosition, string[]> = {
   GK: ['GK'],
   CB: ['CB'],
-  LB: ['LB'],
-  RB: ['RB'],
+  LB: ['LB', 'LWB'],
+  RB: ['RB', 'RWB'],
   LWB: ['LWB', 'LB'],
   RWB: ['RWB', 'RB'],
   CDM: ['CDM'],
   CM: ['CM'],
   CAM: ['CAM'],
-  LM: ['LM'],
-  RM: ['RM'],
-  LW: ['LW'],
-  RW: ['RW'],
+  LM: ['LM', 'LW'],
+  RM: ['RM', 'RW'],
+  LW: ['LW', 'LM'],
+  RW: ['RW', 'RM'],
   CF: ['CF', 'ST'],
   ST: ['ST'],
 }
@@ -35,12 +42,11 @@ const COMPAT: Record<SlotPosition, string[]> = {
 export function isCompatible(
   slot: SlotPosition,
   primary: string | undefined,
-  _alt: string[] | undefined,
+  alt: string[] | undefined,
 ): boolean {
-  // Por ora só considera a posição principal — altPositions ainda precisa
-  // de curadoria. Voltar aqui quando o critério das alternativas estiver definido.
   const allowed = COMPAT[slot]
   if (primary && allowed.includes(primary)) return true
+  if (alt && alt.some((p) => allowed.includes(p))) return true
   return false
 }
 

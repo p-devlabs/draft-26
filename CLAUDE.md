@@ -19,7 +19,7 @@ pnpm data:rebuild      # full data pipeline (network-bound, ~minutes)
 ```
 
 Individual pipeline steps (run in order if rebuilding manually):
-`pnpm scrape:squads` → `pnpm enrich:squads` → `pnpm download:fifa` → `pnpm enrich:fifa` → `pnpm download:transfermarkt` → `pnpm enrich:transfermarkt`.
+`pnpm scrape:squads` → `pnpm enrich:squads` → `pnpm download:fifa` → `pnpm enrich:fifa` → `pnpm download:transfermarkt` → `pnpm enrich:transfermarkt` → `pnpm enrich:alt-positions`.
 
 There is **no test runner and no linter beyond `tsc`**. Don't claim "tests pass" — there are none. When asked to verify, run `pnpm lint` and exercise the UI in the dev server.
 
@@ -47,7 +47,7 @@ Note: README.md / HANDOFF.md still reference the old Portuguese paths (`/selecoe
 
 - **`draft.ts`** — `DraftState` plus the country-cooldown sorter. `rollUntilCompatible` re-rolls automatically when the random country has no player compatible with the current slot. `COUNTRY_COOLDOWN = 5` (a rolled country can't reappear in the next 5 rolls). Pending rolls are persisted on the slot itself so closing/reopening the drawer doesn't re-randomize.
 - **`formations.ts`** — 4 formations (4-3-3, 4-2-3-1, 4-4-2, 3-4-3) with `{x, y}` coordinates per slot; `DIFFICULTY_SKIPS` = `{ easy: 5, medium: 3, hard: 1 }`.
-- **`positions.ts`** — slot↔player compatibility is **strictly 1:1 on `primaryPosition`**. `altPositions[]` is intentionally ignored (needs curation). The only fallbacks: `LWB→LB`, `RWB→RB`, `CF→ST` (because the dataset has zero players whose primary is LWB/RWB/CF).
+- **`positions.ts`** — slot↔player compatibility checks `primaryPosition` **OR** any `altPositions[]` entry against the slot's COMPAT table. Bridges built into COMPAT (sem precisar de alt no jogador): `LB↔LWB`, `RB↔RWB`, `LM↔LW`, `RM↔RW`, `CF↔ST`. Cruzamentos CDM/CM/CAM e LB→LM etc precisam vir do dado (altPositions). Alt positions são populadas em três camadas — FIFA `player_positions` (enrich:fifa), TM `sub_position` + bridges heurísticos (enrich:alt-positions), e overlay curado em `data/position-overrides.json`.
 - **`simulate.ts`** — Poisson-weighted match engine; per-team rate = `(strength^1.5 / total) * 2.6` with `HOME_ADVANTAGE = 2` added to the home overall. `seededRng` is Mulberry32 for reproducibility.
 - **`groups.ts`** — `createGroupStage` picks a random group and substitutes the **weakest** nation with the user's XI. Tiebreakers implement FIFA 2026 Article 13 in order: head-to-head points → H2H goal-diff → H2H goals-for → overall GD → overall GF → (skipped fair play) → `averageOverall` as a FIFA-ranking proxy.
 - **`bracket.ts`** — Top-32 by `averageOverall` (user included) seeded into NCAA snake pairing (`SEED_ORDER_32`). When the bracket is set up, `simulateOtherHalfToFinal` immediately simulates the entire opposite half so the user always knows who's waiting in the final. `ensureRoundsSimulated` advances non-user matches round-by-round as the user plays. Knockout matches go full-game: ET (≈0.7 expected goals) → penalties (5 + sudden death, per-shot prob clamped 0.3–0.9 by overall).

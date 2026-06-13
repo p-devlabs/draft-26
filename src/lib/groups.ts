@@ -145,7 +145,7 @@ export function playRound(
     if (m.round !== round || m.result) return m
     const home = teamByCode.get(m.homeCode)!
     const away = teamByCode.get(m.awayCode)!
-    const result = simulateMatch(home, away, rng)
+    const result = simulateMatch(home, away, rng, { difficulty: draft.difficulty })
     const homeRoster = rosterFor(m.homeCode, stage, draft)
     const awayRoster = rosterFor(m.awayCode, stage, draft)
     const events = narrateMatch({ home: homeRoster, away: awayRoster, result }, rng)

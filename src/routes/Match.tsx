@@ -305,7 +305,9 @@ function KnockoutMatchRunner({
 
     const home = br.teams[match.homeCode]
     const away = br.teams[match.awayCode]
-    const sim = fullySimulate(home, away)
+    const sim = fullySimulate(home, away, Math.random, {
+      difficulty: stageData.draft.difficulty,
+    })
     const events = narrateMatch({
       home: rosterForKnockout(home.code, stageData.draft, { name: home.name, flag: home.flag }),
       away: rosterForKnockout(away.code, stageData.draft, { name: away.name, flag: away.flag }),

@@ -1,0 +1,206 @@
+{
+  "BRA": {
+    "Alex Sandro":          { "primary": "LB", "altsReplace": ["LWB", "LM", "CB"] },
+    "Neymar":               { "primary": "LW", "altsReplace": ["CAM", "ST", "CF"] },
+    "Danilo Luiz":          { "primary": "RB", "altsReplace": ["CB", "RWB"] },
+    "Douglas Santos":       { "primary": "LB", "altsReplace": ["LWB", "LM"] },
+    "Danilo Santos":        { "primary": "CDM", "altsReplace": ["CM"] },
+    "Igor Thiago":          { "primary": "ST", "altsReplace": ["CF"] },
+    "Rayan":                { "primary": "LW", "altsReplace": ["ST", "LM"] },
+    "Éderson Silva":        { "primary": "RB", "altsReplace": ["RM", "RWB"] }
+  },
+
+  "ARG": {
+    "José Manuel López":    { "primary": "ST", "altsReplace": ["CF"] }
+  },
+
+  "POR": {
+    "João Cancelo":         { "altsAdd": ["LB", "LWB", "RWB", "LM"] }
+  },
+
+  "ESP": {
+    "Marcos Llorente":      { "altsAdd": ["CDM"] },
+    "Borja Iglesias":       { "altsAdd": ["CF"] }
+  },
+
+  "AUT": {
+    "Marko Arnautović":     { "altsReplace": ["LW", "CF", "CAM"] },
+    "Carney Chukwuemeka":   { "altsReplace": ["CAM", "CM"] },
+    "Paul Wanner":          { "primary": "CAM", "altsReplace": ["CM", "LW", "LM"] }
+  },
+
+  "MAR": {
+    "Ayyoub Bouaddi":       { "primary": "CDM", "altsReplace": ["CM"] },
+    "Issa Diop":            { "altsAdd": ["CDM"] },
+    "Anass Salah-Eddine":   { "primary": "LB", "altsReplace": ["LWB", "LM"] }
+  },
+
+  "SEN": {
+    "Ibrahim Mbaye":        { "primary": "LW", "altsReplace": ["ST", "RW"] }
+  },
+
+  "CIV": {
+    "Jean Michaël Seri":    { "primary": "CDM", "altsReplace": ["CM"] },
+    "Ange-Yoan Bonny":      { "primary": "ST", "altsReplace": ["CF"] },
+    "Elye Wahi":            { "primary": "ST", "altsReplace": ["CF", "RW"] }
+  },
+
+  "CZE": {
+    "Vladimír Darida":      { "primary": "CM", "altsReplace": ["CDM", "CAM"] }
+  },
+
+  "JPN": {
+    "Yūto Nagatomo":        { "primary": "LB", "altsReplace": ["LWB", "LM"] },
+    "Takehiro Tomiyasu":    { "primary": "RB", "altsReplace": ["CB", "LB"] }
+  },
+
+  "SCO": {
+    "Tyler Fletcher":       { "primary": "CM", "altsReplace": ["CDM"] }
+  },
+
+  "COD": {
+    "Samuel Moutoussamy":   { "primary": "CDM", "altsReplace": ["CM"] },
+    "Théo Bongonda":        { "primary": "LW", "altsReplace": ["LM", "RW"] },
+    "Gaël Kakuta":          { "primary": "CAM", "altsReplace": ["LW", "LM"] },
+    "Aaron Tshibola":       { "primary": "CDM", "altsReplace": ["CM"] },
+    "Gédéon Kalulu":        { "primary": "RB", "altsReplace": ["CB", "RM"] }
+  },
+
+  "CAN": {
+    "Ismaël Koné":          { "altsAdd": ["CDM"] }
+  },
+
+  "ECU": {
+    "Pedro Vite":           { "primary": "CAM", "altsReplace": ["CM"] },
+    "Alan Franco":          { "primary": "CDM", "altsReplace": ["CM", "CB"] }
+  },
+
+  "ALG": {
+    "Zineddine Belaïd":     { "altsAdd": ["RB"] },
+    "Adil Boulbina":        { "primary": "RW", "altsReplace": ["LW", "RM"] },
+    "Farès Ghedjemis":      { "altsAdd": ["RW", "LW"] }
+  },
+
+  "PAR": {
+    "Ramón Sosa":           { "primary": "LW", "altsReplace": ["LM", "RW"] },
+    "Mauricio":             { "primary": "CM", "altsReplace": ["CDM"] }
+  },
+
+  "BIH": {
+    "Ivan Šunjić":          { "primary": "CDM", "altsReplace": ["CM"] }
+  },
+
+  "CPV": {
+    "Stopira":              { "altsAdd": ["LB", "LWB"] },
+    "Garry Rodrigues":      { "primary": "LW", "altsReplace": ["RW", "LM"] },
+    "Ryan Mendes":          { "primary": "RW", "altsReplace": ["LW", "RM"] },
+    "Hélio Varela":         { "primary": "CDM", "altsReplace": ["CM"] }
+  },
+
+  "AUS": {
+    "Jason Geria":          { "primary": "RB", "altsReplace": ["CB", "RM"] },
+    "Cristian Volpato":     { "primary": "CAM", "altsReplace": ["CM", "RW"] }
+  },
+
+  "IRN": {
+    "Saleh Hardani":        { "primary": "RB", "altsReplace": ["RM"] },
+    "Ehsan Hajsafi":        { "primary": "LB", "altsReplace": ["LM", "CB"] },
+    "Milad Mohammadi":      { "primary": "LB", "altsReplace": ["LM", "LWB"] },
+    "Saeid Ezatolahi":      { "primary": "CDM", "altsReplace": ["CM"] },
+    "Alireza Jahanbakhsh":  { "primary": "RW", "altsReplace": ["RM", "LW"] },
+    "Mohammad Mohebi":      { "primary": "RW", "altsReplace": ["LW", "ST"] },
+    "Mehdi Ghayedi":        { "primary": "LW", "altsReplace": ["ST", "LM"] },
+    "Saman Ghoddos":        { "primary": "CAM", "altsReplace": ["RM", "CM"] },
+    "Mehdi Torabi":         { "primary": "CAM", "altsReplace": ["RM", "CM"] },
+    "Amirhossein Hosseinzadeh": { "primary": "LW", "altsReplace": ["CAM", "ST"] },
+    "Ramin Rezaeian":       { "primary": "RB", "altsReplace": ["RM", "RWB"] }
+  },
+
+  "TUN": {
+    "Rani Khedira":         { "primary": "CDM", "altsReplace": ["CM"] }
+  },
+
+  "NZL": {
+    "Sarpreet Singh":       { "primary": "CAM", "altsReplace": ["RW", "CM"] }
+  },
+
+  "EGY": {
+    "Trézéguet":            { "primary": "LW", "altsReplace": ["RW", "LM"] },
+    "Emam Ashour":          { "primary": "CAM", "altsReplace": ["CM"] },
+    "Haissem Hassan":       { "primary": "LW", "altsReplace": ["RW", "ST"] },
+    "Karim Hafez":          { "primary": "LB", "altsReplace": ["LWB", "LM"] },
+    "Ibrahim Adel":         { "primary": "RW", "altsReplace": ["LW", "RM"] },
+    "Zizo":                 { "primary": "LW", "altsReplace": ["CAM", "RW"] },
+    "Nabil Emad":           { "primary": "CAM", "altsReplace": ["CM"] }
+  },
+
+  "PAN": {
+    "José Luis Rodríguez":  { "primary": "RW", "altsReplace": ["RM", "LW"] },
+    "Ismael Díaz":          { "primary": "ST", "altsReplace": ["CAM", "CF"] },
+    "Yoel Bárcenas":        { "primary": "RM", "altsReplace": ["LM", "CAM"] },
+    "Adalberto Carrasquilla": { "altsAdd": ["CDM", "CAM"] }
+  },
+
+  "HAI": {
+    "Ruben Providence":     { "primary": "LW", "altsReplace": ["RW", "ST"] }
+  },
+
+  "IRQ": {
+    "Hussein Ali":          { "primary": "LB", "altsReplace": ["LWB", "LM"] },
+    "Youssef Amyn":         { "primary": "RW", "altsReplace": ["RM"] },
+    "Amir Al-Ammari":       { "altsAdd": ["CAM"] },
+    "Zidane Iqbal":         { "altsAdd": ["CAM"] }
+  },
+
+  "JOR": {
+    "Nizar Al-Rashdan":     { "altsAdd": ["CAM"] },
+    "Mahmoud Al-Mardi":     { "altsAdd": ["CAM"] }
+  },
+
+  "GHA": {
+    "Christopher Bonsu Baah": { "altsAdd": ["CAM"] },
+    "Antoine Semenyo":      { "altsAdd": ["CAM"] }
+  },
+
+  "UZB": {
+    "Eldor Shomurodov":     { "altsAdd": ["CF"] },
+    "Otabek Shukurov":      { "altsAdd": ["CDM"] },
+    "Jaloliddin Masharipov": { "primary": "CAM", "altsReplace": ["LW", "RW"] },
+    "Oston Urunov":         { "primary": "LW", "altsReplace": ["CAM", "LM"] },
+    "Abdukodir Khusanov":   { "altsAdd": ["RB"] },
+    "Khojiakbar Alijonov":  { "altsAdd": ["RB"] }
+  },
+
+  "CUW": {
+    "Leandro Bacuna":       { "altsAdd": ["CDM", "RM"] },
+    "Sherel Floranus":      { "primary": "RB", "altsReplace": ["LB", "LM"] }
+  },
+
+  "QAT": {
+    "Ahmed Alaaeldin":      { "altsAdd": ["RW"] }
+  },
+
+  "URU": {
+    "Nicolás de la Cruz":   { "primary": "CAM", "altsReplace": ["CM", "LM"] },
+    "Giorgian de Arrascaeta": { "primary": "CAM", "altsReplace": ["CM", "LW"] },
+    "Agustín Canobbio":     { "primary": "RW", "altsReplace": ["RM", "CAM"] },
+    "Joaquín Piquerez":     { "primary": "LB", "altsReplace": ["LWB", "LM"] },
+    "Juan Manuel Sanabria": { "primary": "LB", "altsReplace": ["LWB"] }
+  },
+
+  "COL": {
+    "Santiago Arias":       { "primary": "RB", "altsReplace": ["RM", "RWB"] },
+    "Jorge Carrascal":      { "primary": "CAM", "altsReplace": ["CM", "RM"] },
+    "James Rodríguez":      { "primary": "CAM", "altsReplace": ["RM", "CM"] },
+    "Cucho Hernández":      { "primary": "ST", "altsReplace": ["CAM", "CF"] },
+    "Andrés Gómez":         { "primary": "RW", "altsReplace": ["RM", "LW"] }
+  },
+
+  "MEX": {
+    "Luis Romo":            { "primary": "CDM", "altsReplace": ["CB", "CM"] },
+    "Álvaro Fidalgo":       { "primary": "CAM", "altsReplace": ["CM"] },
+    "Gilberto Mora":        { "primary": "CAM", "altsReplace": ["LW", "RW"] },
+    "Luis Chávez":          { "primary": "CDM", "altsReplace": ["CM"] },
+    "Brian Gutiérrez":      { "primary": "LM", "altsReplace": ["CAM", "LW"] }
+  }
+}

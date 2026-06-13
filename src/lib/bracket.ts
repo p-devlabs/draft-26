@@ -9,7 +9,7 @@
  */
 import { squads } from '../data/squads'
 import { averageOverall, type DraftState } from './draft'
-import { simulateMatch, type MatchResult, type Team } from './simulate'
+import { simulateMatch, type MatchResult, type SimOptions, type Team } from './simulate'
 import { narrateMatch, type MatchEvent } from './narrate'
 import { USER_TEAM_CODE } from './groups'
 import { rosterForKnockout } from './rosters'
@@ -216,17 +216,20 @@ export function fullySimulate(
   home: Team,
   away: Team,
   rng: () => number = Math.random,
+  opts?: SimOptions,
 ): {
   result: MatchResult
   extraTime?: MatchResult
   penalties?: Penalties
   winner: 'home' | 'away'
 } {
-  const result = simulateMatch(home, away, rng)
+  const result = simulateMatch(home, away, rng, opts)
   if (result.homeGoals !== result.awayGoals) {
     return { result, winner: result.homeGoals > result.awayGoals ? 'home' : 'away' }
   }
-  // Prorrogação: tratamos como "mini-jogo" com menos gols (~0.6 esperados)
+  // Prorrogação: tratamos como "mini-jogo" com menos gols (~0.6 esperados).
+  // Rubber-band não aplica na ET pra manter o tempo extra como "moeda mais
+  // justa" — a assimetria já entrou no tempo normal.
   const et = simulateExtraTime(home, away, rng)
   if (et.homeGoals !== et.awayGoals) {
     return {
@@ -310,6 +313,7 @@ export function simulateNonUserRound(
   round: KORound,
   rng: () => number = Math.random,
 ): KnockoutBracket {
+  // Jogos sem o user — modelo puro calibrado, sem rubber-band.
   const teamByCode = new Map(Object.entries(bracket.teams).map(([code, t]) => [code, t as Team]))
   let next = bracket
 

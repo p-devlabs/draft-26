@@ -2,6 +2,14 @@
   "rho": 0.04,
   "homeAdvantage": 2,
   "avgGoalsPerMatch": 2.6,
+  "rubberBand": {
+    "base": 0.35,
+    "byDifficulty": {
+      "easy": 0.5,
+      "medium": 1.0,
+      "hard": 1.5
+    }
+  },
   "calibration": {
     "calibratedAt": "2026-06-11",
     "source": "github.com/martj42/international_results",
