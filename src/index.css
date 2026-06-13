@@ -18,7 +18,7 @@
   --color-clay-soft: oklch(92% 0.04 35);
   --color-moss: oklch(48% 0.08 145);
 
-  /* DRAFT 26 dark theme tokens */
+  /* Draft 26 dark theme tokens */
   --color-d-bg: #0a0b09;
   --color-d-surface: #141613;
   --color-d-surface2: #1b1e19;
@@ -54,7 +54,7 @@
   }
 }
 
-/* DRAFT 26 dark theme — used on the Partida route */
+/* Draft 26 dark theme — used on the Partida route */
 @keyframes d26-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(212, 255, 61, 0.5); }
   50% { box-shadow: 0 0 0 7px rgba(212, 255, 61, 0); }

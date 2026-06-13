@@ -1095,7 +1095,7 @@ function PrivacyDrawer({ onClose }: { onClose: () => void }) {
           </div>
           <div style={{ padding: 'clamp(18px, 4vw, 28px) clamp(20px, 5vw, 32px) 28px' }}>
             <PrivacySection title="O QUE COLETAMOS">
-              Tudo o que você joga no DRAFT 26 — formação escolhida, time montado, resultados de
+              Tudo o que você joga no Draft 26 — formação escolhida, time montado, resultados de
               partidas e progressão na Copa — fica gravado{' '}
               <b style={{ color: 'var(--color-d-ink)' }}>localmente no seu navegador</b> (localStorage).
               Não pedimos cadastro, nome ou email pra jogar.
