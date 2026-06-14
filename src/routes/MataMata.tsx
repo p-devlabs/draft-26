@@ -11,7 +11,7 @@ import {
   type KnockoutBracket,
   type KORound,
 } from '../lib/bracket'
-import { clearBracket, loadBracket, loadStage, saveBracket } from '../lib/persistence'
+import { clearBracket, loadBracket, loadWorldCup, saveBracket } from '../lib/persistence'
 import type { DraftState } from '../lib/draft'
 import { syncRun, type FinishedRound } from '../lib/runs'
 
@@ -22,18 +22,18 @@ export function MataMata() {
   const [missingStage, setMissingStage] = useState(false)
 
   useEffect(() => {
-    const stageData = loadStage()
-    if (!stageData) {
+    const persisted = loadWorldCup()
+    if (!persisted) {
       setMissingStage(true)
       return
     }
-    setDraft(stageData.draft)
+    setDraft(persisted.draft)
     const existing = loadBracket()
     if (existing) {
       setBracket(existing)
       return
     }
-    const created = setupBracket(stageData.draft, stageData.stage.replacedTeam.code)
+    const created = setupBracket(persisted.worldCup)
     saveBracket(created)
     setBracket(created)
   }, [])
@@ -130,8 +130,8 @@ export function MataMata() {
 
   const handleReset = () => {
     clearBracket()
-    const stageData = loadStage()!
-    const created = setupBracket(stageData.draft, stageData.stage.replacedTeam.code)
+    const persisted = loadWorldCup()!
+    const created = setupBracket(persisted.worldCup)
     saveBracket(created)
     setBracket(created)
   }

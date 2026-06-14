@@ -2,11 +2,17 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   findTeam,
+  playCpuRound,
   playRound,
+  setUserGroup,
   standings,
+  userFate,
+  userGroup as getUserGroup,
   USER_TEAM_CODE,
   type GroupMatch,
   type GroupStage,
+  type UserFate,
+  type WorldCupGroups,
 } from '../lib/groups'
 import {
   applyResult,
@@ -25,10 +31,10 @@ import { narrateMatch } from '../lib/narrate'
 import {
   loadBracket,
   loadMatchSpeed,
-  loadStage,
+  loadWorldCup,
   saveBracket,
   saveMatchSpeed,
-  saveStage,
+  saveWorldCup,
 } from '../lib/persistence'
 import { nationGradient } from '../lib/nation-colors'
 import type { MatchEvent } from '../lib/narrate'
@@ -67,7 +73,11 @@ function GroupMatchRunner({
   navigate: ReturnType<typeof useNavigate>
   round: 1 | 2 | 3
 }) {
-  const [data, setData] = useState<{ stage: GroupStage; draft: DraftState } | null>(null)
+  const [data, setData] = useState<{
+    worldCup: WorldCupGroups
+    stage: GroupStage
+    draft: DraftState
+  } | null>(null)
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
@@ -79,13 +89,18 @@ function GroupMatchRunner({
   const persistedRef = useRef(false)
 
   useEffect(() => {
-    const persisted = loadStage()
+    const persisted = loadWorldCup()
     if (!persisted || !round) {
       navigate('/groups', { replace: true })
       return
     }
-    const played = playRound(persisted.stage, round, persisted.draft)
-    setData({ stage: played, draft: persisted.draft })
+    // Simula o jogo do user no grupo dele E simula a mesma rodada nos
+    // 11 outros grupos (CPU vs CPU) em lockstep. Idempotente — rodas já
+    // jogadas ficam intactas.
+    const userGroupAfter = playRound(getUserGroup(persisted.worldCup), round, persisted.draft)
+    const stitched = setUserGroup(persisted.worldCup, userGroupAfter)
+    const worldCupAfter = playCpuRound(stitched, round)
+    setData({ worldCup: worldCupAfter, stage: userGroupAfter, draft: persisted.draft })
   }, [navigate, round])
 
   useEffect(() => {
@@ -117,9 +132,9 @@ function GroupMatchRunner({
   useEffect(() => {
     if (!data || virtualMinute < 90 || persistedRef.current) return
     persistedRef.current = true
-    saveStage(data.draft, data.stage)
+    saveWorldCup(data.draft, data.worldCup)
     setPlaying(false)
-    setOutcome(resolveGroupOutcome(data.stage, round))
+    setOutcome(resolveGroupOutcome(data.worldCup, round))
   }, [data, virtualMinute, round])
 
   if (!data || !userMatch) return <Loading />
@@ -172,15 +187,15 @@ function GroupMatchRunner({
       onSpeed={setSpeed}
       onSkipToEnd={() => setVirtualMinute(90)}
       outcome={outcome}
-      outcomeContext={buildGroupOutcomeContext(data.stage, data.draft, round, homeTeam, awayTeam, homeGoals, awayGoals)}
+      outcomeContext={buildGroupOutcomeContext(data.worldCup, data.draft, round, homeTeam, awayTeam, homeGoals, awayGoals)}
       onCloseOutcome={() => setOutcome(null)}
       onShowOutcome={(o) => setOutcome(o)}
     />
   )
 }
 
-function resolveGroupOutcome(stage: GroupStage, round: 1 | 2 | 3): OutcomeKind {
-  const table = standings(stage)
+function resolveGroupOutcome(worldCup: WorldCupGroups, round: 1 | 2 | 3): OutcomeKind {
+  const stage = getUserGroup(worldCup)
   if (round < 3) {
     const userMatch = stage.matches.find(
       (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
@@ -192,14 +207,12 @@ function resolveGroupOutcome(stage: GroupStage, round: 1 | 2 | 3): OutcomeKind {
     if (ug > og) return 'grupo'
     return 'grupo-resultado'
   }
-  // round 3 (final group game)
-  const userPos = table.findIndex((s) => s.team.code === USER_TEAM_CODE)
-  if (userPos === 0 || userPos === 1) return 'classificado'
-  return 'fora-grupos'
+  // round 3 — usa regra Copa 2026 completa (1º, 2º ou 3º entre os 8 melhores)
+  return userFate(worldCup).kind.startsWith('qualified') ? 'classificado' : 'fora-grupos'
 }
 
 function buildGroupOutcomeContext(
-  stage: GroupStage,
+  worldCup: WorldCupGroups,
   draft: DraftState,
   round: 1 | 2 | 3,
   home: ReturnType<typeof findTeam>,
@@ -207,6 +220,7 @@ function buildGroupOutcomeContext(
   homeGoals: number,
   awayGoals: number,
 ): OutcomeContext {
+  const stage = getUserGroup(worldCup)
   const userMatch = stage.matches.find(
     (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
   )
@@ -219,6 +233,9 @@ function buildGroupOutcomeContext(
   const table = standings(stage)
   const userPos = table.findIndex((s) => s.team.code === USER_TEAM_CODE) + 1
   const oppLabel = opp?.name?.slice(0, 3).toUpperCase() ?? 'OPP'
+  // Só no jogo final faz sentido falar de fate (no round 3). Nos outros é
+  // só posição parcial.
+  const fate = round === 3 ? userFate(worldCup) : null
   return {
     phase: `FASE DE GRUPOS · ${round}/3`,
     resultLine: `SEU XI ${userGoals}–${oppGoals} ${oppLabel}`,
@@ -226,7 +243,7 @@ function buildGroupOutcomeContext(
     draft,
     stats,
     scorers,
-    extras: { userPos },
+    extras: { userPos, fate },
   }
 }
 
@@ -289,9 +306,9 @@ function KnockoutMatchRunner({
   const persistedRef = useRef(false)
 
   useEffect(() => {
-    const stageData = loadStage()
+    const persisted = loadWorldCup()
     const br = loadBracket()
-    if (!stageData || !br) {
+    if (!persisted || !br) {
       navigate('/bracket', { replace: true })
       return
     }
@@ -300,17 +317,17 @@ function KnockoutMatchRunner({
       navigate('/bracket', { replace: true })
       return
     }
-    setDraft(stageData.draft)
-    setStage(stageData.stage)
+    setDraft(persisted.draft)
+    setStage(getUserGroup(persisted.worldCup))
 
     const home = br.teams[match.homeCode]
     const away = br.teams[match.awayCode]
     const sim = fullySimulate(home, away, Math.random, {
-      difficulty: stageData.draft.difficulty,
+      difficulty: persisted.draft.difficulty,
     })
     const events = narrateMatch({
-      home: rosterForKnockout(home.code, stageData.draft, { name: home.name, flag: home.flag }),
-      away: rosterForKnockout(away.code, stageData.draft, { name: away.name, flag: away.flag }),
+      home: rosterForKnockout(home.code, persisted.draft, { name: home.name, flag: home.flag }),
+      away: rosterForKnockout(away.code, persisted.draft, { name: away.name, flag: away.flag }),
       result: sim.result,
     })
     setSimResult({
@@ -598,7 +615,7 @@ interface OutcomeContext {
   draft: DraftState
   stats: CampaignStats
   scorers: ScorerRow[]
-  extras: { userPos?: number; nextRoundLabel?: string | null }
+  extras: { userPos?: number; nextRoundLabel?: string | null; fate?: UserFate | null }
 }
 
 interface PartidaShellProps {
@@ -1607,7 +1624,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         kicker: 'FASE DE GRUPOS · ENCERRADA',
         title: 'CLASSIFICADO',
         titleColor: 'var(--color-d-ink)',
-        sub: `${ordinalPt(ctx.extras.userPos ?? 1)} do grupo. Seu XI está no mata-mata.`,
+        sub: classificadoSubMessage(ctx),
         accent: 'var(--color-d-lime)',
         bannerBg: 'linear-gradient(180deg, #161d0b, #0a0b09)',
         showCheck: true,
@@ -1625,7 +1642,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         kicker: 'COPA 2026 · FIM DE LINHA',
         title: 'ELIMINADO',
         titleColor: 'var(--color-d-ink)',
-        sub: 'Seu XI não passou da fase de grupos. Tente de novo.',
+        sub: foraGruposSubMessage(ctx),
         accent: 'var(--color-d-red)',
         bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
         showCheck: false,
@@ -1698,6 +1715,34 @@ function ordinalPt(n: number): string {
   if (n === 2) return '2º'
   if (n === 3) return '3º'
   return `${n}º`
+}
+
+/**
+ * Sub-mensagem do drawer "CLASSIFICADO" — varia por destino:
+ *   - 1º/2º: "1º do grupo. Seu XI está no mata-mata."
+ *   - 3º entre os 8 melhores: "3º do grupo · entre os 8 melhores terceiros."
+ */
+function classificadoSubMessage(ctx: OutcomeContext): string {
+  const fate = ctx.extras.fate
+  if (fate?.kind === 'qualified-3rd-rank') {
+    return `3º do grupo · entre os 8 melhores terceiros (#${fate.rank} de 12).`
+  }
+  return `${ordinalPt(ctx.extras.userPos ?? 1)} do grupo. Seu XI está no mata-mata.`
+}
+
+/**
+ * Sub-mensagem do drawer "ELIMINADO" da fase de grupos — diferencia entre
+ * 3º fora dos 8 melhores e 4º colocado puro.
+ */
+function foraGruposSubMessage(ctx: OutcomeContext): string {
+  const fate = ctx.extras.fate
+  if (fate?.kind === 'eliminated-3rd-rank') {
+    return `3º do grupo, fora dos 8 melhores terceiros (#${fate.rank} de 12). Faltou pouco.`
+  }
+  if (fate?.kind === 'eliminated-4th') {
+    return 'Último do grupo. Seu XI não passou.'
+  }
+  return 'Seu XI não passou da fase de grupos. Tente de novo.'
 }
 
 function OutcomeDrawer({

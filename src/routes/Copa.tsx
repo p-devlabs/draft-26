@@ -1,73 +1,79 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { features } from '../lib/features'
 import {
-  createGroupStage,
+  createWorldCup,
   findTeam,
   nextRound,
   standings,
+  userFate,
+  userGroup as getUserGroup,
   USER_TEAM_CODE,
   type GroupMatch,
   type GroupStage,
   type GroupTeam,
   type Standing,
+  type WorldCupGroups,
 } from '../lib/groups'
 import { autoFillXI } from '../lib/autofill'
 import { createDraft, isComplete, type DraftState } from '../lib/draft'
-import { loadDraft, saveStage, loadStage, clearStage, clearDraft } from '../lib/persistence'
+import { loadDraft, saveWorldCup, loadWorldCup, clearWorldCup, clearDraft } from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
 import { nationGradient } from '../lib/nation-colors'
 
 export function Copa() {
   const navigate = useNavigate()
-  const [stage, setStage] = useState<GroupStage | null>(null)
+  const [worldCup, setWorldCup] = useState<WorldCupGroups | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
 
   useEffect(() => {
-    const persisted = loadStage()
+    const persisted = loadWorldCup()
     if (persisted) {
-      setStage(persisted.stage)
+      setWorldCup(persisted.worldCup)
       setDraft(persisted.draft)
       return
     }
     const fromDraft = loadDraft()
     if (fromDraft && isComplete(fromDraft)) {
-      const newStage = createGroupStage(fromDraft)
-      setStage(newStage)
+      const newWorldCup = createWorldCup(fromDraft)
+      setWorldCup(newWorldCup)
       setDraft(fromDraft)
-      saveStage(fromDraft, newStage)
-      void createRun({ draft: fromDraft, stage: newStage })
+      saveWorldCup(fromDraft, newWorldCup)
+      void createRun({ draft: fromDraft, stage: getUserGroup(newWorldCup) })
       return
     }
     const isDemo =
       new URLSearchParams(window.location.search).get('demo') === '1' || features.dev
     if (isDemo) {
       const demoDraft = autoFillXI(createDraft('4-3-3', 'equilibrado', 'medium'))
-      const newStage = createGroupStage(demoDraft)
-      setStage(newStage)
+      const newWorldCup = createWorldCup(demoDraft)
+      setWorldCup(newWorldCup)
       setDraft(demoDraft)
-      saveStage(demoDraft, newStage)
-      void createRun({ draft: demoDraft, stage: newStage })
+      saveWorldCup(demoDraft, newWorldCup)
+      void createRun({ draft: demoDraft, stage: getUserGroup(newWorldCup) })
       return
     }
     navigate('/draft', { replace: true })
   }, [navigate])
 
+  // Vista do grupo do user pra UI. Memoiza pra evitar re-renders desnecessários.
+  const stage = useMemo(() => (worldCup ? getUserGroup(worldCup) : null), [worldCup])
+
   useEffect(() => {
-    if (!stage) return
+    if (!worldCup || !stage) return
     const finishedNow = nextRound(stage) == null
     if (!finishedNow) {
       void syncRun({ stage })
       return
     }
-    const sorted = standings(stage)
-    const userPos = sorted.findIndex((s) => s.team.isUser) + 1
-    const qualified = userPos > 0 && userPos <= 2
+    // Classificação real Copa 2026: 1º, 2º ou 3º entre os 8 melhores.
+    const fate = userFate(worldCup)
+    const qualified = fate.kind.startsWith('qualified')
     void syncRun({
       stage,
       ...(qualified ? {} : { finishedRound: 'group' as const }),
     })
-  }, [stage])
+  }, [worldCup, stage])
 
   if (!stage || !draft) {
     return (
@@ -95,6 +101,8 @@ export function Copa() {
   const userPos = sortedStandings.findIndex((s) => s.team.isUser) + 1
   const userStanding = sortedStandings.find((s) => s.team.isUser) ?? null
   const playedRoundsCount = roundsPlayed(stage)
+  // Fate só faz sentido quando a fase encerra — antes disso, posição é parcial.
+  const fate = finished && worldCup ? userFate(worldCup) : null
   const phaseLabel = finished
     ? 'FASE DE GRUPOS · ENCERRADA'
     : `FASE DE GRUPOS · JOGO ${playedRoundsCount + 1}/3`
@@ -107,13 +115,13 @@ export function Copa() {
     : null
 
   const handlePlay = () => {
-    if (!round) return
-    saveStage(draft, stage)
+    if (!round || !worldCup) return
+    saveWorldCup(draft, worldCup)
     navigate(`/match?round=${round}`)
   }
 
   const handleReset = () => {
-    clearStage()
+    clearWorldCup()
     clearDraft()
     clearLocalRunId()
     navigate('/draft', { replace: true })
@@ -135,6 +143,7 @@ export function Copa() {
           userPos={userPos}
           playedRounds={playedRoundsCount}
           finished={finished}
+          fate={fate}
         />
         {userMatchInRound && !userMatchInRound.result && (
           <NextMatchBanner
@@ -346,14 +355,16 @@ function Masthead({
   userPos,
   playedRounds,
   finished,
+  fate,
 }: {
   letter: string
   userStanding: Standing | null
   userPos: number
   playedRounds: number
   finished: boolean
+  fate: ReturnType<typeof userFate> | null
 }) {
-  const status = computeStatusPill(userStanding, userPos, finished)
+  const status = computeStatusPill(userStanding, userPos, finished, fate)
   const pct = (playedRounds / 3) * 100
 
   return (
@@ -440,6 +451,7 @@ function computeStatusPill(
   s: Standing | null,
   pos: number,
   finished: boolean,
+  fate: ReturnType<typeof userFate> | null,
 ): { label: string; bg: string; fg: string } {
   if (!s || pos === 0) {
     return { label: 'CARREGANDO…', bg: 'var(--color-d-surface2)', fg: 'var(--color-d-mut)' }
@@ -449,17 +461,36 @@ function computeStatusPill(
       return { label: `1º LUGAR · ${s.points} PTS`, bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
     if (pos === 2)
       return { label: `CLASSIFICADO · ${s.points} PTS`, bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
+    // 3º colocado: depende se entrou nos 8 melhores
+    if (pos === 3 && fate?.kind === 'qualified-3rd-rank') {
+      return {
+        label: `CLASSIFICADO · 3º (#${fate.rank}/12)`,
+        bg: 'var(--color-d-lime)',
+        fg: 'var(--color-d-bg)',
+      }
+    }
+    if (pos === 3 && fate?.kind === 'eliminated-3rd-rank') {
+      return {
+        label: `ELIMINADO · 3º (#${fate.rank}/12)`,
+        bg: 'var(--color-d-red)',
+        fg: '#fff',
+      }
+    }
     return { label: `ELIMINADO · ${pos}º LUGAR`, bg: 'var(--color-d-red)', fg: '#fff' }
   }
   const labels: Record<number, string> = {
     1: 'LÍDER PARCIAL',
     2: 'EM ZONA · 2º LUGAR',
-    3: '3º LUGAR',
+    3: '3º · PODE CLASSIFICAR',
     4: '4º LUGAR',
   }
+  // pos 1-2: zona segura (lime). pos 3: amarelo/warn (pode classificar via
+  // 8 melhores 3ºs). pos 4: cinza.
   const tone = pos <= 2
     ? { bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
-    : { bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' }
+    : pos === 3
+      ? { bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' }
+      : { bg: 'rgba(255,138,59,0.10)', fg: 'var(--color-d-mut)' }
   return { label: `${labels[pos] ?? `${pos}º`} · ${s.points} PTS`, ...tone }
 }
 
