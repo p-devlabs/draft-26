@@ -9,6 +9,17 @@ import { Draft } from './routes/Draft'
 import { Copa } from './routes/Copa'
 import { Match } from './routes/Match'
 import { MataMata } from './routes/MataMata'
+import { features } from './lib/features'
+import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
+
+// Em dev mode, expõe o harness de simulação pro Playwright (e debugging
+// manual no console). Em prod fica desligado, custo zero.
+if (features.dev) {
+  ;(window as unknown as { __draft26__: object }).__draft26__ = {
+    simulateFullCup,
+    runDistortionBatch,
+  }
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

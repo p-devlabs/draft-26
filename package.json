@@ -11,6 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "sim:distortions": "playwright test e2e/distortions.spec.ts",
     "scrape:squads": "tsx scripts/scrape-squads.ts",
     "enrich:squads": "tsx scripts/enrich-squads.ts",
     "download:fifa": "tsx scripts/download-fifa-dataset.ts",
@@ -30,6 +33,7 @@
     "react-router-dom": "^7.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.0.0",
