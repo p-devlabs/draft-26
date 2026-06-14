@@ -46,7 +46,10 @@ function makeStrongDraft() {
 }
 
 /** Cria um worldCup já com as 3 rodadas simuladas em todos os 12 grupos. */
-function makeFinishedWorldCup(seed = 42): WorldCupGroups {
+// seed 1: user classifica e seed 7 (passada pra setupBracket) deixa o lado
+// oposto da R32 com alguns winners. Trocar seed exige re-validar essas
+// pré-condições nos testes de setupBracket/userPath.
+function makeFinishedWorldCup(seed = 1): WorldCupGroups {
   const draft = makeStrongDraft()
   const rng = seededRng(seed)
   let worldCup = createWorldCup(draft, rng)
@@ -87,15 +90,13 @@ describe('createBracket (a partir de qualifiers)', () => {
     expect(all[31].seed).toBe(32)
   })
 
-  it('user 1º do grupo (Brasil substituiu HAI no grupo C) entra como seed alta', () => {
+  it('user XI brasileiro classifica e marca isUser=true', () => {
     const bracket = createBracket(makeFinishedWorldCup())
     const userTeam = bracket.teams[USER_TEAM_CODE]
-    if (userTeam) {
-      // XI brasileiro num grupo do tier inferior (HAI/MAR/SCO) → deve ser 1º.
-      // Seed dele cai dentro dos 12 primeiros (1ºs dos grupos).
-      expect(userTeam.seed).toBeLessThanOrEqual(12)
-      expect(userTeam.isUser).toBe(true)
-    }
+    expect(userTeam).toBeDefined()
+    expect(userTeam.isUser).toBe(true)
+    expect(userTeam.seed).toBeGreaterThanOrEqual(1)
+    expect(userTeam.seed).toBeLessThanOrEqual(32)
   })
 
   it('não inclui o time que o XI substituiu', () => {

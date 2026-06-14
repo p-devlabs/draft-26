@@ -94,17 +94,39 @@ function pairings(): Array<[number, number]>[] {
  */
 export function createGroupStage(draft: DraftState, rng: () => number = Math.random): GroupStage {
   const groupIndex = Math.floor(rng() * groupedSquads.length)
-  return createUserGroupAt(draft, groupedSquads[groupIndex])
+  return createUserGroupAt(draft, groupedSquads[groupIndex], rng)
+}
+
+/**
+ * Sorteia QUAL time do grupo será substituído pelo XI. Peso decrescente
+ * por força — o mais fraco tem 40% de chance, depois 30/20/10. Garante
+ * variedade entre runs sem perder o sentido narrativo (você quase sempre
+ * toma o lugar de uma das seleções mais frágeis, mas vez ou outra acaba
+ * num grupo difícil substituindo um peixe maior).
+ */
+const REPLACE_WEIGHTS_BY_RANK = [4, 3, 2, 1] // sorted ASC pelo overall
+function pickReplaceIndex(rng: () => number): number {
+  const total = REPLACE_WEIGHTS_BY_RANK.reduce((a, b) => a + b, 0)
+  const roll = rng() * total
+  let cum = 0
+  for (let i = 0; i < REPLACE_WEIGHTS_BY_RANK.length; i++) {
+    cum += REPLACE_WEIGHTS_BY_RANK[i]
+    if (roll < cum) return i
+  }
+  return 0
 }
 
 function createUserGroupAt(
   draft: DraftState,
   chosenGroup: { letter: string; squads: Squad[] },
+  rng: () => number,
 ): GroupStage {
-  // ordena por força, o mais fraco é substituído
+  // ordena por força, escolhe quem sai via random ponderado (peso maior pros
+  // mais fracos). O mais forte raramente é substituído, mas vez ou outra rola.
   const sorted = [...chosenGroup.squads].sort((a, b) => a.averageOverall - b.averageOverall)
-  const weakest = sorted[0]
-  const survivors = sorted.slice(1).map(teamFromSquad)
+  const replaceIdx = pickReplaceIndex(rng)
+  const replaced = sorted[replaceIdx]
+  const survivors = sorted.filter((_, i) => i !== replaceIdx).map(teamFromSquad)
   const userTeam = teamFromDraft(draft)
 
   // user time entra na posição 0 pro chaveamento (mando alternado é detalhe)
@@ -125,7 +147,7 @@ function createUserGroupAt(
     letter: chosenGroup.letter,
     teams,
     matches,
-    replacedTeam: { code: weakest.code, name: weakest.country, flag: weakest.flag },
+    replacedTeam: { code: replaced.code, name: replaced.country, flag: replaced.flag },
   }
 }
 
@@ -178,7 +200,7 @@ export function createWorldCup(
   const groupIndex = Math.floor(rng() * groupedSquads.length)
   const userLetter = groupedSquads[groupIndex].letter
   const groups: GroupStage[] = groupedSquads.map((g) =>
-    g.letter === userLetter ? createUserGroupAt(draft, g) : createCpuGroup(g),
+    g.letter === userLetter ? createUserGroupAt(draft, g, rng) : createCpuGroup(g),
   )
   return { userLetter, groups }
 }

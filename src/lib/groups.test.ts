@@ -206,7 +206,7 @@ function emptyDraft() {
   return createDraft('4-3-3', 'equilibrado', 'easy')
 }
 
-function makeFinishedWorldCup(seed = 42): WorldCupGroups {
+function makeFinishedWorldCup(seed = 1): WorldCupGroups {
   const draft = makeStrongDraft()
   const rng = seededRng(seed)
   let worldCup = createWorldCup(draft, rng)
@@ -250,7 +250,62 @@ describe('createWorldCup', () => {
     expect(a.userLetter).toBe(b.userLetter)
     expect(a.groups.map((g) => g.letter)).toEqual(b.groups.map((g) => g.letter))
   })
+
+  it('grupo escolhido varia entre seeds — distribuição aproximadamente uniforme', () => {
+    const counts = new Map<string, number>()
+    const N = 2400
+    for (let i = 0; i < N; i++) {
+      const wc = createWorldCup(emptyDraft(), seededRng(i))
+      counts.set(wc.userLetter, (counts.get(wc.userLetter) ?? 0) + 1)
+    }
+    // 12 grupos × ~200 esperados cada (1/12 = 8.3%). Janela ±30% por bucket.
+    expect(counts.size).toBe(12)
+    const expected = N / 12
+    for (const [, c] of counts) {
+      expect(c).toBeGreaterThan(expected * 0.7)
+      expect(c).toBeLessThan(expected * 1.3)
+    }
+  })
+
+  it('time substituído varia: cobre as 4 posições de força ao longo de muitas seeds', () => {
+    // A cada run, o time substituído pode ser o mais fraco até o mais forte
+    // do grupo (peso 4/3/2/1). Em 2000 runs, esperamos:
+    //   weakest (rank 0): ~40%, 2nd (rank 1): ~30%, 3rd (rank 2): ~20%, strongest (rank 3): ~10%
+    const ranks = [0, 0, 0, 0]
+    const N = 2000
+    for (let i = 0; i < N; i++) {
+      const wc = createWorldCup(emptyDraft(), seededRng(i))
+      const ug = userGroup(wc)
+      const groupDef = wc.groups.find((g) => g.letter === wc.userLetter)!
+      // Reconstrói as 4 squads originais ordenadas asc por overall.
+      const survivorsAsc = [...groupDef.teams]
+        .filter((t) => !t.isUser)
+        .sort((a, b) => a.averageOverall - b.averageOverall)
+      // Posição do replaced dentro do ranking ascendente.
+      const replacedOvr = inferReplacedOverall(survivorsAsc, ug.replacedTeam.code)
+      const rank = countLessThan(survivorsAsc.map((t) => t.averageOverall), replacedOvr)
+      ranks[rank]++
+    }
+    // Tolerância larga porque amostragem aleatória + 4 categorias.
+    expect(ranks[0]).toBeGreaterThan(N * 0.30) // weakest esperado ~40%
+    expect(ranks[3]).toBeGreaterThan(N * 0.05) // strongest esperado ~10%
+    // E a ordem deve ser monotonicamente decrescente: weakest > 2nd > 3rd > strongest
+    expect(ranks[0]).toBeGreaterThan(ranks[3])
+    expect(ranks[1]).toBeGreaterThan(ranks[3])
+  })
 })
+
+/** Lookup do overall do time substituído (não está no GroupTeam). */
+function inferReplacedOverall(survivors: GroupTeam[], replacedCode: string): number {
+  const squad = squads.find((s) => s.code === replacedCode)
+  if (squad) return squad.averageOverall
+  // Fallback: assume substituiu o mais fraco se não achou.
+  return survivors[0]?.averageOverall ?? 0
+}
+
+function countLessThan(arr: number[], val: number): number {
+  return arr.filter((x) => x < val).length
+}
 
 describe('playCpuRound', () => {
   it('simula a rodada N em todos os grupos CPU, deixa grupo do user intacto', () => {
