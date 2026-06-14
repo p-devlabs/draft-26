@@ -6,6 +6,7 @@ dist
 *.log
 .vite
 *.tsbuildinfo
+coverage
 
 # claude code runtime state
 .claude/

@@ -14,14 +14,19 @@ The repo's `README.md` and `HANDOFF.md` are the canonical product overview — r
 pnpm dev               # vite dev server (localhost:5173)
 pnpm build             # tsc -b && vite build → dist/
 pnpm preview           # serve dist/
-pnpm lint              # tsc -b --noEmit (this is the only check — no test runner is configured)
+pnpm lint              # tsc -b --noEmit
+pnpm test              # vitest run (~200ms, 80+ tests)
+pnpm test:watch        # vitest in watch mode
+pnpm test:coverage     # vitest run --coverage (HTML report em coverage/)
 pnpm data:rebuild      # full data pipeline (network-bound, ~minutes)
 ```
 
 Individual pipeline steps (run in order if rebuilding manually):
 `pnpm scrape:squads` → `pnpm enrich:squads` → `pnpm download:fifa` → `pnpm enrich:fifa` → `pnpm download:transfermarkt` → `pnpm enrich:transfermarkt` → `pnpm enrich:alt-positions`.
 
-There is **no test runner and no linter beyond `tsc`**. Don't claim "tests pass" — there are none. When asked to verify, run `pnpm lint` and exercise the UI in the dev server.
+CI roda `lint + test + build` em PR e push pra main (`.github/workflows/ci.yml`). When asked to verify, run `pnpm lint && pnpm test` and exercise the UI in the dev server.
+
+Tests live next to the code they test (`src/lib/*.test.ts`). Engine has both deterministic (correctness) and seeded statistical suites (`simulate.stats.test.ts` — N≈3000 sims com tolerância ±10%). Stats tests preferem comparações relativas (rubber-band em hard < no-difficulty) sobre asserts absolutos pra resistir a re-calibração.
 
 `pnpm install` requires `allowBuilds: { esbuild: true }` in `pnpm-workspace.yaml` (already set) — CI will break without it.
 

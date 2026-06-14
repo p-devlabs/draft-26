@@ -8,6 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "tsc -b --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "scrape:squads": "tsx scripts/scrape-squads.ts",
     "enrich:squads": "tsx scripts/enrich-squads.ts",
     "download:fifa": "tsx scripts/download-fifa-dataset.ts",
@@ -32,12 +35,14 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.1.8",
     "cheerio": "^1.2.0",
     "papaparse": "^5.5.3",
     "supabase": "^2.105.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.22.4",
     "typescript": "~5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vitest": "^4.1.8"
   }
 }
