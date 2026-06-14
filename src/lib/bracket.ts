@@ -1,17 +1,16 @@
 /**
- * Mata-mata: bracket de 32 com seeds por averageOverall.
+ * Mata-mata: bracket de 32 com seeds pelos classificados da fase de grupos.
  *
- * O XI do usuário entra como um "time" extra e ocupa o lugar do 32º
- * cabeça-de-chave se entrar no top 32.
+ * Composição dos 32 (regra Copa 2026): 12 1ºs + 12 2ºs + 8 melhores 3ºs.
+ * Ranking pra seed dentro do bracket: posição no grupo (1 > 2 > 3) → pts
+ * → saldo → gols pró → averageOverall (proxy FIFA ranking).
  *
- * Pareamento snake (NCAA-style) garante que seeds 1 e 2 só se encontram
- * na final.
+ * Pareamento snake NCAA-style garante que seeds 1 e 2 só se encontram na
+ * final.
  */
-import { squads } from '../data/squads'
-import { averageOverall, type DraftState } from './draft'
 import { simulateMatch, type MatchResult, type SimOptions, type Team } from './simulate'
 import { narrateMatch, type MatchEvent } from './narrate'
-import { USER_TEAM_CODE } from './groups'
+import { USER_TEAM_CODE, computeQualifiers, type Qualifier, type WorldCupGroups } from './groups'
 import { rosterForKnockout } from './rosters'
 
 export type KORound = 'R32' | 'R16' | 'QF' | 'SF' | 'F'
@@ -83,47 +82,33 @@ export interface KnockoutBracket {
   champion?: string
 }
 
-/** Cria o bracket: top 32 por averageOverall, com user como uma "seleção". */
-export function createBracket(draft: DraftState, replacedCode?: string): KnockoutBracket {
-  const userOverall = averageOverall(draft)
-  const userAsSquad: { code: string; country: string; flag: string; averageOverall: number } = {
-    code: USER_TEAM_CODE,
-    country: 'Seu XI',
-    flag: '⚡',
-    averageOverall: userOverall,
+/**
+ * Cria o bracket a partir dos 32 classificados da Copa 2026 (1ºs, 2ºs e
+ * 8 melhores 3ºs). Ranking pra seed: posição no grupo (1 > 2 > 3) → pts
+ * → saldo → gols pró → averageOverall. Snake NCAA-style nos pares da R32.
+ */
+export function createBracket(worldCup: WorldCupGroups): KnockoutBracket {
+  const qualifiers = computeQualifiers(worldCup)
+  if (qualifiers.length !== 32) {
+    throw new Error(`esperado 32 classificados, recebi ${qualifiers.length}`)
   }
 
-  // Pool: 48 seleções (exceto a que o XI substituiu na fase de grupos)
-  const pool: Array<{ code: string; country: string; flag: string; averageOverall: number }> = [
-    userAsSquad,
-    ...squads
-      .filter((s) => s.code !== replacedCode)
-      .map((s) => ({
-        code: s.code,
-        country: s.country,
-        flag: s.flag,
-        averageOverall: s.averageOverall,
-      })),
-  ]
-
-  const top32 = [...pool].sort((a, b) => b.averageOverall - a.averageOverall).slice(0, 32)
+  const ranked = [...qualifiers].sort(compareQualifiersForSeeding)
 
   const teams: Record<string, KnockoutTeam> = {}
-  top32.forEach((t, idx) => {
-    teams[t.code] = {
-      code: t.code,
-      name: t.country,
-      flag: t.flag,
-      averageOverall: t.averageOverall,
+  ranked.forEach((q, idx) => {
+    teams[q.teamCode] = {
+      code: q.teamCode,
+      name: q.team.name,
+      flag: q.team.flag,
+      averageOverall: q.team.averageOverall,
       seed: idx + 1,
-      isUser: t.code === USER_TEAM_CODE,
+      isUser: q.teamCode === USER_TEAM_CODE,
     }
   })
 
   const matches: BracketMatch[] = []
-
-  // R32: pares (SEED_ORDER_32[2k], SEED_ORDER_32[2k+1])
-  const seedToCode = top32.map((t) => t.code)
+  const seedToCode = ranked.map((q) => q.teamCode)
   for (let i = 0; i < 16; i++) {
     const homeSeed = SEED_ORDER_32[i * 2]
     const awaySeed = SEED_ORDER_32[i * 2 + 1]
@@ -136,7 +121,7 @@ export function createBracket(draft: DraftState, replacedCode?: string): Knockou
     })
   }
 
-  // R16, QF, SF, F: placeholders sem times definidos (preenchidos no advance)
+  // R16, QF, SF, F: placeholders preenchidos no advance
   for (const round of ['R16', 'QF', 'SF', 'F'] as const) {
     for (let i = 0; i < ROUND_SIZE[round]; i++) {
       matches.push({
@@ -150,6 +135,20 @@ export function createBracket(draft: DraftState, replacedCode?: string): Knockou
   }
 
   return { matches, teams, userCode: USER_TEAM_CODE }
+}
+
+/**
+ * Ranking de seed: 1ºs primeiro, depois 2ºs, depois 3ºs. Dentro de cada
+ * faixa, ordena por pts, saldo, gols pró, averageOverall (proxy FIFA).
+ */
+function compareQualifiersForSeeding(a: Qualifier, b: Qualifier): number {
+  if (a.groupPosition !== b.groupPosition) return a.groupPosition - b.groupPosition
+  if (b.standing.points !== a.standing.points) return b.standing.points - a.standing.points
+  const aGd = a.standing.goalsFor - a.standing.goalsAgainst
+  const bGd = b.standing.goalsFor - b.standing.goalsAgainst
+  if (bGd !== aGd) return bGd - aGd
+  if (b.standing.goalsFor !== a.standing.goalsFor) return b.standing.goalsFor - a.standing.goalsFor
+  return b.team.averageOverall - a.team.averageOverall
 }
 
 /** Encontra o match do user na rodada atual (ainda não jogado). */
@@ -377,11 +376,10 @@ export function simulateOtherHalfToFinal(
  * `ensureRoundsSimulated` conforme o user joga.
  */
 export function setupBracket(
-  draft: DraftState,
-  replacedCode?: string,
+  worldCup: WorldCupGroups,
   rng: () => number = Math.random,
 ): KnockoutBracket {
-  return ensureRoundsSimulated(createBracket(draft, replacedCode), rng)
+  return ensureRoundsSimulated(createBracket(worldCup), rng)
 }
 
 /**

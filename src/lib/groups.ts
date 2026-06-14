@@ -1,7 +1,13 @@
 /**
  * Fase de grupos da Copa: o XI do usuário substitui a seleção mais fraca de
- * um dos 12 grupos (sorteado). Aí simula os 6 jogos do grupo em 3 rodadas
- * com pareamento clássico FIFA.
+ * um dos 12 grupos (sorteado). Os 11 grupos restantes rodam em paralelo
+ * com CPU vs CPU, em lockstep com o user (round 1 do user → round 1 dos CPU).
+ *
+ * Classificação pra mata-mata (Copa 2026 Article 13):
+ *   - 1º colocado de cada grupo (12)
+ *   - 2º colocado de cada grupo (12)
+ *   - 8 melhores 3ºs colocados entre os 12 grupos
+ *   - Total: 32 → R32
  */
 import { groupedSquads, squads, type Player, type Squad } from '../data/squads'
 import { averageOverall, type DraftState } from './draft'
@@ -88,7 +94,13 @@ function pairings(): Array<[number, number]>[] {
  */
 export function createGroupStage(draft: DraftState, rng: () => number = Math.random): GroupStage {
   const groupIndex = Math.floor(rng() * groupedSquads.length)
-  const chosenGroup = groupedSquads[groupIndex]
+  return createUserGroupAt(draft, groupedSquads[groupIndex])
+}
+
+function createUserGroupAt(
+  draft: DraftState,
+  chosenGroup: { letter: string; squads: Squad[] },
+): GroupStage {
   // ordena por força, o mais fraco é substituído
   const sorted = [...chosenGroup.squads].sort((a, b) => a.averageOverall - b.averageOverall)
   const weakest = sorted[0]
@@ -116,6 +128,231 @@ export function createGroupStage(draft: DraftState, rng: () => number = Math.ran
     replacedTeam: { code: weakest.code, name: weakest.country, flag: weakest.flag },
   }
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// World Cup completo — 12 grupos
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Estado de toda a fase de grupos: o grupo do user + os 11 grupos CPU.
+ * Sempre length 12, ordenados A..L. O grupo do user é identificado pela letra.
+ */
+export interface WorldCupGroups {
+  userLetter: string
+  groups: GroupStage[]
+}
+
+/**
+ * Cria um grupo CPU-only (sem substituição do XI). Os 4 times do grupo
+ * disputam as 6 partidas. Pareamento idêntico ao do grupo do user.
+ */
+function createCpuGroup(g: { letter: string; squads: Squad[] }): GroupStage {
+  const teams = g.squads.map(teamFromSquad)
+  const matches: GroupMatch[] = []
+  pairings().forEach((round, rIdx) => {
+    for (const [h, a] of round) {
+      matches.push({
+        round: (rIdx + 1) as 1 | 2 | 3,
+        homeCode: teams[h].code,
+        awayCode: teams[a].code,
+      })
+    }
+  })
+  return {
+    letter: g.letter,
+    teams,
+    matches,
+    // CPU groups não substituem ninguém. Placeholder vazio.
+    replacedTeam: { code: '', name: '', flag: '' },
+  }
+}
+
+/**
+ * Cria os 12 grupos do mundial: 11 CPU + 1 com o user. A letra do grupo do
+ * user é sorteada via `rng`. Os 11 grupos restantes ainda não têm resultados.
+ */
+export function createWorldCup(
+  draft: DraftState,
+  rng: () => number = Math.random,
+): WorldCupGroups {
+  const groupIndex = Math.floor(rng() * groupedSquads.length)
+  const userLetter = groupedSquads[groupIndex].letter
+  const groups: GroupStage[] = groupedSquads.map((g) =>
+    g.letter === userLetter ? createUserGroupAt(draft, g) : createCpuGroup(g),
+  )
+  return { userLetter, groups }
+}
+
+/** Acha o grupo do user dentro do worldCup. */
+export function userGroup(worldCup: WorldCupGroups): GroupStage {
+  const g = worldCup.groups.find((g) => g.letter === worldCup.userLetter)
+  if (!g) throw new Error(`grupo do user (${worldCup.userLetter}) sumiu do worldCup`)
+  return g
+}
+
+/**
+ * Simula a rodada dada em TODOS os grupos CPU. O grupo do user é simulado
+ * separadamente via `playRound` pra preservar a narração e dificuldade do XI.
+ * Idempotente — partidas já jogadas não são re-simuladas.
+ */
+export function playCpuRound(
+  worldCup: WorldCupGroups,
+  round: 1 | 2 | 3,
+  rng: () => number = Math.random,
+): WorldCupGroups {
+  const groups = worldCup.groups.map((g) => {
+    if (g.letter === worldCup.userLetter) return g
+    return simulateCpuGroupRound(g, round, rng)
+  })
+  return { ...worldCup, groups }
+}
+
+function simulateCpuGroupRound(
+  stage: GroupStage,
+  round: 1 | 2 | 3,
+  rng: () => number,
+): GroupStage {
+  const teamByCode = new Map(stage.teams.map((t) => [t.code, t as Team]))
+  const newMatches = stage.matches.map((m) => {
+    if (m.round !== round || m.result) return m
+    const home = teamByCode.get(m.homeCode)!
+    const away = teamByCode.get(m.awayCode)!
+    // CPU vs CPU: sem rubber-band, sem narração (não exibida).
+    const result = simulateMatch(home, away, rng)
+    return { ...m, result }
+  })
+  return { ...stage, matches: newMatches }
+}
+
+/** Atualiza o grupo do user dentro do worldCup (após playRound). */
+export function setUserGroup(worldCup: WorldCupGroups, updated: GroupStage): WorldCupGroups {
+  return {
+    ...worldCup,
+    groups: worldCup.groups.map((g) => (g.letter === worldCup.userLetter ? updated : g)),
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Classificação pra mata-mata (Copa 2026)
+// ────────────────────────────────────────────────────────────────────────
+
+/** Entrada por time qualificado pro mata-mata. */
+export interface Qualifier {
+  teamCode: string
+  team: GroupTeam
+  groupLetter: string
+  /** 1, 2 ou 3 — 4º colocado nunca classifica. */
+  groupPosition: 1 | 2 | 3
+  standing: Standing
+}
+
+/**
+ * Aplica a regra Copa 2026 e retorna os 32 classificados:
+ *   - 1º de cada grupo (12)
+ *   - 2º de cada grupo (12)
+ *   - 8 melhores 3ºs colocados entre os 12 grupos
+ *
+ * Ranking dos 3ºs: pts → saldo geral → gols pró → averageOverall (proxy FIFA).
+ * Lança se algum grupo ainda não tem standings completos.
+ */
+export function computeQualifiers(worldCup: WorldCupGroups): Qualifier[] {
+  const result: Qualifier[] = []
+  const thirds: Qualifier[] = []
+
+  for (const g of worldCup.groups) {
+    const std = standings(g)
+    // 1º e 2º entram direto
+    for (const pos of [1, 2] as const) {
+      const s = std[pos - 1]
+      result.push({
+        teamCode: s.team.code,
+        team: s.team,
+        groupLetter: g.letter,
+        groupPosition: pos,
+        standing: s,
+      })
+    }
+    // 3º vai pra triagem
+    if (std[2]) {
+      thirds.push({
+        teamCode: std[2].team.code,
+        team: std[2].team,
+        groupLetter: g.letter,
+        groupPosition: 3,
+        standing: std[2],
+      })
+    }
+  }
+
+  thirds.sort(compareThirds)
+  result.push(...thirds.slice(0, 8))
+  return result
+}
+
+/** Mesma ordem de tiebreakers da standings(), só que entre grupos. */
+function compareThirds(a: Qualifier, b: Qualifier): number {
+  if (b.standing.points !== a.standing.points) return b.standing.points - a.standing.points
+  const aGd = a.standing.goalsFor - a.standing.goalsAgainst
+  const bGd = b.standing.goalsFor - b.standing.goalsAgainst
+  if (bGd !== aGd) return bGd - aGd
+  if (b.standing.goalsFor !== a.standing.goalsFor) return b.standing.goalsFor - a.standing.goalsFor
+  return b.team.averageOverall - a.team.averageOverall
+}
+
+/** O user passou de fase? */
+export function userQualifies(worldCup: WorldCupGroups): boolean {
+  return computeQualifiers(worldCup).some((q) => q.teamCode === USER_TEAM_CODE)
+}
+
+/** Posição final do user no grupo dele (1, 2, 3 ou 4). */
+export function userGroupPosition(worldCup: WorldCupGroups): 1 | 2 | 3 | 4 {
+  const std = standings(userGroup(worldCup))
+  const idx = std.findIndex((s) => s.team.code === USER_TEAM_CODE)
+  if (idx < 0) throw new Error('user não está no próprio grupo (bug)')
+  return (idx + 1) as 1 | 2 | 3 | 4
+}
+
+/**
+ * Detalhamento do destino do user: classificado como 1º/2º/3º (entre os 8
+ * melhores), ou eliminado como 3º fora dos 8 ou 4º. Útil pras mensagens.
+ */
+export type UserFate =
+  | { kind: 'qualified-1st' }
+  | { kind: 'qualified-2nd' }
+  | { kind: 'qualified-3rd-rank'; rank: number } // 1..8 entre os 12 3ºs
+  | { kind: 'eliminated-3rd-rank'; rank: number } // 9..12
+  | { kind: 'eliminated-4th' }
+
+export function userFate(worldCup: WorldCupGroups): UserFate {
+  const pos = userGroupPosition(worldCup)
+  if (pos === 1) return { kind: 'qualified-1st' }
+  if (pos === 2) return { kind: 'qualified-2nd' }
+  if (pos === 4) return { kind: 'eliminated-4th' }
+  // pos === 3: precisa saber o rank entre os 3ºs.
+  const thirds: Qualifier[] = []
+  for (const g of worldCup.groups) {
+    const std = standings(g)
+    if (std[2]) {
+      thirds.push({
+        teamCode: std[2].team.code,
+        team: std[2].team,
+        groupLetter: g.letter,
+        groupPosition: 3,
+        standing: std[2],
+      })
+    }
+  }
+  thirds.sort(compareThirds)
+  const userIdx = thirds.findIndex((q) => q.teamCode === USER_TEAM_CODE)
+  if (userIdx < 0) throw new Error('user 3º mas não apareceu na lista de 3ºs (bug)')
+  const rank = userIdx + 1
+  if (rank <= 8) return { kind: 'qualified-3rd-rank', rank }
+  return { kind: 'eliminated-3rd-rank', rank }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Helpers existentes (mantidos)
+// ────────────────────────────────────────────────────────────────────────
 
 export function findTeam(stage: GroupStage, code: string): GroupTeam | undefined {
   return stage.teams.find((t) => t.code === code)

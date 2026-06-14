@@ -12,7 +12,7 @@ import {
 } from '../lib/draft'
 import { autoFillXI } from '../lib/autofill'
 import { features } from '../lib/features'
-import { saveDraft, clearStage } from '../lib/persistence'
+import { saveDraft, clearWorldCup } from '../lib/persistence'
 import type { Difficulty, Style } from '../lib/formations'
 
 export function Draft() {
@@ -32,7 +32,7 @@ export function Draft() {
   const handleSimulate = () => {
     if (!draft || !isComplete(draft)) return
     saveDraft(draft)
-    clearStage()
+    clearWorldCup()
     navigate('/groups')
   }
 

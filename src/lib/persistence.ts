@@ -4,11 +4,14 @@
  */
 import { FORMATIONS, type Formation } from './formations'
 import type { DraftState } from './draft'
-import type { GroupStage } from './groups'
+import type { WorldCupGroups } from './groups'
 import type { KnockoutBracket } from './bracket'
 
 const KEY_DRAFT = 'd26:draft'
-const KEY_STAGE = 'd26:stage'
+// Versão antiga (d26:stage) guardava só GroupStage. Bumped pra worldcup quando
+// a fase virou 12 grupos. Saves antigos ficam órfãos — load retorna null e o
+// usuário recomeça a fase de grupos.
+const KEY_WORLDCUP = 'd26:worldcup'
 const KEY_BRACKET = 'd26:bracket'
 const KEY_SPEED = 'd26:speed'
 
@@ -54,28 +57,28 @@ export function clearDraft(): void {
   }
 }
 
-export function saveStage(draft: DraftState, stage: GroupStage): void {
+export function saveWorldCup(draft: DraftState, worldCup: WorldCupGroups): void {
   saveDraft(draft)
-  safeWrite(KEY_STAGE, stage)
+  safeWrite(KEY_WORLDCUP, worldCup)
 }
 
-export function loadStage(): { draft: DraftState; stage: GroupStage } | null {
+export function loadWorldCup(): { draft: DraftState; worldCup: WorldCupGroups } | null {
   const draft = loadDraft()
-  const stage = safeRead<GroupStage>(KEY_STAGE)
-  if (!draft || !stage) return null
-  return { draft, stage }
+  const worldCup = safeRead<WorldCupGroups>(KEY_WORLDCUP)
+  if (!draft || !worldCup) return null
+  return { draft, worldCup }
 }
 
 /**
- * Limpa só o stage da fase de grupos e o bracket (que é downstream).
+ * Limpa o estado da fase de grupos e o bracket (que é downstream).
  * NÃO mexe no draft — quem quer reset completo do XI deve chamar `clearDraft()`
  * separadamente. Esse split evita o bug clássico de chamar saveDraft seguido
- * de clearStage e perder o draft recém-gravado.
+ * de clearWorldCup e perder o draft recém-gravado.
  */
-export function clearStage(): void {
+export function clearWorldCup(): void {
   clearBracket()
   try {
-    window.localStorage.removeItem(KEY_STAGE)
+    window.localStorage.removeItem(KEY_WORLDCUP)
   } catch {
     /* ignore */
   }
