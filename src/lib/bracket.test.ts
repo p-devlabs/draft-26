@@ -14,11 +14,19 @@ import {
 } from './bracket'
 import { createDraft, pickPlayer } from './draft'
 import { squads } from '../data/squads'
-import { USER_TEAM_CODE } from './groups'
+import {
+  USER_TEAM_CODE,
+  createWorldCup,
+  playCpuRound,
+  playRound,
+  setUserGroup,
+  userGroup,
+  type WorldCupGroups,
+} from './groups'
 import { seededRng } from './simulate'
 
 function makeStrongDraft() {
-  // XI 100% Brasileiro → averageOverall alto, garante entrada no top 32.
+  // XI 100% brasileiro → averageOverall alto.
   let draft = createDraft('4-3-3', 'equilibrado', 'easy')
   const brazil = squads.find((s) => s.code === 'BRA')!
   const used = new Set<string>()
@@ -37,10 +45,22 @@ function makeStrongDraft() {
   return draft
 }
 
-describe('createBracket', () => {
+/** Cria um worldCup já com as 3 rodadas simuladas em todos os 12 grupos. */
+function makeFinishedWorldCup(seed = 42): WorldCupGroups {
+  const draft = makeStrongDraft()
+  const rng = seededRng(seed)
+  let worldCup = createWorldCup(draft, rng)
+  for (const round of [1, 2, 3] as const) {
+    const ug = playRound(userGroup(worldCup), round, draft, rng)
+    worldCup = setUserGroup(worldCup, ug)
+    worldCup = playCpuRound(worldCup, round, rng)
+  }
+  return worldCup
+}
+
+describe('createBracket (a partir de qualifiers)', () => {
   it('cria 16 jogos em R32 + placeholders nas rodadas seguintes', () => {
-    const draft = makeStrongDraft()
-    const bracket = createBracket(draft)
+    const bracket = createBracket(makeFinishedWorldCup())
     expect(bracket.matches.filter((m) => m.round === 'R32')).toHaveLength(16)
     expect(bracket.matches.filter((m) => m.round === 'R16')).toHaveLength(8)
     expect(bracket.matches.filter((m) => m.round === 'QF')).toHaveLength(4)
@@ -49,8 +69,7 @@ describe('createBracket', () => {
   })
 
   it('preenche os 16 jogos da R32 com homeCode/awayCode válidos', () => {
-    const draft = makeStrongDraft()
-    const bracket = createBracket(draft)
+    const bracket = createBracket(makeFinishedWorldCup())
     const r32 = bracket.matches.filter((m) => m.round === 'R32')
     for (const m of r32) {
       expect(m.homeCode).toBeDefined()
@@ -60,33 +79,31 @@ describe('createBracket', () => {
     }
   })
 
-  it('marca o XI do user com isUser:true', () => {
-    const draft = makeStrongDraft()
-    const bracket = createBracket(draft)
-    expect(bracket.userCode).toBe(USER_TEAM_CODE)
-    if (bracket.teams[USER_TEAM_CODE]) {
-      expect(bracket.teams[USER_TEAM_CODE].isUser).toBe(true)
-    }
-  })
-
-  it('top 32 ordenados por averageOverall com seeds 1..32', () => {
-    const draft = makeStrongDraft()
-    const bracket = createBracket(draft)
+  it('tem exatamente 32 times com seeds 1..32', () => {
+    const bracket = createBracket(makeFinishedWorldCup())
     const all = Object.values(bracket.teams).sort((a, b) => a.seed - b.seed)
     expect(all).toHaveLength(32)
     expect(all[0].seed).toBe(1)
     expect(all[31].seed).toBe(32)
-    // monotonicamente decrescente em averageOverall
-    for (let i = 1; i < all.length; i++) {
-      expect(all[i].averageOverall).toBeLessThanOrEqual(all[i - 1].averageOverall)
+  })
+
+  it('user 1º do grupo (Brasil substituiu HAI no grupo C) entra como seed alta', () => {
+    const bracket = createBracket(makeFinishedWorldCup())
+    const userTeam = bracket.teams[USER_TEAM_CODE]
+    if (userTeam) {
+      // XI brasileiro num grupo do tier inferior (HAI/MAR/SCO) → deve ser 1º.
+      // Seed dele cai dentro dos 12 primeiros (1ºs dos grupos).
+      expect(userTeam.seed).toBeLessThanOrEqual(12)
+      expect(userTeam.isUser).toBe(true)
     }
   })
 
-  it('exclui a seleção `replacedCode` do pool (a que o XI substituiu)', () => {
-    const draft = makeStrongDraft()
-    const bracket = createBracket(draft, 'BRA') // substitui Brasil
-    // BRA não pode estar no bracket
-    expect(bracket.teams['BRA']).toBeUndefined()
+  it('não inclui o time que o XI substituiu', () => {
+    const worldCup = makeFinishedWorldCup()
+    const userGroupStage = userGroup(worldCup)
+    const replacedCode = userGroupStage.replacedTeam.code
+    const bracket = createBracket(worldCup)
+    expect(bracket.teams[replacedCode]).toBeUndefined()
   })
 })
 
@@ -161,7 +178,6 @@ describe('fullySimulate (knockout)', () => {
       const sim = fullySimulate(home, away, seededRng(i))
       if (!sim.extraTime) regulationDecided++
     }
-    // gap de 25 pts → praticamente nunca empata 0-0/1-1; ≥80% decididos no regulamentar
     expect(regulationDecided).toBeGreaterThan(N * 0.7)
   })
 })
@@ -177,14 +193,12 @@ describe('ROUND_ORDER e ROUND_SIZE coerentes', () => {
 })
 
 describe('setupBracket', () => {
-  it('simula a rodada do oponente e R32 do user existe, mas não jogou', () => {
-    const draft = makeStrongDraft()
-    const bracket = setupBracket(draft, undefined, seededRng(7))
+  it('R32 do user existe sem vencedor, lado oposto já tem alguns winners', () => {
+    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(7))
     const userR32 = nextUserMatch(bracket)
     expect(userR32).not.toBeNull()
     expect(userR32!.round).toBe('R32')
     expect(userR32!.winnerCode).toBeUndefined()
-    // No mínimo, o lado oposto da R32 já tem alguns winners
     const otherSide = bracket.matches.filter(
       (m) =>
         m.round === 'R32' &&
@@ -198,8 +212,7 @@ describe('setupBracket', () => {
 
 describe('userPath', () => {
   it('lista os jogos do user em ordem cronológica', () => {
-    const draft = makeStrongDraft()
-    const bracket = setupBracket(draft, undefined, seededRng(7))
+    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(7))
     const path = userPath(bracket)
     expect(path.length).toBeGreaterThanOrEqual(1)
     expect(path[0].round).toBe('R32')
