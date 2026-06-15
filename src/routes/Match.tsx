@@ -116,33 +116,35 @@ function GroupMatchRunner({
       navigate('/groups', { replace: true })
       return
     }
+    // Checa "já-jogado" ANTES de chamar playRound — depois de simular, o
+    // result aparece pra todo mundo e a heurística vira "sempre replay".
+    const userGroupBefore = getUserGroup(persisted.worldCup)
+    const userMatchBefore = userGroupBefore.matches.find(
+      (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
+    )
+    const alreadyPlayed = !!userMatchBefore?.result
     // playRound é idempotente — se o user já jogou essa rodada antes
     // (ex: fechou a modal e voltou pra cá), o stage volta inalterado.
-    const userGroupAfter = playRound(getUserGroup(persisted.worldCup), round, persisted.draft)
+    const userGroupAfter = playRound(userGroupBefore, round, persisted.draft)
     const stitched = setUserGroup(persisted.worldCup, userGroupAfter)
     const worldCupAfter = playCpuRound(stitched, round)
     setData({ worldCup: worldCupAfter, stage: userGroupAfter, draft: persisted.draft })
     startedAtRef.current = Date.now()
-    const userMatchOnEntry = userGroupAfter.matches.find(
-      (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
-    )
-    if (userMatchOnEntry) {
-      const userIsHome = userMatchOnEntry.homeCode === USER_TEAM_CODE
-      // Já tinha resultado quando o user voltou — pula direto pro fim
-      // ao invés de obrigar a assistir o jogo de novo (e suprime o
-      // re-trigger de match_started/_completed na telemetria).
-      if (userMatchOnEntry.result) {
-        wasAlreadyPlayedRef.current = true
-        setVirtualMinute(90)
-      } else {
-        void track('match_started', {
-          kind: 'group',
-          round,
-          userIsHome,
-          oppCode: userIsHome ? userMatchOnEntry.awayCode : userMatchOnEntry.homeCode,
-          initialSpeed: loadMatchSpeed(),
-        })
-      }
+    if (alreadyPlayed && userMatchBefore) {
+      // Já tinha resultado salvo — pula direto pro fim ao invés de obrigar
+      // a assistir o jogo de novo (e suprime o re-trigger de
+      // match_started/_completed na telemetria).
+      wasAlreadyPlayedRef.current = true
+      setVirtualMinute(90)
+    } else if (userMatchBefore) {
+      const userIsHome = userMatchBefore.homeCode === USER_TEAM_CODE
+      void track('match_started', {
+        kind: 'group',
+        round,
+        userIsHome,
+        oppCode: userIsHome ? userMatchBefore.awayCode : userMatchBefore.homeCode,
+        initialSpeed: loadMatchSpeed(),
+      })
     }
   }, [navigate, round, setVirtualMinute])
 
