@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   findSquad,
@@ -9,6 +9,7 @@ import {
   type Position,
 } from '../data/squads'
 import { NATION_GRADIENTS } from '../lib/nation-colors'
+import { track } from '../lib/track'
 
 function formatValue(eur: number | null | undefined): string {
   if (!eur || eur <= 0) return '—'
@@ -22,6 +23,11 @@ const POSITIONS: Position[] = ['GK', 'DEF', 'MID', 'FWD']
 export function SelecaoDetalhe() {
   const { code } = useParams<{ code: string }>()
   const squad = code ? findSquad(code) : undefined
+
+  useEffect(() => {
+    if (!squad) return
+    void track('team_detail_viewed', { code: squad.code, country: squad.country })
+  }, [squad])
 
   if (!squad) {
     return (
