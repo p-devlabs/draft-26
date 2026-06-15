@@ -278,6 +278,7 @@ function SquadCard({ squad }: { squad: Squad }) {
   return (
     <Link
       to={`/teams/${squad.code.toLowerCase()}`}
+      aria-label={`Ver elenco de ${squad.country}`}
       style={{
         display: 'block',
         background: 'var(--color-d-surface)',

@@ -22,6 +22,7 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
   return (
     <>
       <div
+        aria-hidden="true"
         style={{
           position: 'fixed',
           inset: 0,
@@ -45,6 +46,9 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
         }}
       >
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="setup-drawer-title"
           className="az-sheet"
           style={{
             width: '100%',
@@ -81,6 +85,7 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
             PASSO 1 · CONFIGURE
           </div>
           <h2
+            id="setup-drawer-title"
             className="az-sheettitle"
             style={{
               fontFamily: 'Anton',
@@ -105,6 +110,8 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
 
           <SectionLabel>TÁTICA</SectionLabel>
           <div
+            role="radiogroup"
+            aria-label="Tática"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
@@ -118,6 +125,8 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
                 <button
                   key={f.name}
                   type="button"
+                  role="radio"
+                  aria-checked={on}
                   className="az-formbtn"
                   onClick={() => setFormationName(f.name)}
                   style={{
@@ -141,13 +150,15 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
           </div>
 
           <SectionLabel>ESTILO</SectionLabel>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
+          <div role="radiogroup" aria-label="Estilo" style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
             {STYLES.map((s) => {
               const on = style === s.id
               return (
                 <button
                   key={s.id}
                   type="button"
+                  role="radio"
+                  aria-checked={on}
                   onClick={() => setStyle(s.id)}
                   style={{
                     flex: 1,
@@ -189,13 +200,15 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
               define seus pulos de sorteio
             </span>
           </div>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
+          <div role="radiogroup" aria-label="Dificuldade" style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
             {DIFFICULTIES.map((d) => {
               const on = difficulty === d.id
               return (
                 <button
                   key={d.id}
                   type="button"
+                  role="radio"
+                  aria-checked={on}
                   onClick={() => setDifficulty(d.id)}
                   style={{
                     flex: 1,

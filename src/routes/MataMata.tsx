@@ -309,8 +309,10 @@ function NavPill({
   if (disabled) {
     return (
       <span
+        role="link"
+        aria-disabled="true"
         title="Use o ↻ no header pra recomeçar essa etapa"
-        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.35, cursor: 'not-allowed' }}
+        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.55, cursor: 'not-allowed' }}
       >
         {label}
       </span>

@@ -113,6 +113,19 @@
 .d26-scope ::-webkit-scrollbar-track { background: var(--color-d-bg); }
 .d26-scope ::-webkit-scrollbar-thumb { background: var(--color-d-line); border-radius: 8px; }
 
+/* Foco visível pra navegação por teclado — não interfere com mouse focus.
+   Lime no tema dark (alto contraste sobre #0a0b09), moss no tema light. */
+.d26-scope :focus-visible {
+  outline: 2px solid var(--color-d-lime);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+:focus-visible {
+  outline: 2px solid var(--color-moss);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* ========================================================================
    Escalação responsive (classes az-*) — vence as inline styles via !important
    ======================================================================== */

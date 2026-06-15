@@ -1094,8 +1094,10 @@ function NavPill({
   if (disabled) {
     return (
       <span
+        role="link"
+        aria-disabled="true"
         title="Use o ↻ no header pra recomeçar essa etapa"
-        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.35, cursor: 'not-allowed' }}
+        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.55, cursor: 'not-allowed' }}
       >
         {label}
       </span>
@@ -1813,6 +1815,7 @@ const SimulationPanel = memo(function SimulationPanel(props: {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <button
           onClick={props.onRestart}
+          aria-label="Reiniciar simulação"
           title="Reiniciar"
           style={{
             flex: '0 0 auto',
@@ -1829,6 +1832,8 @@ const SimulationPanel = memo(function SimulationPanel(props: {
           ↻
         </button>
         <div
+          role="radiogroup"
+          aria-label="Velocidade da simulação"
           style={{
             flex: 1,
             display: 'flex',
@@ -1843,6 +1848,9 @@ const SimulationPanel = memo(function SimulationPanel(props: {
             <button
               key={s}
               onClick={() => props.onSpeed(s)}
+              role="radio"
+              aria-checked={props.speed === s}
+              aria-label={`Velocidade ${SPEED_LABEL[s]}`}
               style={{
                 flex: 1,
                 background: props.speed === s ? 'var(--color-d-lime)' : 'transparent',
@@ -2345,6 +2353,7 @@ function OutcomeDrawer({
     <>
       <div
         onClick={onClose}
+        aria-hidden="true"
         style={{
           position: 'fixed',
           inset: 0,
@@ -2368,6 +2377,9 @@ function OutcomeDrawer({
         }}
       >
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={cfg.title}
           style={{
             width: '100%',
             maxWidth: 600,
@@ -2418,6 +2430,7 @@ function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => vo
       />
       <button
         onClick={onClose}
+        aria-label="Fechar"
         style={{
           position: 'absolute',
           top: 20,
