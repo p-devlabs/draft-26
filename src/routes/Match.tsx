@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   findTeam,
@@ -83,13 +83,16 @@ function GroupMatchRunner({
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
-  const setSpeed = (s: Speed) => {
-    if (s !== speed) {
-      void track('match_speed_changed', { kind: 'group', round, from: speed, to: s })
-    }
-    saveMatchSpeed(s)
-    _setSpeed(s)
-  }
+  const setSpeed = useCallback(
+    (s: Speed) => {
+      if (s !== speed) {
+        void track('match_speed_changed', { kind: 'group', round, from: speed, to: s })
+      }
+      saveMatchSpeed(s)
+      _setSpeed(s)
+    },
+    [round, speed],
+  )
   const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
@@ -176,31 +179,80 @@ function GroupMatchRunner({
     }
   }, [data, virtualMinute, round, speed])
 
-  if (!data || !userMatch) return <Loading />
+  // Handlers estáveis: passados pra <PartidaShell> e re-encaminhados pros
+  // children memoizados (SimulationPanel). Sem useCallback, cada tick criava
+  // funções novas e quebrava o memo() lá embaixo.
+  const onToggle = useCallback(() => setPlaying((p) => !p), [])
+  const onRestart = useCallback(() => {
+    setVirtualMinute(0)
+    setPlaying(true)
+    persistedRef.current = false
+    setOutcome(null)
+  }, [])
+  const onSkipToEnd = useCallback(() => {
+    if (!skippedRef.current) {
+      skippedRef.current = true
+      void track('match_skipped_to_result', {
+        kind: 'group',
+        round,
+        atMinute: Math.floor(virtualMinute),
+      })
+    }
+    setVirtualMinute(90)
+  }, [round, virtualMinute])
+  const onCloseOutcome = useCallback(() => setOutcome(null), [])
+  const onShowOutcome = useCallback((o: OutcomeKind) => setOutcome(o), [])
 
-  const homeTeam = findTeam(data.stage, userMatch.homeCode)!
-  const awayTeam = findTeam(data.stage, userMatch.awayCode)!
   const wholeMinute = Math.floor(virtualMinute)
-  const events = userMatch.events ?? []
-  const revealed = events.filter((e) => e.minute <= wholeMinute)
-  const homeGoals = revealed.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
-  const awayGoals = revealed.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
   const finished = virtualMinute >= 90
 
-  const home: SideTeam = {
-    code: homeTeam.code,
-    name: homeTeam.name,
-    averageOverall: homeTeam.averageOverall,
-    isUser: homeTeam.isUser,
-  }
-  const away: SideTeam = {
-    code: awayTeam.code,
-    name: awayTeam.name,
-    averageOverall: awayTeam.averageOverall,
-    isUser: awayTeam.isUser,
-  }
-  const finalEvents = finished ? events : revealed
-  const goalEvents = finalEvents.filter((e) => e.type === 'goal' || e.type === 'red')
+  // Derivações por wholeMinute (não por virtualMinute): só mudam quando o
+  // relógio cruza um minuto inteiro, e não a cada um dos 60ms ticks.
+  const homeTeam = data && userMatch ? findTeam(data.stage, userMatch.homeCode)! : null
+  const awayTeam = data && userMatch ? findTeam(data.stage, userMatch.awayCode)! : null
+  const events = userMatch?.events ?? []
+
+  const revealed = useMemo(
+    () => events.filter((e) => e.minute <= wholeMinute),
+    [events, wholeMinute],
+  )
+  const homeGoals = useMemo(
+    () => (homeTeam ? revealed.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length : 0),
+    [revealed, homeTeam],
+  )
+  const awayGoals = useMemo(
+    () => (awayTeam ? revealed.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length : 0),
+    [revealed, awayTeam],
+  )
+
+  // SideTeam estável por identidade do *Team — passa pra ScoreboardHero /
+  // LancesFeed sem trocar referência a cada tick.
+  const home = useMemo<SideTeam | null>(
+    () =>
+      homeTeam
+        ? { code: homeTeam.code, name: homeTeam.name, averageOverall: homeTeam.averageOverall, isUser: homeTeam.isUser }
+        : null,
+    [homeTeam],
+  )
+  const away = useMemo<SideTeam | null>(
+    () =>
+      awayTeam
+        ? { code: awayTeam.code, name: awayTeam.name, averageOverall: awayTeam.averageOverall, isUser: awayTeam.isUser }
+        : null,
+    [awayTeam],
+  )
+
+  const goalEvents = useMemo(() => {
+    const finalEvents = finished ? events : revealed
+    return finalEvents.filter((e) => e.type === 'goal' || e.type === 'red')
+  }, [finished, events, revealed])
+
+  const outcomeContext = useMemo(() => {
+    if (!data || !homeTeam || !awayTeam) return null
+    return buildGroupOutcomeContext(data.worldCup, data.draft, round, homeTeam, awayTeam, homeGoals, awayGoals)
+  }, [data, homeTeam, awayTeam, round, homeGoals, awayGoals])
+
+  if (!data || !userMatch || !homeTeam || !awayTeam || !home || !away || !outcomeContext) return <Loading />
 
   return (
     <PartidaShell
@@ -216,29 +268,14 @@ function GroupMatchRunner({
       events={revealed}
       goalAndRedEvents={goalEvents}
       speed={speed}
-      onToggle={() => setPlaying((p) => !p)}
-      onRestart={() => {
-        setVirtualMinute(0)
-        setPlaying(true)
-        persistedRef.current = false
-        setOutcome(null)
-      }}
+      onToggle={onToggle}
+      onRestart={onRestart}
       onSpeed={setSpeed}
-      onSkipToEnd={() => {
-        if (!skippedRef.current) {
-          skippedRef.current = true
-          void track('match_skipped_to_result', {
-            kind: 'group',
-            round,
-            atMinute: Math.floor(virtualMinute),
-          })
-        }
-        setVirtualMinute(90)
-      }}
+      onSkipToEnd={onSkipToEnd}
       outcome={outcome}
-      outcomeContext={buildGroupOutcomeContext(data.worldCup, data.draft, round, homeTeam, awayTeam, homeGoals, awayGoals)}
-      onCloseOutcome={() => setOutcome(null)}
-      onShowOutcome={(o) => setOutcome(o)}
+      outcomeContext={outcomeContext}
+      onCloseOutcome={onCloseOutcome}
+      onShowOutcome={onShowOutcome}
       draft={data.draft}
       userTeamCode={USER_TEAM_CODE}
     />
@@ -345,13 +382,16 @@ function KnockoutMatchRunner({
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
-  const setSpeed = (s: Speed) => {
-    if (s !== speed) {
-      void track('match_speed_changed', { kind: 'knockout', matchId, from: speed, to: s })
-    }
-    saveMatchSpeed(s)
-    _setSpeed(s)
-  }
+  const setSpeed = useCallback(
+    (s: Speed) => {
+      if (s !== speed) {
+        void track('match_speed_changed', { kind: 'knockout', matchId, from: speed, to: s })
+      }
+      saveMatchSpeed(s)
+      _setSpeed(s)
+    },
+    [matchId, speed],
+  )
   const [simResult, setSimResult] = useState<
     | { events: MatchEvent[]; extraTime?: { homeGoals: number; awayGoals: number }; penalties?: Penalties; winner: 'home' | 'away' }
     | null
@@ -472,36 +512,85 @@ function KnockoutMatchRunner({
     })
   }, [bracket, draft, finalShowing, matchId, speed])
 
-  if (!bracket || !simResult || !draft || !stage) return <Loading />
+  // Handlers estáveis — passados pros children memoizados via <PartidaShell>.
+  const onToggle = useCallback(() => setPlaying((p) => !p), [])
+  const onRestart = useCallback(() => {
+    setVirtualMinute(0)
+    setPlaying(true)
+    persistedRef.current = false
+    setOutcome(null)
+  }, [])
+  const onSkipToEnd = useCallback(() => {
+    if (!skippedRef.current) {
+      skippedRef.current = true
+      const match = bracket ? findKnockoutMatch(bracket, matchId) : null
+      void track('match_skipped_to_result', {
+        kind: 'knockout',
+        matchId,
+        round: match?.round ?? null,
+        atMinute: Math.floor(virtualMinute),
+      })
+    }
+    setVirtualMinute(goalMinute)
+  }, [bracket, matchId, virtualMinute, goalMinute])
+  const onCloseOutcome = useCallback(() => setOutcome(null), [])
+  const onShowOutcome = useCallback((o: OutcomeKind) => setOutcome(o), [])
 
-  const match = findKnockoutMatch(bracket, matchId)!
-  const homeTeam = bracket.teams[match.homeCode!]
-  const awayTeam = bracket.teams[match.awayCode!]
   const wholeMinute = Math.floor(virtualMinute)
-  const revealed = simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, 90))
   const inExtraTime = wholeMinute > 90
-  const homeGoals90 = revealed.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
-  const awayGoals90 = revealed.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
-  const extraHome = inExtraTime ? (simResult.extraTime?.homeGoals ?? 0) : 0
-  const extraAway = inExtraTime ? (simResult.extraTime?.awayGoals ?? 0) : 0
-  const homeGoals = homeGoals90 + extraHome
-  const awayGoals = awayGoals90 + extraAway
+  const match = bracket ? findKnockoutMatch(bracket, matchId) : null
+  const homeTeam = bracket && match?.homeCode ? bracket.teams[match.homeCode] : null
+  const awayTeam = bracket && match?.awayCode ? bracket.teams[match.awayCode] : null
 
-  const home: SideTeam = {
-    code: homeTeam.code,
-    name: homeTeam.name,
-    averageOverall: homeTeam.averageOverall,
-    isUser: homeTeam.isUser,
-  }
-  const away: SideTeam = {
-    code: awayTeam.code,
-    name: awayTeam.name,
-    averageOverall: awayTeam.averageOverall,
-    isUser: awayTeam.isUser,
-  }
-  const goalEvents = (finalShowing ? simResult.events : revealed).filter(
-    (e) => e.type === 'goal' || e.type === 'red',
+  // Derivações dependem de wholeMinute (não virtualMinute) — só recalcula no
+  // cruzamento de minuto inteiro.
+  const revealed = useMemo(() => {
+    if (!simResult) return [] as MatchEvent[]
+    return simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, 90))
+  }, [simResult, wholeMinute])
+
+  const homeGoals = useMemo(() => {
+    if (!homeTeam) return 0
+    const reg = revealed.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
+    const extra = inExtraTime ? (simResult?.extraTime?.homeGoals ?? 0) : 0
+    return reg + extra
+  }, [revealed, homeTeam, inExtraTime, simResult])
+
+  const awayGoals = useMemo(() => {
+    if (!awayTeam) return 0
+    const reg = revealed.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
+    const extra = inExtraTime ? (simResult?.extraTime?.awayGoals ?? 0) : 0
+    return reg + extra
+  }, [revealed, awayTeam, inExtraTime, simResult])
+
+  const home = useMemo<SideTeam | null>(
+    () =>
+      homeTeam
+        ? { code: homeTeam.code, name: homeTeam.name, averageOverall: homeTeam.averageOverall, isUser: homeTeam.isUser }
+        : null,
+    [homeTeam],
   )
+  const away = useMemo<SideTeam | null>(
+    () =>
+      awayTeam
+        ? { code: awayTeam.code, name: awayTeam.name, averageOverall: awayTeam.averageOverall, isUser: awayTeam.isUser }
+        : null,
+    [awayTeam],
+  )
+
+  const goalEvents = useMemo(() => {
+    if (!simResult) return [] as MatchEvent[]
+    const source = finalShowing ? simResult.events : revealed
+    return source.filter((e) => e.type === 'goal' || e.type === 'red')
+  }, [finalShowing, simResult, revealed])
+
+  const outcomeContext = useMemo(() => {
+    if (!bracket || !stage || !draft || !match) return null
+    return buildKnockoutOutcomeContext(bracket, stage, draft, match, homeGoals, awayGoals, simResult?.penalties)
+  }, [bracket, stage, draft, match, homeGoals, awayGoals, simResult])
+
+  if (!bracket || !simResult || !draft || !stage || !match || !homeTeam || !awayTeam || !home || !away || !outcomeContext)
+    return <Loading />
 
   const phaseLabel = `${ROUND_LABEL[match.round].toUpperCase()} · COPA 2026`
 
@@ -522,30 +611,14 @@ function KnockoutMatchRunner({
       penaltyHomeCode={match.homeCode!}
       penaltyAwayCode={match.awayCode!}
       speed={speed}
-      onToggle={() => setPlaying((p) => !p)}
-      onRestart={() => {
-        setVirtualMinute(0)
-        setPlaying(true)
-        persistedRef.current = false
-        setOutcome(null)
-      }}
+      onToggle={onToggle}
+      onRestart={onRestart}
       onSpeed={setSpeed}
-      onSkipToEnd={() => {
-        if (!skippedRef.current) {
-          skippedRef.current = true
-          void track('match_skipped_to_result', {
-            kind: 'knockout',
-            matchId,
-            round: match.round,
-            atMinute: Math.floor(virtualMinute),
-          })
-        }
-        setVirtualMinute(goalMinute)
-      }}
+      onSkipToEnd={onSkipToEnd}
       outcome={outcome}
-      outcomeContext={buildKnockoutOutcomeContext(bracket, stage, draft, match, homeGoals, awayGoals, simResult.penalties)}
-      onCloseOutcome={() => setOutcome(null)}
-      onShowOutcome={(o) => setOutcome(o)}
+      outcomeContext={outcomeContext}
+      onCloseOutcome={onCloseOutcome}
+      onShowOutcome={onShowOutcome}
       draft={draft}
       userTeamCode={bracket.userCode}
     />
@@ -812,7 +885,9 @@ function Loading() {
 
 // ---------- App Bar ----------
 
-function AppBar({ phaseLabel }: { phaseLabel: string }) {
+// memo: AppBar é puro e só depende de phaseLabel (string). Sem isso, re-rendera
+// a cada tick mesmo a string não tendo mudado.
+const AppBar = memo(function AppBar({ phaseLabel }: { phaseLabel: string }) {
   return (
     <div
       style={{
@@ -871,7 +946,7 @@ function AppBar({ phaseLabel }: { phaseLabel: string }) {
       </div>
     </div>
   )
-}
+})
 
 function NavPill({
   to,
@@ -1214,8 +1289,20 @@ function Body({ children }: { children: React.ReactNode }) {
   )
 }
 
-function LancesFeed({ events, home, away }: { events: MatchEvent[]; home: SideTeam; away: SideTeam }) {
-  const reversed = [...events].reverse()
+// memo: LancesFeed só muda quando entra um evento novo (identidade de `events`
+// muda) ou quando o time troca. Os runners agora memoizam `revealed` por
+// wholeMinute, então `events` só vira referência nova quando passa de minuto
+// inteiro — não a cada tick de 60ms.
+const LancesFeed = memo(function LancesFeed({
+  events,
+  home,
+  away,
+}: {
+  events: MatchEvent[]
+  home: SideTeam
+  away: SideTeam
+}) {
+  const reversed = useMemo(() => [...events].reverse(), [events])
   return (
     <div
       style={{
@@ -1271,7 +1358,7 @@ function LancesFeed({ events, home, away }: { events: MatchEvent[]; home: SideTe
       </div>
     </div>
   )
-}
+})
 
 function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: SideTeam }) {
   const eventIsUser =
@@ -1449,7 +1536,10 @@ function RightColumn(props: {
   )
 }
 
-function SimulationPanel(props: {
+// memo: SimulationPanel não depende de virtualMinute — só de playing/finished/
+// speed/outcome + callbacks. Com os handlers estáveis (useCallback) lá em cima,
+// memo() é eficaz e mata ~1500 re-renders por partida desse painel.
+const SimulationPanel = memo(function SimulationPanel(props: {
   playing: boolean
   finished: boolean
   speed: Speed
@@ -1605,7 +1695,7 @@ function SimulationPanel(props: {
       )}
     </div>
   )
-}
+})
 
 function PenaltiesCard({
   penalties,
@@ -1689,7 +1779,11 @@ interface LineupRow {
   red: boolean
 }
 
-function LineupCard({
+// memo: LineupCard só precisa re-renderizar quando entra um evento novo (i.e.,
+// identidade de revealedEvents muda) ou quando o draft muda (não muda durante a
+// partida). Com `revealed` memoizado no runner por wholeMinute, esse painel
+// para de re-renderizar a cada 60ms.
+const LineupCard = memo(function LineupCard({
   draft,
   userTeamCode,
   revealedEvents,
@@ -1701,38 +1795,40 @@ function LineupCard({
   // Por-jogador, deriva gols/amarelo/vermelho dos eventos já revelados,
   // matching por nome — narrate.ts pesca os atletas direto do roster do
   // user (rosterForKnockout / playRound), então os nomes batem 1:1.
-  const userEvents = revealedEvents.filter((e) => e.teamCode === userTeamCode)
-  const byPlayer = new Map<string, { goals: number; yellow: boolean; red: boolean }>()
-  for (const ev of userEvents) {
-    const cur = byPlayer.get(ev.player) ?? { goals: 0, yellow: false, red: false }
-    if (ev.type === 'goal') cur.goals += 1
-    if (ev.type === 'yellow') cur.yellow = true
-    if (ev.type === 'red') cur.red = true
-    byPlayer.set(ev.player, cur)
-  }
-
-  const grouped = new Map<'GOL' | 'DEF' | 'MEI' | 'ATA', LineupRow[]>()
-  for (const slot of draft.slots) {
-    if (!slot.player) continue
-    const key = lineKeyOf(slot)
-    const player = slot.player.player
-    const evs = byPlayer.get(player.name)
-    const row: LineupRow = {
-      shirt: player.shirt,
-      name: player.name,
-      posLabel: SLOT_LABEL[slot.pos].toUpperCase(),
-      goals: evs?.goals ?? 0,
-      yellow: evs?.yellow ?? false,
-      red: evs?.red ?? false,
+  const lines = useMemo(() => {
+    const userEvents = revealedEvents.filter((e) => e.teamCode === userTeamCode)
+    const byPlayer = new Map<string, { goals: number; yellow: boolean; red: boolean }>()
+    for (const ev of userEvents) {
+      const cur = byPlayer.get(ev.player) ?? { goals: 0, yellow: false, red: false }
+      if (ev.type === 'goal') cur.goals += 1
+      if (ev.type === 'yellow') cur.yellow = true
+      if (ev.type === 'red') cur.red = true
+      byPlayer.set(ev.player, cur)
     }
-    if (!grouped.has(key)) grouped.set(key, [])
-    grouped.get(key)!.push(row)
-  }
 
-  const lines = LINE_ORDER.filter((l) => grouped.has(l.key)).map((l) => ({
-    label: l.label,
-    players: grouped.get(l.key)!,
-  }))
+    const grouped = new Map<'GOL' | 'DEF' | 'MEI' | 'ATA', LineupRow[]>()
+    for (const slot of draft.slots) {
+      if (!slot.player) continue
+      const key = lineKeyOf(slot)
+      const player = slot.player.player
+      const evs = byPlayer.get(player.name)
+      const row: LineupRow = {
+        shirt: player.shirt,
+        name: player.name,
+        posLabel: SLOT_LABEL[slot.pos].toUpperCase(),
+        goals: evs?.goals ?? 0,
+        yellow: evs?.yellow ?? false,
+        red: evs?.red ?? false,
+      }
+      if (!grouped.has(key)) grouped.set(key, [])
+      grouped.get(key)!.push(row)
+    }
+
+    return LINE_ORDER.filter((l) => grouped.has(l.key)).map((l) => ({
+      label: l.label,
+      players: grouped.get(l.key)!,
+    }))
+  }, [draft, userTeamCode, revealedEvents])
 
   if (lines.length === 0) return null
 
@@ -1797,7 +1893,7 @@ function LineupCard({
       </div>
     </div>
   )
-}
+})
 
 function LineupRowItem({ row }: { row: LineupRow }) {
   const accent = row.red
