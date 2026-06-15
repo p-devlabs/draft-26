@@ -15,9 +15,11 @@ pnpm dev               # vite dev server (localhost:5173)
 pnpm build             # tsc -b && vite build → dist/
 pnpm preview           # serve dist/
 pnpm lint              # tsc -b --noEmit
-pnpm test              # vitest run (~200ms, 80+ tests)
+pnpm test              # vitest run (~200ms, 96+ tests)
 pnpm test:watch        # vitest in watch mode
 pnpm test:coverage     # vitest run --coverage (HTML report em coverage/)
+pnpm test:e2e          # playwright (e2e/)
+pnpm sim:distortions   # roda 50 campanhas E2E e gera report (reports/distortions-*.{json,md})
 pnpm data:rebuild      # full data pipeline (network-bound, ~minutes)
 ```
 
@@ -27,6 +29,10 @@ Individual pipeline steps (run in order if rebuilding manually):
 CI roda `lint + test + build` em PR e push pra main (`.github/workflows/ci.yml`). When asked to verify, run `pnpm lint && pnpm test` and exercise the UI in the dev server.
 
 Tests live next to the code they test (`src/lib/*.test.ts`). Engine has both deterministic (correctness) and seeded statistical suites (`simulate.stats.test.ts` — N≈3000 sims com tolerância ±10%). Stats tests preferem comparações relativas (rubber-band em hard < no-difficulty) sobre asserts absolutos pra resistir a re-calibração.
+
+E2E (Playwright, `e2e/`) ficam separados — não rodam no `pnpm test` nem no CI default. Use `pnpm sim:distortions` pra rodar 50 (ou `DRAFT26_RUNS=200`) campanhas inteiras via `window.__draft26__` (exposto em dev mode em `src/main.tsx`) e gerar `reports/distortions-{timestamp}.{json,md}`. O harness vive em `src/lib/sim-harness.ts` (`simulateFullCup(seed)` retorna `RunResult` estruturado). Configuração em `playwright.config.ts` — sobe o vite dev server automaticamente.
+
+Playwright 1.38+ não baixa o Chromium no `pnpm install` — os scripts `test:e2e`, `test:e2e:ui` e `sim:distortions` rodam `playwright install chromium` antes do test (no-op se já cacheado, ~150MB no primeiro run). Pra instalar separado: `pnpm setup:e2e`.
 
 `pnpm install` requires `allowBuilds: { esbuild: true }` in `pnpm-workspace.yaml` (already set) — CI will break without it.
 

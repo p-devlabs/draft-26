@@ -7,6 +7,10 @@ dist
 .vite
 *.tsbuildinfo
 coverage
+reports
+playwright-report
+test-results
+.playwright
 
 # claude code runtime state
 .claude/
