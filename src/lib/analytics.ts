@@ -1,5 +1,6 @@
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined
 const CF_BEACON_TOKEN = import.meta.env.VITE_CF_BEACON_TOKEN as string | undefined
+const APP_RELEASE = import.meta.env.VITE_APP_RELEASE
 
 /**
  * Inicializa Sentry (erros) e injeta o beacon do Cloudflare Web Analytics
@@ -19,6 +20,7 @@ export function initAnalytics(): void {
         Sentry.init({
           dsn: SENTRY_DSN,
           environment: import.meta.env.MODE,
+          release: APP_RELEASE,
           // Sem tracing/replay por ora — só erros, pra manter o chunk pequeno.
           tracesSampleRate: 0,
         })
