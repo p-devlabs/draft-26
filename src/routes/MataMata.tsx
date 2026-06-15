@@ -19,6 +19,7 @@ import { syncRun, type FinishedRound } from '../lib/runs'
 import { BannerSlot } from '../components/ads/BannerSlot'
 import { EliminatedDrawer } from '../components/ads/EliminatedDrawer'
 import { useAds } from '../components/ads/AdsProvider'
+import { track } from '../lib/track'
 
 export function MataMata() {
   const navigate = useNavigate()
@@ -63,6 +64,13 @@ export function MataMata() {
       if (lostMatch) finishedRound = lostMatch.round
     }
     void syncRun({ bracket, ...(finishedRound ? { finishedRound } : {}) })
+    if (finishedRound) {
+      void track('cup_ended', {
+        finishedRound,
+        champion: bracket.champion ?? null,
+        userWon: userChampion,
+      })
+    }
   }, [bracket])
 
   if (missingStage) {
@@ -135,6 +143,7 @@ export function MataMata() {
   const phaseLabel = computePhaseLabel(bracket, next, userOut, userChampion)
 
   const handleReset = () => {
+    void track('reset_clicked', { from: 'bracket' })
     clearBracket()
     const persisted = loadWorldCup()!
     const created = setupBracket(persisted.worldCup)

@@ -40,6 +40,7 @@ import { nationGradient } from '../lib/nation-colors'
 import { SLOT_LABEL } from '../lib/positions'
 import type { MatchEvent } from '../lib/narrate'
 import type { DraftState, DraftSlot } from '../lib/draft'
+import { track } from '../lib/track'
 import { useAds } from '../components/ads/AdsProvider'
 
 type Speed = 'slow' | 'normal' | 'fast'
@@ -84,11 +85,16 @@ function GroupMatchRunner({
   const [playing, setPlaying] = useState(true)
   const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
   const setSpeed = (s: Speed) => {
+    if (s !== speed) {
+      void track('match_speed_changed', { kind: 'group', round, from: speed, to: s })
+    }
     saveMatchSpeed(s)
     _setSpeed(s)
   }
   const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
   const persistedRef = useRef(false)
+  const startedAtRef = useRef<number | null>(null)
+  const skippedRef = useRef(false)
 
   useEffect(() => {
     const persisted = loadWorldCup()
@@ -103,6 +109,20 @@ function GroupMatchRunner({
     const stitched = setUserGroup(persisted.worldCup, userGroupAfter)
     const worldCupAfter = playCpuRound(stitched, round)
     setData({ worldCup: worldCupAfter, stage: userGroupAfter, draft: persisted.draft })
+    startedAtRef.current = Date.now()
+    const userMatchOnEntry = userGroupAfter.matches.find(
+      (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
+    )
+    if (userMatchOnEntry) {
+      const userIsHome = userMatchOnEntry.homeCode === USER_TEAM_CODE
+      void track('match_started', {
+        kind: 'group',
+        round,
+        userIsHome,
+        oppCode: userIsHome ? userMatchOnEntry.awayCode : userMatchOnEntry.homeCode,
+        initialSpeed: loadMatchSpeed(),
+      })
+    }
   }, [navigate, round])
 
   useEffect(() => {
@@ -137,7 +157,25 @@ function GroupMatchRunner({
     saveWorldCup(data.draft, data.worldCup)
     setPlaying(false)
     setOutcome(resolveGroupOutcome(data.worldCup, round))
-  }, [data, virtualMinute, round])
+    const userMatch = data.stage.matches.find(
+      (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
+    )
+    if (userMatch?.result) {
+      const userIsHome = userMatch.homeCode === USER_TEAM_CODE
+      const ug = userIsHome ? userMatch.result.homeGoals : userMatch.result.awayGoals
+      const og = userIsHome ? userMatch.result.awayGoals : userMatch.result.homeGoals
+      void track('match_completed', {
+        kind: 'group',
+        round,
+        userGoals: ug,
+        oppGoals: og,
+        userResult: ug > og ? 'W' : ug === og ? 'D' : 'L',
+        durationMs: startedAtRef.current ? Date.now() - startedAtRef.current : null,
+        skippedToResult: skippedRef.current,
+        finalSpeed: speed,
+      })
+    }
+  }, [data, virtualMinute, round, speed])
 
   if (!data || !userMatch) return <Loading />
 
@@ -187,7 +225,17 @@ function GroupMatchRunner({
         setOutcome(null)
       }}
       onSpeed={setSpeed}
-      onSkipToEnd={() => setVirtualMinute(90)}
+      onSkipToEnd={() => {
+        if (!skippedRef.current) {
+          skippedRef.current = true
+          void track('match_skipped_to_result', {
+            kind: 'group',
+            round,
+            atMinute: Math.floor(virtualMinute),
+          })
+        }
+        setVirtualMinute(90)
+      }}
       outcome={outcome}
       outcomeContext={buildGroupOutcomeContext(data.worldCup, data.draft, round, homeTeam, awayTeam, homeGoals, awayGoals)}
       onCloseOutcome={() => setOutcome(null)}
@@ -299,6 +347,9 @@ function KnockoutMatchRunner({
   const [playing, setPlaying] = useState(true)
   const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
   const setSpeed = (s: Speed) => {
+    if (s !== speed) {
+      void track('match_speed_changed', { kind: 'knockout', matchId, from: speed, to: s })
+    }
     saveMatchSpeed(s)
     _setSpeed(s)
   }
@@ -308,6 +359,8 @@ function KnockoutMatchRunner({
   >(null)
   const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
   const persistedRef = useRef(false)
+  const startedAtRef = useRef<number | null>(null)
+  const skippedRef = useRef(false)
 
   useEffect(() => {
     const persisted = loadWorldCup()
@@ -354,6 +407,16 @@ function KnockoutMatchRunner({
     // pra ter campeão definido.
     next = ensureRoundsSimulated(next)
     setBracket(next)
+    startedAtRef.current = Date.now()
+    const userIsHome = match.homeCode === br.userCode
+    void track('match_started', {
+      kind: 'knockout',
+      matchId,
+      round: match.round,
+      userIsHome,
+      oppCode: userIsHome ? match.awayCode : match.homeCode,
+      initialSpeed: loadMatchSpeed(),
+    })
   }, [matchId, navigate])
 
   const goalMinute = simResult?.extraTime ? 120 : 90
@@ -385,7 +448,30 @@ function KnockoutMatchRunner({
     const match = findKnockoutMatch(bracket, matchId)
     if (!match) return
     setOutcome(resolveKnockoutOutcome(bracket, match))
-  }, [bracket, draft, finalShowing, matchId])
+    const userIsHome = match.homeCode === bracket.userCode
+    const userWon = match.winnerCode === bracket.userCode
+    const reg = match.result
+    const extra = match.extraTime ?? { homeGoals: 0, awayGoals: 0 }
+    const userGoals = reg
+      ? (userIsHome ? reg.homeGoals : reg.awayGoals) + (userIsHome ? extra.homeGoals : extra.awayGoals)
+      : 0
+    const oppGoals = reg
+      ? (userIsHome ? reg.awayGoals : reg.homeGoals) + (userIsHome ? extra.awayGoals : extra.homeGoals)
+      : 0
+    void track('match_completed', {
+      kind: 'knockout',
+      matchId,
+      round: match.round,
+      userGoals,
+      oppGoals,
+      userResult: userWon ? 'W' : 'L',
+      hadExtraTime: !!match.extraTime,
+      hadPenalties: !!match.penalties,
+      durationMs: startedAtRef.current ? Date.now() - startedAtRef.current : null,
+      skippedToResult: skippedRef.current,
+      finalSpeed: speed,
+    })
+  }, [bracket, draft, finalShowing, matchId, speed])
 
   if (!bracket || !simResult || !draft || !stage) return <Loading />
 
@@ -445,7 +531,18 @@ function KnockoutMatchRunner({
         setOutcome(null)
       }}
       onSpeed={setSpeed}
-      onSkipToEnd={() => setVirtualMinute(goalMinute)}
+      onSkipToEnd={() => {
+        if (!skippedRef.current) {
+          skippedRef.current = true
+          void track('match_skipped_to_result', {
+            kind: 'knockout',
+            matchId,
+            round: match.round,
+            atMinute: Math.floor(virtualMinute),
+          })
+        }
+        setVirtualMinute(goalMinute)
+      }}
       outcome={outcome}
       outcomeContext={buildKnockoutOutcomeContext(bracket, stage, draft, match, homeGoals, awayGoals, simResult.penalties)}
       onCloseOutcome={() => setOutcome(null)}
