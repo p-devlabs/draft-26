@@ -151,7 +151,11 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
           </div>
 
           <SectionLabel>ESTILO</SectionLabel>
-          <div role="radiogroup" aria-label="Estilo" style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
+          <div
+            role="radiogroup"
+            aria-label="Estilo"
+            style={{ display: 'flex', gap: 10, marginBottom: 22 }}
+          >
             {STYLES.map((s) => {
               const on = style === s.id
               return (
@@ -201,7 +205,11 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
               define seus pulos de sorteio
             </span>
           </div>
-          <div role="radiogroup" aria-label="Dificuldade" style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
+          <div
+            role="radiogroup"
+            aria-label="Dificuldade"
+            style={{ display: 'flex', gap: 10, marginBottom: 28 }}
+          >
             {DIFFICULTIES.map((d) => {
               const on = difficulty === d.id
               return (
