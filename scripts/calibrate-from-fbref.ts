@@ -184,7 +184,7 @@ const FEATURE_NAMES: Record<Bucket, string[]> = {
 async function main() {
   const root = process.cwd()
   const squads: SquadEnriched[] = JSON.parse(
-    await readFile(resolve(root, 'data/squads-enriched.json'), 'utf8'),
+    await readFile(resolve(root, 'public/data/squads-enriched.json'), 'utf8'),
   )
 
   const allPlayers: PlayerEnriched[] = []
@@ -271,7 +271,7 @@ async function main() {
   }
 
   await writeFile(
-    resolve(root, 'data/squads-enriched.json'),
+    resolve(root, 'public/data/squads-enriched.json'),
     JSON.stringify(squads, null, 2),
   )
 

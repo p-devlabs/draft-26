@@ -3,10 +3,14 @@ import { Link } from 'react-router-dom'
 import { groupedSquads, type Squad } from '../data/squads'
 import { NATION_GRADIENTS } from '../lib/nation-colors'
 
-const TOTAL_PLAYERS = groupedSquads.reduce(
-  (s, g) => s + g.squads.reduce((ss, sq) => ss + sq.players.length, 0),
-  0,
-)
+// Computado em render (não em module-load) pra rodar depois do <SquadsGate>
+// ter hidratado `groupedSquads`.
+function totalPlayers(): number {
+  return groupedSquads.reduce(
+    (s, g) => s + g.squads.reduce((ss, sq) => ss + sq.players.length, 0),
+    0,
+  )
+}
 
 export function Selecoes() {
   return (
@@ -144,7 +148,7 @@ function Hero() {
     >
       <div style={{ maxWidth: 1120, margin: '0 auto' }}>
         <Kicker>
-          48 SELEÇÕES · 12 GRUPOS · {TOTAL_PLAYERS.toLocaleString('pt-BR')} CONVOCADOS
+          48 SELEÇÕES · 12 GRUPOS · {totalPlayers().toLocaleString('pt-BR')} CONVOCADOS
         </Kicker>
         <h1
           style={{
