@@ -133,21 +133,24 @@ Vite 6 + React 19 + TS + Tailwind v4. Routing via React Router 7
 - **`bracket.ts`** — `createBracket(worldCup)` consumes the 32 qualifiers
   and seeds them by (groupPosition asc → pts → GD → GF → overall) using an
   NCAA snake pairing (`SEED_ORDER_32`). Setup calls
-  `setupBracket(worldCup)` which builds + runs `ensureRoundsSimulated`.
-  When the bracket is created, `simulateOtherHalfToFinal` immediately
-  simulates the opposite half all the way to the final.
-  `ensureRoundsSimulated` advances round-by-round as the user plays.
-  Knockout matches go the full route: ET (~0.7 expected goals) →
-  penalties (5 + sudden death, per-shot probability clamped to 0.3-0.9 by
-  overall).
+  `setupBracket(worldCup)` which builds the bracket and immediately runs
+  `ensureRoundsSimulated`. That helper walks the rounds in order: for
+  each round it simulates every non-user match (`simulateNonUserRound`)
+  and stops as soon as it finds the user's next pending match. If the
+  user has been eliminated, it keeps going through to the final.
+  `ensureRoundsSimulated` is called again after every user match to
+  catch the next round up. `simulateOtherHalfToFinal` is also exported
+  but is not part of the live gameplay loop today. Knockout matches go
+  the full route: ET (~0.7 expected goals) → penalties (5 + sudden
+  death, per-shot probability clamped to 0.3-0.9 by overall).
 - **`narrate.ts`** — per-minute event stream (goals / cards) weighted by
   player position; consumed by `routes/Match` for the live playback.
 - **`persistence.ts`** — `localStorage` keys: `d26:draft`, `d26:worldcup`,
   `d26:bracket`, `d26:speed`. This is the source of truth for in-progress
   runs. The `Formation` object is **not** serialized — only
   `formationName`, and `loadDraft` re-derives it.
-- **`features.ts`** — `?dev=1` (or `localStorage` `d26:dev`) enables dev
-  affordances like autofill (`autofill.ts`).
+- **`features.ts`** — `?dev=1` (or `localStorage` key `feature:dev`)
+  enables dev affordances like autofill (`autofill.ts`).
 - **`supabase.ts` / `runs.ts`** — wired into the gameplay loop as a
   fire-and-forget remote mirror. Schema is in
   `supabase/migrations/0001_runs.sql` (table `runs` with RLS: owner sees
@@ -216,8 +219,8 @@ fallback in `public/_redirects`, cache + security headers in
 `public/_headers`. Build-time env vars: `VITE_SUPABASE_URL`,
 `VITE_SUPABASE_ANON_KEY` (the anon key is public by design — RLS protects
 the data, not the key), plus optional `VITE_SENTRY_DSN`,
-`VITE_CF_BEACON_TOKEN`, and `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` /
-`SENTRY_PROJECT` for sourcemap upload from CI.
+`VITE_CF_BEACON_TOKEN`, and `SENTRY_AUTH_TOKEN` for sourcemap upload
+from CI (the Sentry org and project are hard-coded in `vite.config.ts`).
 
 ## Conventions specific to this repo
 

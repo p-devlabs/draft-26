@@ -57,8 +57,9 @@ The anon key is **public by design** — it ships in the bundle through the
    - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
    - `VITE_SENTRY_DSN` (optional, enables Sentry on the client)
    - `VITE_CF_BEACON_TOKEN` (optional, enables Cloudflare Web Analytics)
-   - `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` (optional, upload
-     sourcemaps from CI)
+   - `SENTRY_AUTH_TOKEN` (optional, enables sourcemap upload to Sentry
+     from CI; the Sentry org and project are hard-coded in
+     `vite.config.ts`)
 
 `public/_redirects` already handles the SPA fallback. `public/_headers` sets
 cache headers and security headers (HSTS, CSP, XFO, etc).

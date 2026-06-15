@@ -147,12 +147,11 @@ VITE_CF_BEACON_TOKEN=<optional>
 ```
 
 Build-time only (used to upload sourcemaps to Sentry from CI; **not**
-bundled into the client):
+bundled into the client). The Sentry org and project are hard-coded in
+`vite.config.ts`, so only the token needs to be supplied:
 
 ```
 SENTRY_AUTH_TOKEN=<token>
-SENTRY_ORG=<org slug>
-SENTRY_PROJECT=<project slug>
 ```
 
 ## Roadmap
@@ -163,7 +162,7 @@ SENTRY_PROJECT=<project slug>
   flagged by [docs/launch-plan.md](./docs/launch-plan.md). ROI is high,
   cost is ~6h. Pick edge generation (Worker + Satori / `@vercel/og`).
 - **`share_clicked` analytics event** so we can measure the share rate
-  alongside `run_finished`.
+  alongside `cup_ended`.
 - **Promote CSP from Report-Only to enforced** once Sentry reports a clean
   run of the prod traffic against the current policy.
 

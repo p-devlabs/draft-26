@@ -180,11 +180,11 @@ The current telemetry covers everything needed to decide what's working:
 |---------------------------------------|------------------------------|
 | Sessions / DAU                        | `view_page` + `session_id`   |
 | Funnel draft → groups → bracket       | `country_rolled`, `player_picked`, `match_completed` |
-| Run completion rate                   | `run_finished` / `run_started` |
+| Run completion rate                   | `cup_ended` / `draft_started` |
 | Share rate                            | `share_clicked` (to be instrumented) |
 | Traffic origin                        | UTM in `track-session-once`  |
 | Most drafted nations                  | aggregate of `country_rolled` |
-| Nations that win most Copas           | aggregate of `run_finished`  |
+| Nations that win most Copas           | aggregate of `cup_ended` `champion` |
 
 Week-1 success criterion: >500 completed runs AND share rate >5%. Below
 that, re-plan week 2 prioritizing whichever channel is converting.

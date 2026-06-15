@@ -351,13 +351,16 @@ the UI.
 
 ### Render strategy
 
-When the bracket is created, `simulateOtherHalfToFinal` immediately
-simulates the **opposite** half all the way to the final. The user only
-plays matches in their half; the final's opponent is whoever survives the
-other half.
-
-`ensureRoundsSimulated(bracket, rng)` advances the user's half one round at
-a time as the user plays through it.
+`setupBracket(worldCup, rng)` creates the bracket and immediately calls
+`ensureRoundsSimulated(bracket, rng)`. That helper walks the rounds in
+order; for each round it calls `simulateNonUserRound` (which plays every
+match that isn't the user's) and then stops as soon as it finds the
+user's next pending match. If the user has already been eliminated, it
+continues straight through to the final so the bracket UI can show the
+champion. Each user match plays normally; `ensureRoundsSimulated` is
+called again afterwards so the next round of non-user matches catches
+up. `simulateOtherHalfToFinal` is exported as a helper but is currently
+unused by the gameplay loop.
 
 ### User helpers
 
@@ -602,8 +605,9 @@ on every location change.
 
 ### Feature flag (`src/lib/features.ts`)
 
-- Enabled by `?dev=1` (persists to `localStorage` as `d26:dev`) or by
-  setting `localStorage.setItem('d26:dev', '1')` directly
+- Enabled by `?dev=1` (persists to `localStorage` under the key
+  `feature:dev`) or by setting `localStorage.setItem('feature:dev', '1')`
+  directly
 - Reading `features.dev` gates:
   - The dev-only Autofill button on `/draft`
   - The `?demo=1` shortcut on `/groups`
@@ -768,8 +772,9 @@ pnpm data:rebuild      # full data pipeline (network-bound, ~minutes)
 - Build command: `pnpm build`
 - Output directory: `dist/`
 - Build-time env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
-  `VITE_SENTRY_DSN`, `VITE_CF_BEACON_TOKEN`, `SENTRY_AUTH_TOKEN`,
-  `SENTRY_ORG`, `SENTRY_PROJECT`
+  `VITE_SENTRY_DSN`, `VITE_CF_BEACON_TOKEN`, `SENTRY_AUTH_TOKEN`. The
+  Sentry org and project are hard-coded in `vite.config.ts`, so only the
+  auth token needs to come from the environment
 
 ### CI (`.github/workflows/ci.yml`)
 
