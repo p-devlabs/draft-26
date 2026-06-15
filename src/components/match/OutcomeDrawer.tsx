@@ -1,0 +1,1089 @@
+import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+
+import { track } from '../../lib/track'
+
+import type { DraftState } from '../../lib/draft'
+import type { UserFate } from '../../lib/groups'
+
+// ---------- Tipos públicos ----------
+
+export interface ScorerRow {
+  name: string
+  goals: number
+}
+
+export interface CampaignStats {
+  jogos: number
+  rec: string
+  gols: number
+  saldo: string
+}
+
+export type OutcomeKind =
+  | 'grupo'
+  | 'grupo-resultado'
+  | 'classificado'
+  | 'fora-grupos'
+  | 'avancou'
+  | 'elim'
+  | 'champ'
+
+export interface OutcomeContext {
+  phase: string
+  resultLine: string
+  matchResult: {
+    userGoals: number
+    oppGoals: number
+    oppLabel: string
+    /** Pênaltis (knockout) já normalizados na perspectiva do user. */
+    penalties?: {
+      userScored: number
+      oppScored: number
+      /** Cobranças em ordem cronológica — true = converteu. */
+      sequence: { isUser: boolean; scored: boolean }[]
+    }
+  }
+  draft: DraftState
+  stats: CampaignStats
+  scorers: ScorerRow[]
+  extras: { userPos?: number; nextRoundLabel?: string | null; fate?: UserFate | null }
+}
+
+// ---------- Config interna ----------
+
+interface OutcomeConfig {
+  kicker: string
+  title: string
+  titleColor: string
+  sub: string
+  accent: string
+  bannerBg: string
+  showCheck: boolean
+  emoji: string | null
+  ctaLabel: string
+  ctaTo: string
+  cta2Label?: string
+  cta2To?: string
+  primaryIsLime: boolean
+  champion: boolean
+  showShare: boolean
+}
+
+function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
+  switch (kind) {
+    case 'grupo':
+      return {
+        kicker: ctx.phase,
+        title: 'VITÓRIA',
+        titleColor: 'var(--color-d-ink)',
+        sub: 'Mais três pontos. Falta jogo pra fechar o grupo.',
+        accent: 'var(--color-d-lime)',
+        bannerBg: 'linear-gradient(180deg, #12160d, #0a0b09)',
+        showCheck: true,
+        emoji: null,
+        ctaLabel: 'VOLTAR PRO GRUPO →',
+        ctaTo: '/groups',
+        cta2Label: 'VER CHAVEAMENTO',
+        cta2To: '/bracket',
+        primaryIsLime: true,
+        champion: false,
+        showShare: true,
+      }
+    case 'grupo-resultado':
+      return {
+        kicker: ctx.phase,
+        title: 'JOGO ENCERRADO',
+        titleColor: 'var(--color-d-ink)',
+        sub: 'Ainda falta jogo pra fechar o grupo.',
+        accent: 'var(--color-d-mut)',
+        bannerBg: 'linear-gradient(180deg, #141613, #0a0b09)',
+        showCheck: false,
+        emoji: null,
+        ctaLabel: 'VOLTAR PRO GRUPO →',
+        ctaTo: '/groups',
+        primaryIsLime: false,
+        champion: false,
+        showShare: false,
+      }
+    case 'classificado':
+      return {
+        kicker: 'FASE DE GRUPOS · ENCERRADA',
+        title: 'CLASSIFICADO',
+        titleColor: 'var(--color-d-ink)',
+        sub: classificadoSubMessage(ctx),
+        accent: 'var(--color-d-lime)',
+        bannerBg: 'linear-gradient(180deg, #161d0b, #0a0b09)',
+        showCheck: true,
+        emoji: null,
+        ctaLabel: 'IR PRO MATA-MATA →',
+        ctaTo: '/bracket',
+        cta2Label: 'REVER O GRUPO',
+        cta2To: '/groups',
+        primaryIsLime: true,
+        champion: false,
+        showShare: true,
+      }
+    case 'fora-grupos':
+      return {
+        kicker: 'COPA 2026 · FIM DE LINHA',
+        title: 'ELIMINADO',
+        titleColor: 'var(--color-d-ink)',
+        sub: foraGruposSubMessage(ctx),
+        accent: 'var(--color-d-red)',
+        bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
+        showCheck: false,
+        emoji: null,
+        ctaLabel: 'TENTAR DE NOVO →',
+        ctaTo: '/draft',
+        cta2Label: 'VER CHAVEAMENTO',
+        cta2To: '/bracket',
+        primaryIsLime: false,
+        champion: false,
+        showShare: false,
+      }
+    case 'avancou':
+      return {
+        kicker: ctx.phase,
+        title: ctx.extras.nextRoundLabel ? `NA ${ctx.extras.nextRoundLabel}!` : 'AVANÇOU',
+        titleColor: 'var(--color-d-ink)',
+        sub: 'Seu XI passou pra próxima fase.',
+        accent: 'var(--color-d-lime)',
+        bannerBg: 'linear-gradient(180deg, #161d0b, #0a0b09)',
+        showCheck: true,
+        emoji: null,
+        ctaLabel: ctx.extras.nextRoundLabel
+          ? `VER ${ctx.extras.nextRoundLabel} →`
+          : 'VOLTAR PRO CHAVEAMENTO →',
+        ctaTo: '/bracket',
+        primaryIsLime: true,
+        champion: false,
+        showShare: true,
+      }
+    case 'elim':
+      return {
+        kicker: ctx.phase,
+        title: 'ELIMINADO',
+        titleColor: 'var(--color-d-ink)',
+        sub: 'Seu time caiu no mata-mata. Quase lá.',
+        accent: 'var(--color-d-red)',
+        bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
+        showCheck: false,
+        emoji: null,
+        ctaLabel: 'TENTAR DE NOVO →',
+        ctaTo: '/draft',
+        cta2Label: 'VER CHAVEAMENTO',
+        cta2To: '/bracket',
+        primaryIsLime: false,
+        champion: false,
+        showShare: false,
+      }
+    case 'champ':
+      return {
+        kicker: 'COPA 2026 · DECISÃO',
+        title: 'CAMPEÃO',
+        titleColor: 'var(--color-d-bg)',
+        sub: 'Seu time levantou a taça.',
+        accent: 'rgba(10,11,9,0.7)',
+        bannerBg: 'radial-gradient(130% 100% at 50% 0%, #d4ff3d, #a9d11e)',
+        showCheck: false,
+        emoji: '🏆',
+        ctaLabel: 'JOGAR DE NOVO →',
+        ctaTo: '/draft',
+        primaryIsLime: true,
+        champion: true,
+        showShare: false,
+      }
+  }
+}
+
+function ordinalPt(n: number): string {
+  if (n === 1) return '1º'
+  if (n === 2) return '2º'
+  if (n === 3) return '3º'
+  return `${n}º`
+}
+
+/**
+ * Sub-mensagem do drawer "CLASSIFICADO" — varia por destino:
+ *   - 1º/2º: "1º do grupo. Seu XI está no mata-mata."
+ *   - 3º entre os 8 melhores: "3º do grupo · entre os 8 melhores terceiros."
+ */
+function classificadoSubMessage(ctx: OutcomeContext): string {
+  const fate = ctx.extras.fate
+  if (fate?.kind === 'qualified-3rd-rank') {
+    return `3º do grupo · entre os 8 melhores terceiros (#${fate.rank} de 12).`
+  }
+  return `${ordinalPt(ctx.extras.userPos ?? 1)} do grupo. Seu XI está no mata-mata.`
+}
+
+/**
+ * Sub-mensagem do drawer "ELIMINADO" da fase de grupos — diferencia entre
+ * 3º fora dos 8 melhores e 4º colocado puro.
+ */
+function foraGruposSubMessage(ctx: OutcomeContext): string {
+  const fate = ctx.extras.fate
+  if (fate?.kind === 'eliminated-3rd-rank') {
+    return `3º do grupo, fora dos 8 melhores terceiros (#${fate.rank} de 12). Faltou pouco.`
+  }
+  if (fate?.kind === 'eliminated-4th') {
+    return 'Último do grupo. Seu XI não passou.'
+  }
+  return 'Seu XI não passou da fase de grupos. Tente de novo.'
+}
+
+// ---------- Componente público ----------
+
+export function OutcomeDrawer({
+  outcome,
+  ctx,
+  onClose,
+}: {
+  outcome: OutcomeKind
+  ctx: OutcomeContext
+  onClose: () => void
+}) {
+  const cfg = outcomeConfig(outcome, ctx)
+  return (
+    <>
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(6,7,5,0.78)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 30,
+          animation: 'd26-fade-in .25s ease',
+        }}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 31,
+          display: 'flex',
+          justifyContent: 'center',
+          animation: 'd26-sheet-up .32s cubic-bezier(.2,.9,.3,1)',
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={cfg.title}
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            maxHeight: '92vh',
+            overflowY: 'auto',
+            background: 'var(--color-d-surface)',
+            border: '1px solid var(--color-d-line)',
+            borderBottom: 'none',
+            borderRadius: '22px 22px 0 0',
+            boxShadow: '0 -30px 60px -20px rgba(0,0,0,0.7)',
+            pointerEvents: 'auto',
+          }}
+        >
+          <OutcomeBanner cfg={cfg} onClose={onClose} />
+          <div style={{ padding: '22px clamp(18px, 5vw, 28px) 30px' }}>
+            <MatchResultCard phase={ctx.phase} result={ctx.matchResult} />
+            <TeamChosenCard draft={ctx.draft} />
+            <CampaignStatsRow stats={ctx.stats} />
+            {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
+            {cfg.champion && (
+              <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />
+            )}
+            {!cfg.champion && cfg.showShare && <CompactShare surface={outcome} />}
+            <OutcomeActions cfg={cfg} />
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ---------- Subcomponentes ----------
+
+function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => void }) {
+  return (
+    <div
+      style={{
+        padding: '24px clamp(18px, 5vw, 28px) 20px',
+        borderBottom: '1px solid var(--color-d-line)',
+        background: cfg.bannerBg,
+        position: 'relative',
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 5,
+          borderRadius: 5,
+          background: 'rgba(255,255,255,0.25)',
+          margin: '0 auto 18px',
+        }}
+      />
+      <button
+        onClick={onClose}
+        aria-label="Fechar"
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          background: 'rgba(0,0,0,0.3)',
+          border: '1px solid var(--color-d-line)',
+          color: 'var(--color-d-ink)',
+          borderRadius: 8,
+          width: 30,
+          height: 30,
+          fontSize: 14,
+          cursor: 'pointer',
+        }}
+      >
+        ✕
+      </button>
+      <div style={{ textAlign: 'center' }}>
+        {cfg.showCheck && (
+          <div
+            style={{
+              width: 54,
+              height: 54,
+              margin: '0 auto 8px',
+              borderRadius: '50%',
+              background: 'rgba(212,255,61,0.14)',
+              border: '1.5px solid var(--color-d-lime)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'Anton',
+              fontSize: 28,
+              color: 'var(--color-d-lime)',
+            }}
+          >
+            ✓
+          </div>
+        )}
+        {cfg.emoji && (
+          <div style={{ fontSize: 46, lineHeight: 1, marginBottom: 8 }}>{cfg.emoji}</div>
+        )}
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            letterSpacing: '0.18em',
+            color: cfg.accent,
+            marginBottom: 4,
+          }}
+        >
+          {cfg.kicker}
+        </div>
+        <h2
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 40,
+            margin: 0,
+            lineHeight: 0.92,
+            color: cfg.titleColor,
+          }}
+        >
+          {cfg.title}
+        </h2>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 12,
+            color: cfg.champion ? 'rgba(10,11,9,0.6)' : 'var(--color-d-mut)',
+            marginTop: 8,
+          }}
+        >
+          {cfg.sub}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MatchResultCard({
+  phase,
+  result,
+}: {
+  phase: string
+  result: OutcomeContext['matchResult']
+}) {
+  const { userGoals, oppGoals, oppLabel, penalties } = result
+  const userWon = penalties ? penalties.userScored > penalties.oppScored : userGoals > oppGoals
+
+  return (
+    <div
+      style={{
+        background: 'var(--color-d-surface2)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 12,
+        padding: '14px 16px',
+        marginBottom: 14,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.1em',
+          color: 'var(--color-d-mut)',
+          marginBottom: 10,
+        }}
+      >
+        {phase}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          gap: 14,
+        }}
+      >
+        <div
+          style={{
+            textAlign: 'right',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-lime)',
+          }}
+        >
+          SEU XI
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 8,
+            fontFamily: 'Anton',
+            fontSize: 34,
+            lineHeight: 1,
+          }}
+        >
+          <span style={{ color: userWon ? 'var(--color-d-lime)' : 'var(--color-d-mut)' }}>
+            {userGoals}
+          </span>
+          <span style={{ fontSize: 22, color: 'var(--color-d-mut)' }}>—</span>
+          <span style={{ color: !userWon ? 'var(--color-d-ink)' : 'var(--color-d-mut)' }}>
+            {oppGoals}
+          </span>
+        </div>
+        <div
+          style={{
+            textAlign: 'left',
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-ink)',
+          }}
+        >
+          {oppLabel}
+        </div>
+      </div>
+      {penalties && <PenaltyDots penalties={penalties} userWon={userWon} />}
+    </div>
+  )
+}
+
+function PenaltyDots({
+  penalties,
+  userWon,
+}: {
+  penalties: NonNullable<OutcomeContext['matchResult']['penalties']>
+  userWon: boolean
+}) {
+  const userKicks = penalties.sequence.filter((k) => k.isUser)
+  const oppKicks = penalties.sequence.filter((k) => !k.isUser)
+  // Slots por lateral: 5 (regulamentar) + 1 por par de morte súbita.
+  // Cobranças não-batidas (encerrou cedo) ficam pontilhadas no row.
+  const totalSlots = 5 + Math.ceil(Math.max(0, penalties.sequence.length - 10) / 2)
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        paddingTop: 12,
+        borderTop: '1px solid var(--color-d-line)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          letterSpacing: '0.1em',
+          color: 'var(--color-d-mut)',
+          marginBottom: 8,
+        }}
+      >
+        <span>PÊNALTIS</span>
+        <span style={{ fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-ink)' }}>
+          <span style={{ color: userWon ? 'var(--color-d-lime)' : 'var(--color-d-mut)' }}>
+            {penalties.userScored}
+          </span>
+          <span style={{ color: 'var(--color-d-mut)', margin: '0 5px' }}>—</span>
+          <span style={{ color: !userWon ? 'var(--color-d-ink)' : 'var(--color-d-mut)' }}>
+            {penalties.oppScored}
+          </span>
+        </span>
+      </div>
+      <PenaltyRow
+        label="SEU XI"
+        kicks={userKicks}
+        totalSlots={totalSlots}
+        ours
+        scoredColor="var(--color-d-lime)"
+      />
+      <div style={{ height: 6 }} />
+      <PenaltyRow
+        label="OPP"
+        kicks={oppKicks}
+        totalSlots={totalSlots}
+        scoredColor="var(--color-d-ink)"
+      />
+    </div>
+  )
+}
+
+function PenaltyRow({
+  label,
+  kicks,
+  totalSlots,
+  ours,
+  scoredColor,
+}: {
+  label: string
+  kicks: NonNullable<OutcomeContext['matchResult']['penalties']>['sequence']
+  totalSlots: number
+  ours?: boolean
+  scoredColor: string
+}) {
+  const pending = Math.max(0, totalSlots - kicks.length)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          color: ours ? 'var(--color-d-lime)' : 'var(--color-d-mut)',
+          width: 56,
+        }}
+      >
+        {label}
+      </span>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+        {kicks.map((k, i) => (
+          <span
+            key={`shot-${i}`}
+            title={k.scored ? 'Convertida' : 'Perdida'}
+            style={{
+              width: 13,
+              height: 13,
+              borderRadius: '50%',
+              background: k.scored ? scoredColor : 'transparent',
+              border: `1.5px solid ${k.scored ? scoredColor : 'var(--color-d-mut)'}`,
+              opacity: k.scored ? 1 : 0.5,
+            }}
+          />
+        ))}
+        {Array.from({ length: pending }).map((_, i) => (
+          <span
+            key={`pending-${i}`}
+            style={{
+              width: 13,
+              height: 13,
+              borderRadius: '50%',
+              background: 'transparent',
+              border: '1.5px dashed var(--color-d-line)',
+              opacity: 0.5,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TeamChosenCard({ draft }: { draft: DraftState }) {
+  const ovr = Math.round(averageOvr(draft))
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        background: 'var(--color-d-surface2)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 12,
+        padding: '14px 16px',
+        marginBottom: 18,
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 10,
+          background: 'var(--color-d-lime)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 20,
+          color: 'var(--color-d-bg)',
+        }}
+      >
+        ⚄
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: 'Anton', fontSize: 22, lineHeight: 0.95 }}>SEU XI</div>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 10,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.08em',
+            marginTop: 2,
+          }}
+        >
+          {draft.formationName.toUpperCase()} · {draft.style.toUpperCase()} ·{' '}
+          {draft.pickedCountries.length} SELEÇÕES
+        </div>
+      </div>
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontFamily: 'Space Mono', fontSize: 9, color: 'var(--color-d-mut)' }}>
+          OVR
+        </div>
+        <div style={{ fontFamily: 'Anton', fontSize: 26, color: 'var(--color-d-lime)' }}>{ovr}</div>
+      </div>
+    </div>
+  )
+}
+
+function averageOvr(draft: DraftState): number {
+  const players = draft.slots.map((s) => s.player?.player).filter(Boolean) as { overall: number }[]
+  if (players.length === 0) return 0
+  return players.reduce((a, b) => a + b.overall, 0) / players.length
+}
+
+function CampaignStatsRow({ stats }: { stats: CampaignStats }) {
+  return (
+    <>
+      <SectionLabel>CAMPANHA NO TORNEIO</SectionLabel>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 10,
+          marginBottom: 22,
+        }}
+      >
+        <StatCell label="JOGOS" value={String(stats.jogos)} highlight />
+        <StatCell label="V-E-D" value={stats.rec} />
+        <StatCell label="GOLS PRÓ" value={String(stats.gols)} highlight />
+        <StatCell label="SALDO" value={stats.saldo} />
+      </div>
+    </>
+  )
+}
+
+function StatCell({
+  label,
+  value,
+  highlight,
+}: {
+  label: string
+  value: string
+  highlight?: boolean
+}) {
+  return (
+    <div
+      style={{
+        background: 'var(--color-d-surface2)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 11,
+        padding: '13px 8px',
+        textAlign: 'center',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'Anton',
+          fontSize: 26,
+          color: highlight ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 9,
+          color: 'var(--color-d-mut)',
+          letterSpacing: '0.06em',
+          marginTop: 2,
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  )
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <div
+      style={{
+        fontFamily: 'Space Mono',
+        fontSize: 11,
+        letterSpacing: '0.12em',
+        color: 'var(--color-d-mut)',
+        marginBottom: 12,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
+  const maxG = Math.max(...scorers.map((s) => s.goals), 1)
+  return (
+    <>
+      <SectionLabel>ARTILHEIROS DA EQUIPE</SectionLabel>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 8 }}>
+        {scorers.map((s, i) => (
+          <div
+            key={s.name}
+            style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)' }}
+          >
+            <div
+              style={{
+                width: 24,
+                flexShrink: 0,
+                fontFamily: 'Anton',
+                fontSize: 16,
+                color: 'var(--color-d-mut)',
+                textAlign: 'center',
+              }}
+            >
+              {i + 1}
+            </div>
+            <div style={{ flex: '1 1 70px', minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: 14,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {s.name}
+              </div>
+            </div>
+            <div
+              style={{
+                flex: '0 1 120px',
+                minWidth: 48,
+                height: 8,
+                borderRadius: 6,
+                background: 'var(--color-d-surface2)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: `${(s.goals / maxG) * 100}%`,
+                  height: '100%',
+                  background: 'var(--color-d-lime)',
+                }}
+              />
+            </div>
+            <div
+              style={{
+                fontFamily: 'Anton',
+                fontSize: 20,
+                color: 'var(--color-d-lime)',
+                width: 28,
+                flexShrink: 0,
+                textAlign: 'right',
+              }}
+            >
+              {s.goals}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function ChampionShareBlock({
+  resultLine,
+  topScorer,
+}: {
+  resultLine: string
+  topScorer?: ScorerRow
+}) {
+  return (
+    <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 20 }}>
+      <SectionLabel>COMPARTILHE A CONQUISTA</SectionLabel>
+      <div
+        style={{
+          borderRadius: 14,
+          overflow: 'hidden',
+          border: '1px solid rgba(212,255,61,0.3)',
+          background:
+            'radial-gradient(120% 90% at 80% 0%, rgba(212,255,61,0.16), transparent 60%), #101310',
+          padding: 20,
+          marginBottom: 14,
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 14,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                background: 'var(--color-d-lime)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                color: 'var(--color-d-bg)',
+              }}
+            >
+              ⚄
+            </div>
+            <span style={{ fontFamily: 'Anton', fontSize: 16 }}>
+              DRAFT{' '}
+              <span
+                style={{
+                  fontFamily: 'Space Mono',
+                  fontSize: 11,
+                  color: 'var(--color-d-lime)',
+                  fontWeight: 700,
+                }}
+              >
+                26
+              </span>
+            </span>
+          </div>
+          <span style={{ fontSize: 24 }}>🏆</span>
+        </div>
+        <div style={{ fontFamily: 'Anton', fontSize: 30, lineHeight: 0.95, marginBottom: 6 }}>
+          SEU XI É<br />
+          <span style={{ color: 'var(--color-d-lime)' }}>CAMPEÃO DO MUNDO</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            marginTop: 14,
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-mut)',
+          }}
+        >
+          <span>{resultLine}</span>
+          {topScorer && (
+            <>
+              <div style={{ width: 1, height: 24, background: 'var(--color-d-line)' }} />
+              <span>
+                ARTILHEIRO{' '}
+                <b style={{ color: 'var(--color-d-ink)' }}>
+                  {topScorer.name.toUpperCase()} · {topScorer.goals}
+                </b>
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+      <ShareGrid surface="champion" />
+    </div>
+  )
+}
+
+function CompactShare({ surface }: { surface: string }) {
+  return (
+    <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 18 }}>
+      <SectionLabel>COMPARTILHAR</SectionLabel>
+      <ShareGrid surface={surface} />
+    </div>
+  )
+}
+
+type ShareMethod = 'x' | 'whats' | 'stories' | 'copy'
+
+// URL canônica de prod — o que viraliza vai pra cá independente de onde o user
+// disparou (dev/preview/prod). UTMs fecham o loop de atribuição em session_init.
+const SHARE_URL_BASE = 'https://draft-26.pages.dev'
+
+function buildShareUrl(method: ShareMethod, surface: string): string {
+  const url = new URL(SHARE_URL_BASE)
+  url.searchParams.set('utm_source', 'share')
+  url.searchParams.set('utm_medium', method)
+  url.searchParams.set('utm_campaign', 'user-share')
+  url.searchParams.set('utm_content', surface)
+  return url.toString()
+}
+
+function buildShareText(surface: string): string {
+  switch (surface) {
+    case 'champion':
+      return '🏆 Meu XI é CAMPEÃO no Draft 26! Simulador da Copa 2026.'
+    case 'classificado':
+      return 'Classificado no Draft 26 ⚄ Simulador da Copa 2026.'
+    case 'avancou':
+      return 'Mais uma fase no Draft 26 ⚄ Simulador da Copa 2026.'
+    case 'grupo':
+      return 'Vitória no grupo no Draft 26 ⚄ Simulador da Copa 2026.'
+    default:
+      return 'Jogando o Draft 26 ⚄ Simulador da Copa 2026.'
+  }
+}
+
+async function fireShare(method: ShareMethod, surface: string): Promise<void> {
+  void track('share_clicked', { method, surface })
+  const url = buildShareUrl(method, surface)
+  const text = buildShareText(surface)
+
+  if (method === 'x') {
+    const intent = new URL('https://twitter.com/intent/tweet')
+    intent.searchParams.set('text', text)
+    intent.searchParams.set('url', url)
+    window.open(intent.toString(), '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (method === 'whats') {
+    const intent = new URL('https://wa.me/')
+    intent.searchParams.set('text', `${text} ${url}`)
+    window.open(intent.toString(), '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (method === 'stories') {
+    // Sem URL direta de IG Stories no web — Web Share API abre o sheet nativo
+    // (e o IG aparece nele); em desktop sem suporte, cai pro clipboard.
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ text, url })
+      } catch {
+        // cancelou ou bloqueou — silencioso
+      }
+      return
+    }
+    await navigator.clipboard.writeText(url)
+    return
+  }
+  await navigator.clipboard.writeText(url)
+}
+
+function ShareGrid({ surface }: { surface: string }) {
+  const [copied, setCopied] = useState(false)
+  const items: { label: string; method: ShareMethod }[] = [
+    { label: '𝕏', method: 'x' },
+    { label: 'WHATS', method: 'whats' },
+    { label: 'STORIES', method: 'stories' },
+    { label: copied ? 'COPIADO ✓' : 'COPIAR', method: 'copy' },
+  ]
+
+  const handleClick = async (method: ShareMethod) => {
+    await fireShare(method, surface)
+    if (method === 'copy') {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9 }}>
+      {items.map(({ label, method }) => (
+        <button
+          key={method}
+          onClick={() => void handleClick(method)}
+          style={{
+            background: 'var(--color-d-surface2)',
+            border: '1px solid var(--color-d-line)',
+            color: 'var(--color-d-ink)',
+            borderRadius: 10,
+            padding: '13px 0',
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+      <Link
+        to={cfg.ctaTo}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          background: cfg.primaryIsLime ? 'var(--color-d-lime)' : 'var(--color-d-surface2)',
+          color: cfg.primaryIsLime ? 'var(--color-d-bg)' : 'var(--color-d-ink)',
+          border: `1px solid ${cfg.primaryIsLime ? 'var(--color-d-lime)' : 'var(--color-d-line)'}`,
+          borderRadius: 11,
+          padding: 15,
+          fontFamily: 'Anton',
+          fontSize: 17,
+          letterSpacing: '0.02em',
+          cursor: 'pointer',
+        }}
+      >
+        {cfg.ctaLabel}
+      </Link>
+      {cfg.cta2Label && cfg.cta2To && (
+        <Link
+          to={cfg.cta2To}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            background: 'transparent',
+            color: 'var(--color-d-mut)',
+            border: '1px solid var(--color-d-line)',
+            borderRadius: 11,
+            padding: 12,
+            fontFamily: 'Space Mono',
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            cursor: 'pointer',
+          }}
+        >
+          {cfg.cta2Label}
+        </Link>
+      )}
+    </div>
+  )
+}
