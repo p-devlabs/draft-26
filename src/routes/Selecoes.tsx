@@ -300,47 +300,44 @@ function SquadCard({ squad }: { squad: Squad }) {
         e.currentTarget.style.transform = 'none'
       }}
     >
-      <div style={{ position: 'relative', height: 64, background: gradient }}>
-        <span
-          style={{
-            position: 'absolute',
-            left: 12,
-            bottom: 8,
-            fontFamily: 'Space Mono',
-            fontSize: 13,
-            fontWeight: 700,
-            color: '#fff',
-            letterSpacing: '0.06em',
-            textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-          }}
-        >
-          {squad.code}
-        </span>
-        <span
-          style={{
-            position: 'absolute',
-            right: 12,
-            bottom: 6,
-            fontFamily: 'Anton',
-            fontSize: 28,
-            lineHeight: 1,
-            color: '#fff',
-            textShadow: '0 1px 6px rgba(0,0,0,0.7)',
-          }}
-        >
-          {squad.averageOverall.toFixed(0)}
-        </span>
-      </div>
+      {/* Faixa de cor da bandeira — limpa, sem código nem OVR sobreposto
+          (criavam "vazado" no topo/base por causa do textShadow). Código e
+          rating moved pro corpo do card. */}
+      <div role="img" aria-label={squad.country} style={{ height: 64, background: gradient }} />
       <div style={{ padding: '14px 16px 16px' }}>
         <div
           style={{
-            fontFamily: 'Anton',
-            fontSize: 19,
-            lineHeight: 1.05,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            gap: 10,
             marginBottom: 6,
           }}
         >
-          {squad.country.toUpperCase()}
+          <div
+            style={{
+              fontFamily: 'Anton',
+              fontSize: 19,
+              lineHeight: 1.05,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {squad.country.toUpperCase()}
+          </div>
+          <span
+            style={{
+              fontFamily: 'Anton',
+              fontSize: 22,
+              lineHeight: 1,
+              color: 'var(--color-d-lime)',
+              flex: '0 0 auto',
+            }}
+          >
+            {squad.averageOverall.toFixed(0)}
+          </span>
         </div>
         <div
           style={{
@@ -365,7 +362,9 @@ function SquadCard({ squad }: { squad: Squad }) {
             color: 'var(--color-d-mut)',
           }}
         >
-          <span>{squad.formation.primary}</span>
+          <span>
+            {squad.code} · {squad.formation.primary}
+          </span>
           <span>{squad.players.length} CONVOC.</span>
         </div>
       </div>

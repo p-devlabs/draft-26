@@ -291,37 +291,20 @@ function Hero({ squad, gradient }: { squad: ReturnType<typeof findSquad>; gradie
           }}
         >
           <div>
-            {/* Badge da bandeira em destaque */}
+            {/* Badge da bandeira em destaque — gradient puro, sem código
+                sobreposto: o GRUPO/código já aparecem no kicker acima. */}
             <div
+              role="img"
+              aria-label={squad.country}
               style={{
                 width: 96,
                 height: 64,
                 borderRadius: 10,
                 background: gradient,
                 marginBottom: 18,
-                position: 'relative',
                 boxShadow: '0 8px 32px -8px rgba(0,0,0,0.6)',
               }}
-            >
-              <span
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'flex-start',
-                  padding: '8px 10px',
-                  fontFamily: 'Space Mono',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: '#fff',
-                  letterSpacing: '0.06em',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.7)',
-                }}
-              >
-                {squad.code}
-              </span>
-            </div>
+            />
             <h1
               style={{
                 fontFamily: 'Anton',

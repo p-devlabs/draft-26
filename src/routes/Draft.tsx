@@ -76,7 +76,7 @@ export function Draft() {
 
   return (
     <div className="d26-scope" style={{ position: 'relative', overflowX: 'hidden' }}>
-      <AppBar ovr={ovr} onReset={buildPhase ? handleReset : undefined} />
+      <AppBar ovr={ovr} canAdvance={complete} onReset={buildPhase ? handleReset : undefined} />
       {buildPhase && draft && (
         <ProgressStrip
           formation={draft.formationName}
@@ -144,7 +144,15 @@ export function Draft() {
 // App bar
 // ============================================================
 
-function AppBar({ ovr, onReset }: { ovr: number | null; onReset?: () => void }) {
+function AppBar({
+  ovr,
+  canAdvance,
+  onReset,
+}: {
+  ovr: number | null
+  canAdvance: boolean
+  onReset?: () => void
+}) {
   return (
     <div
       className="az-appbar"
@@ -186,9 +194,9 @@ function AppBar({ ovr, onReset }: { ovr: number | null; onReset?: () => void }) 
         }}
       >
         <NavPill active label="ESCALAÇÃO" />
-        <NavPill to="/groups" label="GRUPOS" />
-        <NavPill to="/bracket" label="CHAVEAMENTO" />
-        <NavPill to="/match" label="PARTIDA" />
+        <NavPill to={canAdvance ? '/groups' : undefined} disabled={!canAdvance} label="GRUPOS" />
+        <NavPill disabled label="CHAVEAMENTO" />
+        <NavPill disabled label="PARTIDA" />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: '0 0 auto' }}>
         <div style={{ textAlign: 'right' }}>
@@ -239,7 +247,17 @@ function AppBar({ ovr, onReset }: { ovr: number | null; onReset?: () => void }) 
   )
 }
 
-function NavPill({ to, label, active }: { to?: string; label: string; active?: boolean }) {
+function NavPill({
+  to,
+  label,
+  active,
+  disabled,
+}: {
+  to?: string
+  label: string
+  active?: boolean
+  disabled?: boolean
+}) {
   const base: CSSProperties = {
     fontFamily: 'Space Mono',
     fontSize: 12,
@@ -257,6 +275,19 @@ function NavPill({ to, label, active }: { to?: string; label: string; active?: b
           background: 'var(--color-d-lime)',
           color: 'var(--color-d-bg)',
         }}
+      >
+        {label}
+      </span>
+    )
+  }
+  if (disabled) {
+    return (
+      <span
+        className="az-navpill"
+        role="link"
+        aria-disabled="true"
+        title="Conclua a escalação pra liberar essa etapa"
+        style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.45, cursor: 'not-allowed' }}
       >
         {label}
       </span>

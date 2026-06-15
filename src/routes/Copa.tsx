@@ -187,7 +187,7 @@ export function Copa() {
 
   return (
     <div className="d26-scope" style={{ position: 'relative', overflowX: 'hidden' }}>
-      <AppBar phaseLabel={phaseLabel} onReset={handleReset} />
+      <AppBar phaseLabel={phaseLabel} bracketUnlocked={finished} onReset={handleReset} />
       <div
         style={{
           maxWidth: 1180,
@@ -232,7 +232,15 @@ function roundsPlayed(stage: GroupStage): number {
 // App bar
 // ============================================================
 
-function AppBar({ phaseLabel, onReset }: { phaseLabel: string; onReset?: () => void }) {
+function AppBar({
+  phaseLabel,
+  bracketUnlocked,
+  onReset,
+}: {
+  phaseLabel: string
+  bracketUnlocked?: boolean
+  onReset?: () => void
+}) {
   return (
     <div
       style={{
@@ -284,8 +292,12 @@ function AppBar({ phaseLabel, onReset }: { phaseLabel: string; onReset?: () => v
       >
         <NavPill disabled label="ESCALAÇÃO" />
         <NavPill active label="GRUPOS" />
-        <NavPill to="/bracket" label="CHAVEAMENTO" />
-        <NavPill to="/match" label="PARTIDA" />
+        <NavPill
+          to={bracketUnlocked ? '/bracket' : undefined}
+          disabled={!bracketUnlocked}
+          label="CHAVEAMENTO"
+        />
+        <NavPill disabled label="PARTIDA" />
       </nav>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <div
@@ -360,7 +372,7 @@ function NavPill({
       <span
         role="link"
         aria-disabled="true"
-        title="Use o ↻ no header pra recomeçar essa etapa"
+        title="Conclua a etapa atual pra liberar"
         style={{ ...base, color: 'var(--color-d-mut)', opacity: 0.55, cursor: 'not-allowed' }}
       >
         {label}
@@ -757,42 +769,29 @@ function BadgeChip({
   code,
   width,
   height,
-  fontSize,
 }: {
   code: string
   width: number
   height: number
-  fontSize: number
+  // `fontSize` é aceito por compatibilidade do call-site mas não é usado:
+  // o badge é só o gradiente — a sigla já aparece ao lado/abaixo no consumer
+  // (SideCell mostra `team.code`, BannerTeam mostra `team.name`).
+  fontSize?: number
 }) {
   const c = code.toUpperCase()
   return (
     <div
+      role="img"
+      aria-label={c}
       style={{
         width,
         height,
         borderRadius: 6,
         background: nationGradient(c),
-        position: 'relative',
         border: '1px solid rgba(255,255,255,0.14)',
         flex: '0 0 auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
-    >
-      <span
-        style={{
-          fontFamily: 'Space Mono',
-          fontSize,
-          fontWeight: 700,
-          color: '#fff',
-          textShadow: '0 1px 2px rgba(0,0,0,0.6)',
-          letterSpacing: '0.04em',
-        }}
-      >
-        {c}
-      </span>
-    </div>
+    />
   )
 }
 
@@ -1355,24 +1354,49 @@ function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }
       >
         {note}
       </span>
-      <Link
-        to="/bracket"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 9,
-          padding: '13px 22px',
-          borderRadius: 11,
-          fontFamily: qualified ? 'Anton' : 'Space Mono',
-          fontSize: qualified ? 17 : 12,
-          fontWeight: 700,
-          letterSpacing: '0.06em',
-          textDecoration: 'none',
-          ...ctaStyle,
-        }}
-      >
-        {ctaLabel}
-      </Link>
+      {finished ? (
+        <Link
+          to="/bracket"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 9,
+            padding: '13px 22px',
+            borderRadius: 11,
+            fontFamily: qualified ? 'Anton' : 'Space Mono',
+            fontSize: qualified ? 17 : 12,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textDecoration: 'none',
+            ...ctaStyle,
+          }}
+        >
+          {ctaLabel}
+        </Link>
+      ) : (
+        <span
+          aria-disabled="true"
+          title="Conclua os 3 jogos do grupo pra liberar"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 9,
+            padding: '13px 22px',
+            borderRadius: 11,
+            fontFamily: 'Space Mono',
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            background: 'transparent',
+            color: 'var(--color-d-mut)',
+            border: '1px dashed var(--color-d-line)',
+            opacity: 0.55,
+            cursor: 'not-allowed',
+          }}
+        >
+          {ctaLabel}
+        </span>
+      )}
     </div>
   )
 }
