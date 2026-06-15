@@ -97,6 +97,11 @@ function GroupMatchRunner({
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
   const skippedRef = useRef(false)
+  // Espelha virtualMinute num ref pra onSkipToEnd ler o minuto atual sem
+  // recriar a callback a cada tick — se virtualMinute fosse dep do useCallback,
+  // o memo() do SimulationPanel quebraria a cada 60ms.
+  const virtualMinuteRef = useRef(0)
+  virtualMinuteRef.current = virtualMinute
 
   useEffect(() => {
     const persisted = loadWorldCup()
@@ -195,11 +200,11 @@ function GroupMatchRunner({
       void track('match_skipped_to_result', {
         kind: 'group',
         round,
-        atMinute: Math.floor(virtualMinute),
+        atMinute: Math.floor(virtualMinuteRef.current),
       })
     }
     setVirtualMinute(90)
-  }, [round, virtualMinute])
+  }, [round])
   const onCloseOutcome = useCallback(() => setOutcome(null), [])
   const onShowOutcome = useCallback((o: OutcomeKind) => setOutcome(o), [])
 
@@ -400,6 +405,9 @@ function KnockoutMatchRunner({
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
   const skippedRef = useRef(false)
+  // Ver comentário em GroupMatchRunner: evita recriar onSkipToEnd a cada tick.
+  const virtualMinuteRef = useRef(0)
+  virtualMinuteRef.current = virtualMinute
 
   useEffect(() => {
     const persisted = loadWorldCup()
@@ -528,11 +536,11 @@ function KnockoutMatchRunner({
         kind: 'knockout',
         matchId,
         round: match?.round ?? null,
-        atMinute: Math.floor(virtualMinute),
+        atMinute: Math.floor(virtualMinuteRef.current),
       })
     }
     setVirtualMinute(goalMinute)
-  }, [bracket, matchId, virtualMinute, goalMinute])
+  }, [bracket, matchId, goalMinute])
   const onCloseOutcome = useCallback(() => setOutcome(null), [])
   const onShowOutcome = useCallback((o: OutcomeKind) => setOutcome(o), [])
 
