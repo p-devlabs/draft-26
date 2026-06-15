@@ -1,197 +1,207 @@
-# Plano de lançamento — Semana 1
+# Launch plan — Week 1
 
-Estratégia de virada de chave do Draft 26: sair do "tá no ar" pra "tem gente
-jogando". Foco em distribuição orgânica casada com a Copa 2026 em fase de
-grupos. Sem ads pagos nessa primeira semana — não vale o ruído com base zero.
+Strategy for flipping Draft 26 from "it's live" to "people are playing it".
+The focus is organic distribution aligned with the Copa 2026 group stage.
+No paid ads in week 1 — not worth the noise on a base of zero.
 
-**Janela:** seg 15/06 → dom 21/06 (referência inicial; replicável por semana
-até a final em 19/07).
+**Window:** Mon Jun 15 → Sun Jun 21 (initial reference; replicable each week
+through the final on Jul 19).
 
 ## TL;DR
 
-- **Bloqueador real do share-loop:** OG image dinâmica no fim de campanha.
-  Sem isso, o resto do plano fica capenga. ROI alto, esforço ~6h.
-- **Cadência:** prepara D0, soft launch D1, picos casados com jogo do Brasil,
-  retrô D6.
-- **Canais:** X + IG + YouTube + TikTok, criados todos em D0 com handle único.
-- **Distribuição:** comentários genuínos em lives BR > Reddit > X amplification
-  > YouTube long-form.
-- **Esforço estimado:** 25-35h de marketing na semana. Se sobrar metade, corta
-  YouTube longo primeiro (D4) — esforço alto, retorno duvidoso em base zero.
+- **The real share-loop blocker:** dynamic OG image at run completion.
+  Without it, the rest of the plan limps. High ROI, ~6h of work.
+- **Cadence:** prepare D0, soft launch D1, peaks aligned with Brazil's
+  matches, retro on D6.
+- **Channels:** X + IG + YouTube + TikTok, all created on D0 under the same
+  handle.
+- **Distribution:** genuine comments on Brazilian football live streams >
+  Reddit > X amplification > YouTube long-form.
+- **Effort estimate:** 25-35 hours of marketing across the week. If only
+  half is available, drop the YouTube long-form first (D4) — high effort,
+  uncertain return at a base of zero.
 
-## Premissas
+## Assumptions
 
-- Produto está estável e os caminhos críticos têm telemetria (`view_page`,
-  `country_rolled`, `player_picked`, `team_detail_viewed`, `match_completed`
-  etc — ver `src/lib/track.ts`).
-- Audiência-alvo é Brasil, pt-BR, mas com flanco aberto pro mercado FIFA
-  gamer internacional (r/SoccerGaming).
-- Performance pós-otimizações de junho/26: bundle inicial em 144 KB gzip,
-  carrega rápido até em mobile fraco — pré-requisito pra share via mobile.
-- Calendário da Copa: assumir 1-2 jogos do Brasil na semana sem assumir o
-  dia exato — ajustar D3 conforme o fixture real.
+- The product is stable and the critical paths are instrumented
+  (`view_page`, `country_rolled`, `player_picked`, `team_detail_viewed`,
+  `match_completed`, etc — see `src/lib/track.ts`).
+- Target audience is Brazil, pt-BR, with a side flank open to the
+  international FIFA gamer crowd (r/SoccerGaming).
+- Post-optimization performance (as of June 2026): ~144 KB gzip initial
+  bundle, fast even on weak mobile — a prerequisite for mobile sharing.
+- Copa schedule: assume 1-2 Brazil matches this week without assuming the
+  exact day — adjust D3 to the real fixture.
 
-## D0 — Hoje (Seg 15/06) · Setup
+## D0 — Today (Mon Jun 15) · Setup
 
-### Branding & contas (3-4h, faz tudo de uma vez)
+### Branding & accounts (3-4h, batch the work)
 
-- **Handle único** em todas: `@draft26` (ou `@usadraft26` se o curto estiver
-  tomado). Cheque X / IG / TikTok / YT **antes** de fechar — handle
-  consistente é não-negociável pra reconhecimento.
-- **Bio única:** *"Role o dado. Faça o draft. Conquiste o mundo. — Simulador
-  1P da Copa 2026"* + link `draft-26.pages.dev`.
-- **Avatar:** logo monocromático sob fundo escuro (consistente com o tema
-  `.d26-scope` da home).
-- **Capa/banner:** screenshot do caça-níquel de países rolando.
-- **X:** pin um post com vídeo de 15s (gravação do draft → primeiro jogo).
-- **YouTube:** cria canal + 1 short de 30s só pra não ficar vazio.
-- **TikTok:** cria mas não posta (entra D2-D3).
+- **Single handle** everywhere: `@draft26` (or `@usadraft26` if the short
+  one is taken). Check X / IG / TikTok / YT **before** committing — handle
+  consistency is non-negotiable for recognition.
+- **Single bio:** *"Role o dado. Faça o draft. Conquiste o mundo. —
+  Simulador 1P da Copa 2026"* + link `draft-26.pages.dev`.
+- **Avatar:** monochrome logo on a dark background (matches the
+  `.d26-scope` home theme).
+- **Cover / banner:** screenshot of the country-rolling slot machine.
+- **X:** pin a post with a 15s clip (drafting → first match).
+- **YouTube:** create the channel + one 30s short so the channel doesn't
+  look empty.
+- **TikTok:** create the account, don't post yet (D2-D3 has the first
+  post).
 
-### Produto (paralelo, crítico)
+### Product (parallel, critical)
 
-- **Implementar OG image dinâmica** no fim de campanha. Opções:
-  - Cloudflare Worker com Satori/`@vercel/og` (recomendado — edge, sem
+- **Implement the dynamic OG image** for the run completion screen.
+  Options:
+  - Cloudflare Worker with Satori / `@vercel/og` (recommended — edge, no
     cold start)
-  - Canvas no client + upload pra storage temporário (mais fácil, mais
-    capenga)
-- **Botão "Compartilhar"** na tela de resultado, pré-preenchendo:
-  - X: texto + `#Draft26` + URL com `?campaign=<id>`
-  - Cópia de link simples (Web Share API onde disponível)
-- **Confirmar** que `share_clicked` está sendo trackeado no funil.
+  - Client-side canvas + upload to temporary storage (easier, jankier)
+- **"Share" button** on the result screen, pre-filling:
+  - X: text + `#Draft26` + URL with `?campaign=<id>`
+  - Plain link copy (Web Share API where available)
+- **Confirm** that `share_clicked` is being tracked in the funnel.
 
-## D1 — Ter 16/06 · Soft launch
+## D1 — Tue Jun 16 · Soft launch
 
-Sem promo pesada. Objetivo: criar conteúdo "evergreen" pra parecer que o
-canal não nasceu ontem quando alguém abrir o perfil.
+No heavy promo. Goal: seed evergreen content so the profile doesn't look
+brand-new when someone clicks through.
 
-- **X:** thread "como nasceu o Draft 26" — referência ao 7a0/38a0, prints,
-  1 GIF do draft. 4-5 tweets.
-- **IG:** carrossel de 3 reels prontos: (a) tela inicial em loop, (b) draft
-  de país aleatório, (c) campanha terminando.
-- **YouTube:** 1 short de 60-90s "drafted XI de país aleatório vai dar bom?".
-- **Reddit:** **não postar ainda.** Começar a comentar genuinamente em
-  threads de r/futebol, r/brasil, r/desimpedidos. Constrói karma sem
-  auto-promo.
-- **Comentários em lives BR:** entra nas lives pós-jogo de Pilhado,
-  Desimpedidos, Bola Pré comentando sobre o jogo de verdade. Sem mencionar
-  produto. Só presença.
+- **X:** thread "how Draft 26 was born" — reference 7a0/38a0, prints, one
+  GIF of the draft. 4-5 tweets.
+- **IG:** carousel of 3 ready-made reels — (a) home screen on loop, (b)
+  rolling a random nation, (c) a campaign ending.
+- **YouTube:** one 60-90s short — "this random-country XI — does it
+  actually work?"
+- **Reddit:** **don't post yet.** Start commenting genuinely on r/futebol,
+  r/brasil, r/desimpedidos threads. Builds karma without self-promo.
+- **Comments on BR live streams:** join post-match lives from Pilhado,
+  Desimpedidos, Bola Pré, commenting on the actual game. Don't mention
+  the product. Just be present.
 
-## D2 — Qua 17/06 · Primeiro empurrão público
+## D2 — Wed Jun 17 · First public push
 
-- **X:** post visual "o XI mais bizarro que apareceu" (ex.: Cabo Verde,
-  Uzbequistão) + screenshot. Esse é o formato que viraliza em pt-BR futebol.
+- **X:** visual post — "the most absurd XI that just came up" (e.g., Cape
+  Verde, Uzbekistan) + screenshot. This is the format that goes viral in
+  pt-BR football twitter.
 - **Reddit:**
-  - r/futebol: post com flair OC "fiz um simulador single-player da Copa
-    2026". Leia as regras antes — alguns subs exigem 90 dias de conta.
-  - r/brasil flair Tecnologia (audiência maior, menos rigoroso).
-  - r/SoccerGaming (gringo, FIFA crowd) — abre flanco internacional.
-- **IG Story:** poll "draftarias esse XI?" com link.
-- **TikTok:** posta o melhor short do D1.
+  - r/futebol: post with OC flair — "I built a single-player Copa 2026
+    simulator". Read the rules — some subs require 90-day-old accounts.
+  - r/brasil with Tecnologia flair (bigger audience, less strict).
+  - r/SoccerGaming (international, FIFA crowd) — opens the international
+    flank.
+- **IG Story:** poll — "would you draft this XI?" with link sticker.
+- **TikTok:** post the best short from D1.
 
-## D3 — Qui 18/06 · Tactical hit em jogo do Brasil
+## D3 — Thu Jun 18 · Tactical hit on a Brazil match day
 
-> Assume jogo do Brasil essa semana. Se for outro dia, troca D3 ↔ D4/D5.
+> Assumes Brazil plays this week. If the fixture is different, swap D3 with
+> D4 / D5.
 
-- **2h antes do jogo:** thread no X "antes do Brasil entrar, simula a Copa
-  inteira" + link. Pico de atenção pré-apito.
-- **Durante o jogo:** posts curtos no X comentando o jogo — tom de torcedor,
-  não de marketing.
-- **Pós-jogo:** "se o Brasil acabou de cair, vinga no Draft 26" — joga na
-  emoção do momento.
-- **Comentários em lives:** Cazé TV, Desimpedidos, Bola Pré durante a live.
-  **1 mensagem por canal** — tem que parecer natural, não spam.
+- **2h pre-match:** thread on X — "before Brazil kicks off, simulate the
+  whole Copa" + link. Peak attention pre-whistle.
+- **During the match:** short X posts reacting to the game — fan tone, not
+  marketing tone.
+- **Post-match:** "if Brazil just got knocked out, take revenge in Draft 26"
+  — ride the emotional wave.
+- **Live-stream comments:** Cazé TV, Desimpedidos, Bola Pré during the live
+  show. **One message per channel** — it has to feel natural, not spam.
 
-## D4 — Sex 19/06 · Mid-week + outreach
+## D4 — Fri Jun 19 · Mid-week + outreach
 
-- **YouTube:** vídeo de 5-8min "campanha completa com país aleatório" em
-  formato vlog. **Investimento maior da semana.** Posta de manhã (algoritmo
-  YT prefere manhã pra sustentar exposição no fim de semana).
-- **TikTok:** 3 shorts ao longo do dia (manhã, almoço, noite). Cada um com
-  hook diferente (engraçado, sério, surpresa).
-- **Outreach 1-on-1:** DM em 3-5 micro-influencers (10-50k seguidores) de
-  futebol no X/IG. **Não pede divulgação — pede pra eles jogarem.** Algo
-  como *"Mano, fiz um simulador da Copa, topa drafted ao vivo no próximo
-  stream?"* Conversão muito maior que mass DM.
-- **X:** meme do dia. Ex.: *"POV: você draftou a Bolívia e o primeiro jogo é
-  Argentina."*
+- **YouTube:** 5-8 min vlog-format video — "full campaign with a random
+  country". **Biggest single investment of the week.** Post in the
+  morning (YT's algorithm prefers morning uploads to sustain weekend
+  exposure).
+- **TikTok:** 3 shorts across the day (morning, lunch, evening). Each with
+  a different hook (funny, serious, surprise).
+- **1-on-1 outreach:** DM 3-5 micro-influencers (10-50k followers) in
+  Brazilian football twitter/IG. **Don't ask for promotion — ask them to
+  play.** Something like *"yo, made a Copa simulator, would you draft live
+  on your next stream?"* Conversion is much higher than mass DM.
+- **X:** meme of the day. E.g., *"POV: you drafted Bolivia and your first
+  match is Argentina."*
 
-## D5 — Sáb 20/06 · Pico do fim de semana
+## D5 — Sat Jun 20 · Weekend peak
 
-- 3-4 posts no X ao longo do dia, com prints de campanhas reais (se já
-  tiver usuários — anon, sem PII).
-- Reel de 30s no IG (não Story) — algoritmo prioriza vídeo aos sábados.
-- YouTube Short adicional (mantém momentum do vídeo longo de sexta).
-- Se Brasil jogar sábado, repete playbook do D3.
+- 3-4 posts on X across the day, with prints of real campaigns (if there
+  are users by now — anonymized, no PII).
+- 30s reel on IG (not a Story) — the algorithm prioritizes video on
+  Saturdays.
+- One extra YouTube Short to keep momentum from Friday's long-form.
+- If Brazil plays Saturday, repeat the D3 playbook.
 
-## D6 — Dom 21/06 · Retrospectiva + carve-out
+## D6 — Sun Jun 21 · Retro + carve-out
 
-- **X thread:** "Os 10 XIs mais doidos da semana" — repost user-generated
-  com crédito. Esse formato gera bounce: as pessoas marcadas amplificam.
-- **IG carrossel:** "Os campeões da semana" — top 5 países que mais viraram
-  campeões.
-- **Métricas internas:** DAU, runs iniciadas vs. completadas, share rate,
-  fontes de tráfego (UTM já está instrumentado — ver `src/lib/session.ts`).
-  Decide próxima semana com base nesses dados.
+- **X thread:** "The 10 craziest XIs of the week" — repost user-generated
+  content with credit. The format generates bounce: people who get tagged
+  amplify.
+- **IG carousel:** "Champions of the week" — top 5 nations that won the
+  most simulated Copas.
+- **Internal metrics:** DAU, runs started vs completed, share rate, traffic
+  sources (UTM is already instrumented — see `src/lib/session.ts`). Plan
+  week 2 based on those numbers.
 
-## Conteúdo recorrente — manter durante a semana toda
+## Recurring content — keep going all week
 
-- **X:** 2-3 posts/dia. 1 "produto" (print/draft), 1 "futebol" (comentário
-  do dia), 1 reply em conta grande.
-- **IG Story:** 1-2 por dia, mantém o feed vivo.
-- **Comentários em lives:** ~30min/dia em 2 canais grandes. Não menciona
-  produto na primeira semana exceto quando tiver hook genuíno.
+- **X:** 2-3 posts/day. One product (print / draft), one football
+  (reaction to the day), one reply on a big account.
+- **IG Story:** 1-2 per day, keeps the feed alive.
+- **Live-stream comments:** ~30 min/day across 2 large channels. Don't
+  mention the product in week 1 unless there's a genuine hook.
 
-## Canais brasileiros pra comentar (ordem de prioridade)
+## Brazilian channels to comment on (priority order)
 
-1. **Cazé TV** — lives com 200k+ ao vivo. Atenção barata, moderação difícil.
-   Comportamento: torcedor, não marketing.
-2. **Desimpedidos / Bola Pré** — audiência exata do produto.
-3. **Pilhado** — torcedor raiz, polêmica = engagement.
-4. **Mundo GE / GE direto da Copa** — comentário mais técnico, audiência
-   mais velha.
-5. **Crew Pro / Bola na Trave** — nicho FIFA gamer, perfeito pro produto.
-6. **Benja (Joel Datena Jr)** — micro mas engajado.
+1. **Cazé TV** — lives with 200k+ concurrent. Cheap attention, hard to
+   moderate. Tone: fan, not marketing.
+2. **Desimpedidos / Bola Pré** — the exact audience for the product.
+3. **Pilhado** — old-school fan, controversy = engagement.
+4. **Mundo GE / GE direto da Copa** — more technical commentary, older
+   audience.
+5. **Crew Pro / Bola na Trave** — FIFA gaming niche, perfect product fit.
+6. **Benja (Joel Datena Jr)** — micro, but highly engaged.
 
-## Riscos / o que NÃO fazer
+## Risks / what NOT to do
 
-- **Spam em r/futebol = ban.** Engaja 3-4 dias antes de postar.
-- **Mass DM sem contexto = blocked.** Pesquisa 5min antes de cada DM.
-- **Sumir em dia de jogo do Brasil = perde a janela.**
-- **Posts genéricos** ("fiz um simulador, joga aí") morrem. Toda mensagem
-  precisa de hook (XI bizarro, resultado absurdo, treta).
-- **Cuidado com marca:** "Copa 2026", não "FIFA World Cup 2026™" — já está
-  OK no produto, manter assim na comunicação.
+- **Spam on r/futebol = ban.** Engage 3-4 days before posting.
+- **Mass DM without context = blocked.** Spend 5 min researching each DM.
+- **Disappearing on Brazil match day = miss the window.**
+- **Generic posts** ("made a simulator, come play") die. Every message
+  needs a hook (absurd XI, ridiculous result, controversy).
+- **Brand carefully:** "Copa 2026", not "FIFA World Cup 2026™" — already
+  fine in the product, keep it that way in messaging.
 
-## Métricas pra acompanhar
+## Metrics to track
 
-A telemetria atual cobre o necessário pra decidir o que funciona:
+The current telemetry covers everything needed to decide what's working:
 
-| Métrica                              | Onde                       |
-|--------------------------------------|----------------------------|
-| Sessões / DAU                        | `view_page` + `session_id` |
-| Funil draft → grupos → mata-mata     | `country_rolled`, `player_picked`, `match_completed` |
-| Run completion rate                  | `run_finished` / `run_started` |
-| Share rate                           | `share_clicked` (a instrumentar) |
-| Origem de tráfego                    | UTM no `track-session-once` |
-| Países draftados mais frequentes     | agregado de `country_rolled` |
-| Países que mais viram campeões       | agregado de `run_finished` |
+| Metric                                | Source                       |
+|---------------------------------------|------------------------------|
+| Sessions / DAU                        | `view_page` + `session_id`   |
+| Funnel draft → groups → bracket       | `country_rolled`, `player_picked`, `match_completed` |
+| Run completion rate                   | `cup_ended` / `draft_started` |
+| Share rate                            | `share_clicked` (to be instrumented) |
+| Traffic origin                        | UTM in `track-session-once`  |
+| Most drafted nations                  | aggregate of `country_rolled` |
+| Nations that win most Copas           | aggregate of `cup_ended` `champion` |
 
-Critério de "deu certo na semana 1": >500 runs completadas E share rate >5%.
-Abaixo disso, replanejar a semana 2 priorizando o canal que está convertendo.
+Week-1 success criterion: >500 completed runs AND share rate >5%. Below
+that, re-plan week 2 prioritizing whichever channel is converting.
 
-## Próximos passos imediatos
+## Immediate next steps
 
-Em ordem de prioridade pra hoje:
+In priority order for today:
 
-1. **OG image dinâmica** (~6h). Sem ela, todo o resto fica fraco.
-2. **Reservar handles** em X / IG / TikTok / YT (~30min).
-3. **Gravar 3-5 clipes curtos** (draft random, campanha terminando, XI
-   bizarro) pra ter banco de conteúdo (~1h).
-4. **Instrumentar `share_clicked`** (~30min).
+1. **Dynamic OG image** (~6h). Without it, everything else is weaker.
+2. **Reserve handles** on X / IG / TikTok / YT (~30 min).
+3. **Record 3-5 short clips** (random draft, campaign ending, absurd XI)
+   to build a content bank (~1h).
+4. **Instrument `share_clicked`** (~30 min).
 
-## Cronograma de revisão
+## Review schedule
 
-- **Dom 21/06:** retrô da semana 1 com métricas. Decide semana 2.
-- **Toda quinta:** mid-week check — o que tá funcionando, o que pivota.
-- **Pós-final (19/07):** decidir se vira produto permanente
-  (multiplayer, próximas competições) ou se entra em modo arquivo.
+- **Sun Jun 21:** week 1 retro with metrics. Decide week 2.
+- **Every Thursday:** mid-week check — what's working, what to pivot.
+- **Post-final (Jul 19):** decide whether to turn this into a permanent
+  product (multiplayer, next competitions) or shift to archive mode.
