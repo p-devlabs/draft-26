@@ -13,6 +13,7 @@ import { features } from './lib/features'
 import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
 import { initAnalytics } from './lib/analytics'
 import { trackSessionOnce, PageViewTracker } from './lib/track'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
 
 initAnalytics()
 trackSessionOnce()
@@ -28,17 +29,19 @@ if (features.dev) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <PageViewTracker />
-      <Routes>
-        <Route index element={<Home />} />
-        <Route path="/teams" element={<Selecoes />} />
-        <Route path="/teams/:code" element={<SelecaoDetalhe />} />
-        <Route path="/draft" element={<Draft />} />
-        <Route path="/groups" element={<Copa />} />
-        <Route path="/bracket" element={<MataMata />} />
-        <Route path="/match" element={<Match />} />
-      </Routes>
-    </BrowserRouter>
+    <AppErrorBoundary>
+      <BrowserRouter>
+        <PageViewTracker />
+        <Routes>
+          <Route index element={<Home />} />
+          <Route path="/teams" element={<Selecoes />} />
+          <Route path="/teams/:code" element={<SelecaoDetalhe />} />
+          <Route path="/draft" element={<Draft />} />
+          <Route path="/groups" element={<Copa />} />
+          <Route path="/bracket" element={<MataMata />} />
+          <Route path="/match" element={<Match />} />
+        </Routes>
+      </BrowserRouter>
+    </AppErrorBoundary>
   </StrictMode>,
 )
