@@ -5,7 +5,7 @@
  *  - formação primária e alternativa do time
  *
  * Lê:  data/squads.json + data/tactics.json + data/country-codes.json
- * Escreve: data/squads-enriched.json
+ * Escreve: public/data/squads-enriched.json
  *
  * Uso: pnpm enrich:squads
  */
@@ -283,7 +283,7 @@ async function main() {
 
   enriched.sort((a, b) => a.group.localeCompare(b.group) || a.country.localeCompare(b.country))
 
-  const out = resolve(root, 'data/squads-enriched.json')
+  const out = resolve(root, 'public/data/squads-enriched.json')
   await writeFile(out, JSON.stringify(enriched, null, 2))
 
   const top10 = [...enriched].sort((a, b) => b.averageOverall - a.averageOverall).slice(0, 10)

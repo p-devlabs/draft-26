@@ -8,6 +8,8 @@ import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
 import { initAnalytics } from './lib/analytics'
 import { trackSessionOnce, PageViewTracker } from './lib/track'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { SquadsGate } from './components/SquadsGate'
+import { loadSquads } from './data/squads'
 
 // Rotas pesadas viram lazy chunks. Home fica eager porque é a landing —
 // a primeira renderização não pode pagar o custo de um round-trip extra.
@@ -37,11 +39,21 @@ trackSessionOnce()
 
 // Em dev mode, expõe o harness de simulação pro Playwright (e debugging
 // manual no console). Em prod fica desligado, custo zero.
+//
+// A atribuição é diferida até `loadSquads()` resolver — assim o Playwright
+// pode usar `waitForFunction(() => '__draft26__' in window)` como gate
+// natural pra esperar os dados carregarem.
 if (features.dev) {
-  ;(window as unknown as { __draft26__: object }).__draft26__ = {
-    simulateFullCup,
-    runDistortionBatch,
-  }
+  loadSquads()
+    .then(() => {
+      ;(window as unknown as { __draft26__: object }).__draft26__ = {
+        simulateFullCup,
+        runDistortionBatch,
+      }
+    })
+    .catch(() => {
+      // Se o fetch falhar, o gate vai mostrar erro pro user; nada a fazer aqui.
+    })
 }
 
 // Fallback minimalista: só reserva a viewport pra evitar layout shift
@@ -51,20 +63,22 @@ const RouteFallback = <div aria-busy="true" style={{ minHeight: '100dvh' }} />
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppErrorBoundary>
-      <BrowserRouter>
-        <PageViewTracker />
-        <Suspense fallback={RouteFallback}>
-          <Routes>
-            <Route index element={<Home />} />
-            <Route path="/teams" element={<Selecoes />} />
-            <Route path="/teams/:code" element={<SelecaoDetalhe />} />
-            <Route path="/draft" element={<Draft />} />
-            <Route path="/groups" element={<Copa />} />
-            <Route path="/bracket" element={<MataMata />} />
-            <Route path="/match" element={<Match />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <SquadsGate>
+        <BrowserRouter>
+          <PageViewTracker />
+          <Suspense fallback={RouteFallback}>
+            <Routes>
+              <Route index element={<Home />} />
+              <Route path="/teams" element={<Selecoes />} />
+              <Route path="/teams/:code" element={<SelecaoDetalhe />} />
+              <Route path="/draft" element={<Draft />} />
+              <Route path="/groups" element={<Copa />} />
+              <Route path="/bracket" element={<MataMata />} />
+              <Route path="/match" element={<Match />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </SquadsGate>
     </AppErrorBoundary>
   </StrictMode>,
 )

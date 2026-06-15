@@ -6,6 +6,9 @@ export default defineConfig({
     // entrarem, mudar pra "jsdom" + adicionar @testing-library/react.
     environment: 'node',
     include: ['src/lib/**/*.test.ts', 'scripts/**/*.test.ts'],
+    // Hidrata os bindings de `src/data/squads.ts` a partir do JSON em disco
+    // (em runtime, o gate `<SquadsGate>` faz isso via fetch).
+    setupFiles: ['src/lib/test-setup.ts'],
     // Smoke tests CLI antigos não entram (scripts/test-*.ts, sem .test.ts).
     coverage: {
       reporter: ['text', 'html'],
