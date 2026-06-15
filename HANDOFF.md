@@ -1,104 +1,201 @@
 # Handoff — Draft 26
 
-## O que é
-Simulador single-player da Copa do Mundo 2026. Sorteia seleções → monta XI → joga grupos → bate chaveamento. Alternativa ao 7a0.com.br / 38a0.com, focada em UX limpa (Claude design) e dados oficiais.
+## What it is
+
+A single-player simulator of the 2026 FIFA World Cup. Roll nations, build an
+XI, play the group stage, run the bracket. An alternative to 7a0.com.br /
+38a0.com — narrowly scoped to Copa 2026, with a clean UI and properly
+sourced data.
 
 Repo: `github.com:p-devlabs/draft-26`
+Live: `https://draft-26.pages.dev`
 
-## Estado atual (2026-06-11)
-Tudo funciona em localhost + localStorage. Acabou de subir o initial commit pro GitHub. Sem deploy ainda, sem backend ainda.
+For the full feature catalogue, see [FEATURES.md](./FEATURES.md).
 
-Fluxo coberto end-to-end:
-- Home (landing nova) → `/selecoes` (48 times + detalhe)
-- `/draft` (formation/style/difficulty → sorteio com cooldown 5, skips por dificuldade, autofill via `?dev=1`)
-- `/copa` (3 rodadas de grupo, simula matches paralelos, tiebreakers FIFA 2026 Article 13)
-- `/copa/partida` (live com speed control lento/normal/rápido, narração de eventos, ET+pênaltis no mata-mata)
-- `/mata-mata` (bracket de 32 NCAA-snake, renderiza só metade do user + final, drawers de eliminação e campeão)
+## Current state (2026-06-15)
+
+Shipped end-to-end. Cloudflare Pages serves the static build at
+draft-26.pages.dev; Sentry hardening (release tag + sourcemap upload) is in
+place; Supabase persistence + analytics are live; CSP runs in Report-Only
+while we watch violations.
+
+The flow:
+
+- `/` (landing, dark Draft 26 theme)
+- `/teams` (the 48 nations, grouped A–L) → `/teams/:code` (squad detail)
+- `/draft` (formation/style/difficulty → roll-by-slot with cooldown 5,
+  skips by difficulty, dev-mode autofill via `?dev=1`)
+- `/groups` (three rounds of group play, parallel CPU groups, FIFA 2026
+  Article 13 tiebreakers, the full 32-team qualification rule including
+  the 8 best 3rd-place finishers)
+- `/match` (live playback: slow/normal/fast speed, minute-by-minute
+  narration, ET + penalties on knockout)
+- `/bracket` (32-team NCAA-snake knockout; only the user's half plus the
+  final is rendered; elimination and champion drawers)
 
 ## Stack
-- **Build**: Vite 6 + React 19 + TS + Tailwind v4 (`@theme` tokens: paper/ink/clay/sand/moss/rule)
+
+- **Build**: Vite 6 + React 19 + TS + Tailwind v4 (`@theme` tokens:
+  paper / ink / clay / sand / moss / rule)
 - **Routing**: React Router 7
-- **Package manager**: pnpm 11 (precisa `allowBuilds: { esbuild: true }` no `pnpm-workspace.yaml`)
-- **Tipografia**: Source Serif (display) + system stack
-- **Persistência**: localStorage, chaves `d26:draft`, `d26:stage`, `d26:bracket`
+- **Package manager**: pnpm 11 (requires `allowBuilds: { esbuild: true }` in
+  `pnpm-workspace.yaml`)
+- **Typography**: Source Serif (display) + system stack
+- **Persistence**: `localStorage` (keys `d26:draft`, `d26:worldcup`,
+  `d26:bracket`, `d26:speed`) + optional Supabase mirror
+- **Monitoring**: Sentry (lazy-loaded, error-only)
+- **Web analytics**: Cloudflare Web Analytics (optional, beacon-gated)
 
-## Pipeline de dados
-1. `pnpm scrape:squads` → Wikipedia "2026 FIFA World Cup squads" via cheerio → `data/squads.json`
-2. `pnpm enrich:squads` → ISO, flag, formação heurística, overall por tier de clube → `data/squads-enriched.json`
-3. `pnpm download:fifa` → EA FC 26 CSV (10MB, gitignored)
-4. `pnpm enrich:fifa` → cruza com squads, desambigua por **bucket position + club + age** (Alisson Becker bug resolvido), separa `primaryPosition` + `altPositions[]`
-5. `pnpm download:transfermarkt` → ZIP do dcaribou/transfermarkt-datasets, extrai players.csv (4MB, gitignored)
-6. `pnpm enrich:transfermarkt` → cross-reference de valor (`value_eur_tm`), não sobrescreve EA FC
-7. `pnpm data:rebuild` → faz tudo em sequência
+## Data pipeline
 
-Resultado final: `data/squads-enriched.json` (~570KB, **commitado**, inline no bundle hoje).
+1. `pnpm scrape:squads` → Wikipedia "2026 FIFA World Cup squads" via cheerio
+   → `data/squads.json`
+2. `pnpm enrich:squads` → ISO codes, flags, heuristic formation, club-tier
+   overall → `data/squads-enriched.json`
+3. `pnpm download:fifa` → EA FC 26 CSV (~10 MB, gitignored)
+4. `pnpm enrich:fifa` → joins with squads, disambiguates by
+   **(positional bucket, club, age)** (Alisson Becker bug fix), splits
+   `primaryPosition` + `altPositions[]`
+5. `pnpm download:transfermarkt` → ZIP from dcaribou/transfermarkt-datasets,
+   extracts players.csv (~4 MB, gitignored)
+6. `pnpm enrich:transfermarkt` → cross-references market value
+   (`value_eur_tm`) without overwriting EA FC's rating or position
+7. `pnpm enrich:alt-positions` → curated alt-positions overlay
+   (`data/position-overrides.json`) + heuristic bridges
+8. `pnpm recalibrate:heuristic` → tunes the club-tier fallback formula
+9. `pnpm download:fbref` (manual Kaggle download) → `data/fbref-players.csv`
+10. `pnpm enrich:fbref` → attaches per-90 stats to matched players
+11. `pnpm calibrate:fbref` → per-bucket OLS regression to fit overall for
+    FBref-only players (`ratingSource = 'fbref-fit'`)
+12. `pnpm download:matches` → international match results (~2018+)
+13. `pnpm calibrate:sim` → fits the Poisson + Dixon-Coles model
+14. `pnpm data:rebuild` → chains everything above
 
-## Arquitetura
+Final artifact: `data/squads-enriched.json` (~570 KB, **committed**, fetched
+on app boot — no longer inlined in the bundle).
+
+## Architecture
+
 ```
 src/
 ├── lib/
 │   ├── draft.ts          DraftState, rollUntilCompatible, useSkip, pickPlayer
-│   ├── formations.ts     4-3-3, 4-2-3-1, 4-4-2, 3-4-3 + DIFFICULTIES (skip count)
-│   ├── positions.ts      COMPAT (LB/RB↔CB, meias centrais fluidos, pontas/meias laterais)
-│   ├── autofill.ts       greedy scoring por slot (feature flag)
-│   ├── features.ts       ?dev=1 + localStorage
-│   ├── simulate.ts       Poisson, Mulberry32, HOME_ADVANTAGE
-│   ├── narrate.ts        eventos por minuto (gol/cartão), pesos por posição
-│   ├── groups.ts         createGroupStage, playRound, miniTable (head-to-head)
-│   ├── bracket.ts        SEED_ORDER_32 NCAA snake, setupBracket, userPath, ET+pênaltis
-│   ├── persistence.ts    load/save/clear pra cada estado
-│   └── rosters.ts        rosterForKnockout (compartilhado)
+│   ├── formations.ts     4-3-3, 4-2-3-1, 4-4-2, 3-4-3 + DIFFICULTY_SKIPS
+│   ├── positions.ts      COMPAT bridges (LB↔LWB, RB↔RWB, LM↔LW, RM↔RW, CF↔ST)
+│   ├── autofill.ts       greedy slot scorer (gated on features.dev)
+│   ├── features.ts       ?dev=1 + localStorage flag
+│   ├── simulate.ts       Dixon-Coles Poisson + rubber-band + ET + penalties
+│   ├── narrate.ts        minute-by-minute events (goals, cards) by position
+│   ├── groups.ts         12-group WorldCup model, FIFA 2026 tiebreakers,
+│   │                     userFate, computeQualifiers (12 1sts + 12 2nds + 8 best 3rds)
+│   ├── bracket.ts        SEED_ORDER_32 NCAA snake, setupBracket,
+│   │                     ensureRoundsSimulated, ET + penalties
+│   ├── persistence.ts    load/save/clear per localStorage key
+│   ├── rosters.ts        rosterForKnockout (shared between groups/bracket)
+│   ├── runs.ts           Supabase anon auth + run snapshot upserts
+│   ├── supabase.ts       client + isSupabaseConfigured gate
+│   ├── session.ts        UTM, device class, session context
+│   ├── track.ts          event analytics, PageViewTracker
+│   ├── analytics.ts      Sentry init (lazy) + CF Web Analytics beacon
+│   └── sim-harness.ts    window.__draft26__ for Playwright/dev
 ├── components/
-│   ├── Drawer.tsx        bottom-up custom (sem libs)
-│   ├── Field.tsx         SVG com 11 slots
-│   ├── PickDrawer/SetupDrawer
-│   ├── MatchCard, StandingsTable
-│   ├── EliminationDrawer (grupos)
-│   ├── BracketView (filtra userHalf + Final)
-│   └── KnockoutEliminationDrawer, ChampionDrawer
+│   ├── AppErrorBoundary  Sentry-wired error boundary
+│   ├── SquadsGate        blocks render until loadSquads() resolves
+│   ├── Field.tsx         SVG pitch with 11 slots
+│   ├── PickDrawer.tsx    per-slot roll/pick drawer
+│   ├── SetupDrawer.tsx   formation/style/difficulty setup
+│   └── BracketView.tsx   user-half + final render
 └── routes/
-    ├── Home.tsx          landing (Hero, FlagsTicker, HowItWorks, DataIntegrity, Journey, ClosingCTA, Credits)
-    ├── Selecoes, SelecaoDetalhe
-    ├── Draft, DraftSummary
-    ├── Copa, Match (group | knockout via ?kind=)
-    └── MataMata
+    ├── Home.tsx          landing (dark .d26-scope theme)
+    ├── Selecoes.tsx      48-team grid by group letter
+    ├── SelecaoDetalhe.tsx single squad detail
+    ├── Draft.tsx         setup → build → ready
+    ├── Copa.tsx          3-round group stage + standings
+    ├── Match.tsx         live playback (group | knockout via ?kind=)
+    └── MataMata.tsx      32-team knockout bracket
 ```
 
-## Decisões importantes
-- **Posição primária + alternativas**: Alisson aparecia como zagueiro no enrich primeiro. Fix: score-based disambiguation (+50 bucket match, +30 club, +10 age ±1, -30 bucket diverge).
-- **Tiebreakers FIFA 2026**: head-to-head **primeiro** (mudou no ciclo 2026), depois stats agregados.
-- **Renderização do bracket**: simula upfront todo o lado oposto até a final pra mostrar só a metade do user + jogo final.
-- **Pênaltis**: 5 rounds + sudden death, scored weighted por overall (clamp 0.3-0.9), sequência visualizada.
-- **Country cooldown**: 5 picks (seleção sorteada não volta nos 5 próximos sorteios).
-- **Difficulty**: easy=5 skips, medium=3, hard=1.
-- **Anon key Supabase é pública por design** (vai pro bundle via `VITE_*`). RLS protege os dados, não a key.
+## Important decisions
+
+- **Primary position + alternatives.** Alisson originally appeared as a
+  centre-back in the first enrichment pass. The fix is score-based
+  disambiguation: +50 for matching positional bucket, +30 for the same club,
+  +10 for age ±1, −30 for a bucket mismatch.
+- **FIFA 2026 tiebreakers** apply head-to-head **first** (this changed for
+  the 2026 cycle), then overall stats.
+- **Bracket rendering.** When the user enters the knockout, the entire
+  opposite half is simulated up to the final so we can render only the
+  user's half plus the final — keeping the bracket UI scannable.
+- **Penalties** run 5 rounds plus sudden death; per-shot probability
+  is weighted by overall (clamped to `[0.3, 0.9]`); the full sequence is
+  animated.
+- **Country cooldown** = 5 picks (a rolled nation can't reappear in the next
+  5 rolls).
+- **Difficulty skips**: easy = 5, medium = 3, hard = 1.
+- **Async squads.** The 570 KB squad JSON is fetched on boot instead of
+  inlined. The initial bundle is ~144 KB gzip (down from ~263 KB pre-async).
+- **Anon Supabase key is public by design.** It ships in the bundle via
+  `VITE_*` envs. RLS protects the data, not the key.
 
 ## `.env.local` (gitignored)
+
 ```
 VITE_SUPABASE_URL=https://pcclczydsjfspffuylmc.supabase.co
 VITE_SUPABASE_ANON_KEY=<jwt>
+VITE_SENTRY_DSN=<optional>
+VITE_CF_BEACON_TOKEN=<optional>
 ```
 
-## Próximos passos (CF + Supabase staged)
-1. **CF Pages deploy estático** — sem backend ainda. Resolver o bundle de 795KB primeiro (code-split do `squads-enriched.json` em fetch async pra `/data/squads.json`). Wrangler config + GitHub Actions workflow.
-2. **Supabase schema mínimo** — tabela `runs` (id, user_id, draft_json, stage_json, bracket_json, created_at, completed_at, champion_code). Anon auth (sem email). localStorage continua sendo fonte primária, Supabase espelha.
-3. **Leaderboard** — primeira feature que justifica ter servidor. Ranking de XIs por rating + jogos vencidos.
+Build-time only (used to upload sourcemaps to Sentry from CI; **not**
+bundled into the client):
 
-## Gotchas conhecidos
-- Bundle: **795KB JS / 158KB gzip** (CSS 34KB com keyframe do ticker). Code-split do JSON é a primeira otimização óbvia.
-- `FooterMini` usa `window.location.pathname` direto (não é SSR-safe, mas não usamos SSR).
-- Datasets crus (`eafc26-players.csv`, `transfermarkt-players.csv`) são gitignored — `pnpm data:rebuild` baixa de novo.
-- `pnpm install` em CI vai precisar do `allowBuilds: esbuild` ou o bundler quebra.
-
-## Comandos diários
 ```
-pnpm dev              # localhost:5173
-pnpm build            # produção
-pnpm data:rebuild     # pipeline inteiro (precisa de rede)
+SENTRY_AUTH_TOKEN=<token>
+SENTRY_ORG=<org slug>
+SENTRY_PROJECT=<project slug>
 ```
 
-## Pendências implícitas
-- Conectar Supabase
-- Code-split do JSON de squads
-- Calibrar simulação (AVG_GOALS_PER_MATCH=2.6 hoje, dá pra refinar)
-- Auth (anon basta pra leaderboard, login com OAuth fica pra v2)
+## Roadmap
+
+### Short term (this week)
+
+- **Dynamic OG image** at run completion. This is the share-loop blocker
+  flagged by [docs/launch-plan.md](./docs/launch-plan.md). ROI is high,
+  cost is ~6h. Pick edge generation (Worker + Satori / `@vercel/og`).
+- **`share_clicked` analytics event** so we can measure the share rate
+  alongside `run_finished`.
+- **Promote CSP from Report-Only to enforced** once Sentry reports a clean
+  run of the prod traffic against the current policy.
+
+### Medium term
+
+- **Leaderboard.** Public read of finished runs is already allowed by RLS
+  (`runs_public_read_completed`); the missing piece is a UI on top of it
+  and a periodic aggregation (champion frequency, hardest draws, top
+  average-overall XIs).
+- **Better calibration loop.** The `calibrate:sim` step is one-shot; we
+  want a continuous loop that incorporates the matches actually played in
+  the simulator (telemetry-driven recalibration).
+- **OAuth login** so users can claim their anonymous runs across devices.
+
+### Known gotchas
+
+- Bundle target is ~144 KB gzip initial; new dependencies should justify
+  their weight or be dynamic-imported.
+- `FooterMini` reads `window.location.pathname` directly (not SSR-safe;
+  we don't ship SSR).
+- The raw CSVs (`eafc26-players.csv`, `transfermarkt-players.csv`,
+  `fbref-players.csv`) are gitignored — `pnpm data:rebuild` re-downloads
+  them.
+- `pnpm install` in CI requires `allowBuilds: esbuild` in
+  `pnpm-workspace.yaml` or the install step breaks.
+
+## Daily commands
+
+```bash
+pnpm dev               # localhost:5173
+pnpm build             # production build
+pnpm lint && pnpm test # the standard pre-PR check
+pnpm sim:distortions   # 50 full campaigns → reports/distortions-*.{json,md}
+pnpm data:rebuild      # full pipeline (network-bound, minutes)
+```

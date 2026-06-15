@@ -1,28 +1,32 @@
 # Draft 26
 
-Simulador da Copa do Mundo 2026 no navegador. Você sorteia uma das 48 seleções,
-monta seu XI titular entre os 26 convocados oficiais e simula o torneio inteiro
-— da fase de grupos à final no MetLife.
+In-browser simulator for the 2026 FIFA World Cup. Roll one of the 48 nations,
+build your starting XI from the official 26-player roster, and simulate the
+whole tournament — group stage through the final at MetLife Stadium.
 
-Inspirado em [7a0](https://7a0.com.br/) e [38a0](https://38a0.com/), mas focado
-**só** na Copa 2026 e com obsessão por UI/UX.
+Inspired by [7a0](https://7a0.com.br/) and [38a0](https://38a0.com/), but
+focused **exclusively** on Copa 2026 with a heavy bias toward UI/UX polish.
+
+For a complete feature inventory, see [FEATURES.md](./FEATURES.md).
 
 ## Stack
 
-- **Vite + React 19 + TypeScript** — SPA, build rápida, types em tudo
-- **Tailwind v4** — design system inline no CSS
-- **Supabase** — Postgres + Auth + (no futuro) Realtime para multiplayer
-- **Cloudflare Pages** — deploy estático na edge
+- **Vite + React 19 + TypeScript** — SPA with fast builds and end-to-end types
+- **Tailwind v4** — design tokens inline in the CSS
+- **Supabase** — Postgres + auth (and, eventually, Realtime for multiplayer)
+- **Cloudflare Pages** — static deploy at the edge
+- **Sentry** — error monitoring with release tagging + sourcemap upload
+- **Vitest + Playwright** — unit tests and end-to-end statistical sims
 
-## Rodar local
+## Run locally
 
 ```bash
 pnpm install
-cp .env.example .env       # preencha com URL + anon key do Supabase
+cp .env.example .env       # add your Supabase URL + anon key
 pnpm dev
 ```
 
-Build de produção:
+Production build:
 
 ```bash
 pnpm build
@@ -31,70 +35,100 @@ pnpm preview
 
 ## Supabase
 
-Schema em `supabase/migrations/0001_runs.sql`. Para inicializar o banco
-localmente (precisa do [Supabase CLI](https://supabase.com/docs/guides/cli)):
+Schema lives in `supabase/migrations/0001_runs.sql`. To bootstrap a local
+database (requires the [Supabase CLI](https://supabase.com/docs/guides/cli)):
 
 ```bash
 supabase start
-supabase db reset            # aplica migrations + seed
+supabase db reset            # applies migrations + seed
 ```
 
-Ou rode a SQL direto no editor do dashboard se estiver usando projeto remoto.
+Or run the SQL directly in a remote project's dashboard editor.
+
+The anon key is **public by design** — it ships in the bundle through the
+`VITE_*` env vars. RLS protects the data, not the key.
 
 ## Deploy (Cloudflare Pages)
 
-1. Conecte o repo no painel do Cloudflare Pages
+1. Connect the repo in the Cloudflare Pages dashboard
 2. Build command: `pnpm build`
 3. Output directory: `dist`
-4. Env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+4. Env vars (build-time):
+   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+   - `VITE_SENTRY_DSN` (optional, enables Sentry on the client)
+   - `VITE_CF_BEACON_TOKEN` (optional, enables Cloudflare Web Analytics)
+   - `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` (optional, upload
+     sourcemaps from CI)
 
-O `public/_redirects` já trata SPA fallback.
+`public/_redirects` already handles the SPA fallback. `public/_headers` sets
+cache headers and security headers (HSTS, CSP, XFO, etc).
 
-## Decisões de arquitetura
+## Architecture decisions
 
-- **Single-player primeiro**: zero estado compartilhado, zero realtime. Prova
-  o core loop antes de complicar com salas multiplayer.
-- **Overall = valor de mercado (Transfermarkt)** normalizado 40–99. Critério
-  único, atualizável, sem licenciamento de marcas tipo FIFA.
-- **Cloudflare = só hosting estático**: a fonte de verdade é o Supabase. Sem
-  Workers customizados pra reduzir superfície de complexidade.
-- **Roteamento client-side** com `react-router-dom` v7. Sem SSR — o conteúdo
-  é interativo e personalizado por usuário, não vale a pena pré-renderizar.
+- **Single-player first.** No shared state, no realtime. Prove the core loop
+  before complicating things with multiplayer lobbies.
+- **Overall comes from multiple sources.** EA FC 26 covers ~73% of called-up
+  players. Transfermarkt, FBref (per-90 OLS fit), and a club-tier heuristic
+  cover the rest. See [FEATURES.md §7](./FEATURES.md#7-data-layer--rating-sources).
+- **Cloudflare = static hosting only.** Supabase is the source of truth.
+  No custom Workers — keeps the surface area small.
+- **Client-side routing** via `react-router-dom` v7. No SSR — the content is
+  interactive and personalized per user, so pre-rendering would buy nothing.
 
-## Pipeline de dados
+## Data pipeline
 
-A pasta `data/` mistura curadoria manual e arquivos gerados:
+The `data/` directory mixes hand-curation and generated files:
 
-| Arquivo                     | Origem                          | No git?       |
-|-----------------------------|---------------------------------|---------------|
-| `country-codes.json`        | curadoria manual                | ✅            |
-| `tactics.json`              | curadoria manual                | ✅            |
-| `squads.json`               | `pnpm scrape:squads` (Wikipedia)| ✅ (referência) |
-| `squads-enriched.json`      | `pnpm enrich:squads` + `enrich:fifa` + `enrich:transfermarkt` | ✅ (consumido pelo app) |
-| `eafc26-players.csv`        | `pnpm download:fifa` (10 MB)    | ❌ (gitignored)|
-| `transfermarkt-players.csv` | `pnpm download:transfermarkt` (4 MB extraído de ZIP de 222 MB) | ❌ (gitignored)|
+| File                        | Origin                                            | In git?            |
+|-----------------------------|---------------------------------------------------|--------------------|
+| `country-codes.json`        | curated manually                                  | ✅                 |
+| `tactics.json`              | curated manually                                  | ✅                 |
+| `position-overrides.json`   | curated overlay for alt-positions                 | ✅                 |
+| `sim-params.json`           | output of `calibrate:sim` (Poisson + Dixon-Coles) | ✅                 |
+| `squads.json`               | `pnpm scrape:squads` (Wikipedia)                  | ✅ (reference)     |
+| `squads-enriched.json`      | full enrichment pipeline (see below)              | ✅ (runtime data)  |
+| `eafc26-players.csv`        | `pnpm download:fifa` (~10 MB)                     | ❌ (gitignored)    |
+| `transfermarkt-players.csv` | `pnpm download:transfermarkt` (~4 MB from a 222 MB ZIP) | ❌ (gitignored) |
+| `fbref-players.csv`         | Kaggle manual download (free account required)    | ❌ (gitignored)    |
 
-Pra reconstruir tudo do zero:
+To rebuild everything from scratch:
 
 ```bash
 pnpm data:rebuild
 ```
 
-(equivale a `scrape:squads → enrich:squads → download:fifa → enrich:fifa`)
+That runs, in order: `scrape:squads → enrich:squads → download:fifa →
+enrich:fifa → download:transfermarkt → enrich:transfermarkt →
+enrich:alt-positions → recalibrate:heuristic → download:fbref →
+enrich:fbref → calibrate:fbref → download:matches → calibrate:sim`.
 
-Match com EA FC 26 pega ~70% dos convocados; o resto (Irã, Jordânia, Uzbequistão
-e outros mal cobertos pelo EA) cai numa heurística por tier do clube + caps + idade.
-Transfermarkt cobre outros ~58% (cross-reference de valor de mercado, sem
-sobrescrever rating ou posição do EA). Quando os dois divergem (Alisson EA €51M / TM €17M,
-CR7 ausente no EA / TM €15M), os dois valores ficam disponíveis no jogador.
+EA FC 26 covers ~73% of the called-up players. Transfermarkt fills another
+~8% (cross-referenced by market value, never overwriting EA FC's rating or
+position). FBref covers the long tail of well-tracked players that EA FC
+missed (~2%, fit by per-bucket OLS regression). The club-tier heuristic
+catches the remaining ~17%, mostly domestic leagues in Iran, Jordan,
+Uzbekistan, and Saudi Arabia.
 
-A desambiguação de match entre múltiplos jogadores com mesmo nome usa
-score por (bucket posicional, clube, idade). Sem isso, o Alisson Becker (GK Liverpool)
-era confundido com outro Alisson brasileiro que joga de RW no Shakhtar.
+Match disambiguation across every source scores candidates by
+`(positional bucket, club, age)`. Without it, Alisson Becker (Liverpool GK)
+used to collide with another Alisson — a right winger at Shakhtar.
 
-## Próximos passos
+## Tests
 
-- [ ] Tela de draft (drawer com tática/estilo, depois sorteio por posição)
-- [ ] Motor de simulação (probabilidade ponderada por overall)
-- [ ] Tela de torneio com tabela dos grupos + chaveamento
-- [ ] Subir os dados pro Supabase (hoje JSON inline no bundle, 594 KB)
+```bash
+pnpm test              # vitest, ~200ms, 96+ tests
+pnpm test:coverage     # HTML report at coverage/
+pnpm test:e2e          # playwright (e2e/)
+pnpm sim:distortions   # 50 (or DRAFT26_RUNS=N) full campaigns → reports/distortions-*.{json,md}
+```
+
+The statistical suite (`src/lib/simulate.stats.test.ts`) runs ~3,000
+seeded simulations per scenario and asserts **relative** outcomes (e.g.,
+"hard difficulty produces a tighter rubber-band than no difficulty"),
+which keeps the tests resilient to re-calibration.
+
+## Roadmap
+
+See [HANDOFF.md](./HANDOFF.md) for the current state and the next
+priorities, and [docs/launch-plan.md](./docs/launch-plan.md) for the
+week-1 launch and growth plan.
