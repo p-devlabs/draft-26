@@ -250,6 +250,7 @@ function PlusChip({ onClick, posLabel }: { onClick: () => void; posLabel: string
       <button
         type="button"
         onClick={onClick}
+        aria-label={`Escalar ${posLabel}`}
         className="az-plus"
         style={{
           width: 54,

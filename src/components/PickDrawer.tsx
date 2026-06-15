@@ -152,6 +152,7 @@ export function PickDrawer({
     <>
       <div
         onClick={handleClose}
+        aria-hidden="true"
         style={{
           position: 'fixed',
           inset: 0,
@@ -175,6 +176,9 @@ export function PickDrawer({
         }}
       >
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Sorteio de jogador para ${slotLabel}`}
           className="az-sheet"
           style={{
             width: '100%',
@@ -690,10 +694,12 @@ function ResultState({
 }
 
 function CandidateRow({ player, onPick }: { player: Player; onPick: () => void }) {
+  const ariaPos = player.primaryPosition ?? player.position
   return (
     <button
       type="button"
       onClick={onPick}
+      aria-label={`Escalar ${player.name}, ${ariaPos}, overall ${player.overall}`}
       style={{
         display: 'flex',
         alignItems: 'center',

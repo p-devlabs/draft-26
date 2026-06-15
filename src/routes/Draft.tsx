@@ -227,6 +227,7 @@ function AppBar({ ovr, onReset }: { ovr: number | null; onReset?: () => void }) 
           <button
             type="button"
             onClick={onReset}
+            aria-label="Recomeçar escalação"
             title="Recomeçar"
             style={{
               background: 'var(--color-d-surface2)',
