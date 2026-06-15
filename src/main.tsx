@@ -9,6 +9,7 @@ import { Draft } from './routes/Draft'
 import { Copa } from './routes/Copa'
 import { Match } from './routes/Match'
 import { MataMata } from './routes/MataMata'
+import { AdsProvider } from './components/ads/AdsProvider'
 import { features } from './lib/features'
 import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
 
@@ -24,15 +25,17 @@ if (features.dev) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route index element={<Home />} />
-        <Route path="/teams" element={<Selecoes />} />
-        <Route path="/teams/:code" element={<SelecaoDetalhe />} />
-        <Route path="/draft" element={<Draft />} />
-        <Route path="/groups" element={<Copa />} />
-        <Route path="/bracket" element={<MataMata />} />
-        <Route path="/match" element={<Match />} />
-      </Routes>
+      <AdsProvider>
+        <Routes>
+          <Route index element={<Home />} />
+          <Route path="/teams" element={<Selecoes />} />
+          <Route path="/teams/:code" element={<SelecaoDetalhe />} />
+          <Route path="/draft" element={<Draft />} />
+          <Route path="/groups" element={<Copa />} />
+          <Route path="/bracket" element={<MataMata />} />
+          <Route path="/match" element={<Match />} />
+        </Routes>
+      </AdsProvider>
     </BrowserRouter>
   </StrictMode>,
 )

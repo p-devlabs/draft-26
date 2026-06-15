@@ -40,6 +40,7 @@ import { nationGradient } from '../lib/nation-colors'
 import { SLOT_LABEL } from '../lib/positions'
 import type { MatchEvent } from '../lib/narrate'
 import type { DraftState, DraftSlot } from '../lib/draft'
+import { useAds } from '../components/ads/AdsProvider'
 
 type Speed = 'slow' | 'normal' | 'fast'
 
@@ -2645,10 +2646,22 @@ function ShareGrid() {
 }
 
 function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
+  const navigate = useNavigate()
+  const ads = useAds()
+  // Apito final do match → interstitial antes de devolver pra Copa/bracket.
+  // O slot é único pra todos os post-match (handoff §C); cooldown e frequência
+  // do AdsProvider garantem que não acumula com a transição groups→ko.
+  const handlePrimaryCta = async () => {
+    await ads.showInterstitial('transition-post-final')
+    navigate(cfg.ctaTo)
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
-      <Link
-        to={cfg.ctaTo}
+      <button
+        type="button"
+        onClick={() => {
+          void handlePrimaryCta()
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -2666,7 +2679,7 @@ function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
         }}
       >
         {cfg.ctaLabel}
-      </Link>
+      </button>
       {cfg.cta2Label && cfg.cta2To && (
         <Link
           to={cfg.cta2To}

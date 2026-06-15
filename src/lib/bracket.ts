@@ -443,6 +443,72 @@ function nextRoundOf(r: KORound): KORound | null {
   return idx >= 0 && idx < ROUND_ORDER.length - 1 ? ROUND_ORDER[idx + 1] : null
 }
 
+/**
+ * Desfaz a última derrota do user: limpa o jogo perdido + propaga a limpeza
+ * por todos os jogos downstream que dependiam daquele winnerCode. Usado pelo
+ * gatilho rewarded "rejogar último jogo" do drawer Eliminado.
+ *
+ * O adversário no jogo perdido continua lá (homeCode/awayCode preservados);
+ * só o resultado é limpo, então o user joga DE NOVO contra o mesmo time.
+ * Downstream da posição perdida fica desempilhado — `ensureRoundsSimulated`
+ * vai parar quando ver esse pendente e voltar a avançar quando o user vencer.
+ *
+ * Idempotente: se não há derrota pra desfazer, retorna o bracket inalterado.
+ */
+export function rewindLastUserLoss(bracket: KnockoutBracket): KnockoutBracket {
+  const lostMatch = [...bracket.matches]
+    .reverse()
+    .find(
+      (m) =>
+        m.winnerCode &&
+        (m.homeCode === bracket.userCode || m.awayCode === bracket.userCode) &&
+        m.winnerCode !== bracket.userCode,
+    )
+  if (!lostMatch) return bracket
+
+  // Limpa a derrota mantendo homeCode/awayCode (mesmo adversário).
+  let matches: BracketMatch[] = bracket.matches.map((m) =>
+    m.id === lostMatch.id
+      ? {
+          ...m,
+          result: undefined,
+          extraTime: undefined,
+          penalties: undefined,
+          events: undefined,
+          winnerCode: undefined,
+        }
+      : m,
+  )
+
+  // Cascata downstream: cada rodada seguinte tinha como feed o winnerCode
+  // limpo acima. Apaga só o slot (home/away) que veio do match limpo —
+  // o outro feed (da outra metade) continua valendo.
+  let curRound: KORound = lostMatch.round
+  let curPos = lostMatch.position
+  while (true) {
+    const next = nextRoundOf(curRound)
+    if (!next) break
+    const nextPos = Math.ceil(curPos / 2)
+    const isHomeFeed = curPos % 2 === 1
+    matches = matches.map((m) => {
+      if (m.round !== next || m.position !== nextPos) return m
+      return {
+        ...m,
+        ...(isHomeFeed ? { homeCode: null } : { awayCode: null }),
+        result: undefined,
+        extraTime: undefined,
+        penalties: undefined,
+        events: undefined,
+        winnerCode: undefined,
+      }
+    })
+    curRound = next
+    curPos = nextPos
+  }
+
+  return { ...bracket, matches, champion: undefined }
+}
+
 // re-export pra conveniência
 export { rosterForKnockout, narrateMatch }
 export type { MatchEvent }

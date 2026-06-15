@@ -9,6 +9,8 @@ import {
 } from '../lib/draft'
 import { nationGradient } from '../lib/nation-colors'
 import { findSquad, squads, type Player, type Squad } from '../data/squads'
+import { useAds } from './ads/AdsProvider'
+import { RewardedCard } from './ads/RewardedCard'
 
 /**
  * Tempo total da animação do caça-níquel antes do carimbo. O `support.js`
@@ -40,6 +42,7 @@ export function PickDrawer({
   onPick,
   onStateChange,
 }: PickDrawerProps) {
+  const ads = useAds()
   const [phase, setPhase] = useState<Phase>({ kind: 'rolling' })
 
   // Ao abrir:
@@ -119,6 +122,15 @@ export function PickDrawer({
     rollFrom(clearPendingRoll(useSkip(state), slotIndex))
   }
 
+  // Rewarded "+1 pulo": só quando os pulos zeram. Não mexe no contador de
+  // skipsRemaining — concede uma re-rolagem grátis e marca o limite por
+  // sessão como consumido. Próxima zeragem na mesma sessão não oferece de novo.
+  const handleRewardedSkip = () => {
+    if (canSkip || phase.kind !== 'result') return
+    ads.grantSkipReward()
+    rollFrom(clearPendingRoll(state, slotIndex))
+  }
+
   const handleClose = () => {
     // Fechar sem escolher NÃO gasta skip — o sorteio fica gravado no slot
     // (pendingSquadCode) e a próxima abertura mostra as mesmas opções.
@@ -184,6 +196,8 @@ export function PickDrawer({
               activeLabel={slotLabel}
               onPick={handlePick}
               onSkip={handleSkip}
+              canShowRewardedSkip={ads.canShowSkipReward}
+              onRewardedSkip={handleRewardedSkip}
             />
           )}
         </div>
@@ -487,6 +501,8 @@ function ResultState({
   activeLabel,
   onPick,
   onSkip,
+  canShowRewardedSkip,
+  onRewardedSkip,
 }: {
   squad: Squad
   candidates: Player[]
@@ -495,6 +511,8 @@ function ResultState({
   activeLabel: string
   onPick: (p: Player) => void
   onSkip: () => void
+  canShowRewardedSkip: boolean
+  onRewardedSkip: () => void
 }) {
   const code = squad.code.toUpperCase()
   const canSkip = skipsRemaining > 0
@@ -633,6 +651,22 @@ function ResultState({
           </span>
         )}
       </div>
+      {!canSkip && canShowRewardedSkip && (
+        <div style={{ margin: '4px 0 14px' }}>
+          <RewardedCard
+            headline={
+              <>
+                <span style={{ color: 'var(--color-d-ink)' }}>ASSISTA</span>
+                <span style={{ fontFamily: 'Space Mono', fontSize: 12, color: 'var(--color-d-mut)' }}>→</span>
+                <span style={{ color: 'var(--color-d-lime)' }}>+1 PULO</span>
+              </>
+            }
+            ctaLabel="▶ ASSISTIR ANÚNCIO"
+            limitBadge="LIMITE · 1× POR SESSÃO"
+            onEarned={onRewardedSkip}
+          />
+        </div>
+      )}
       {skipped > 0 && (
         <div
           style={{

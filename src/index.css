@@ -93,6 +93,19 @@
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* Pulse específico do slot rewarded — versão atenuada do d26-pulse com cor lima. */
+@keyframes d26-ad-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 255, 61, 0.45); }
+  50%      { box-shadow: 0 0 0 7px rgba(212, 255, 61, 0); }
+}
+/* Helpers responsivos pros slots de banner — mobile = footer ancorado,
+   desktop = leaderboard topo + rectangle lateral. Mantém o switch puro CSS
+   pra evitar flicker na mudança de viewport. */
+.d26-mobile-only { display: none; }
+@media (max-width: 760px) {
+  .d26-mobile-only { display: block; }
+  .d26-desktop-only { display: none !important; }
+}
 @media (max-width: 760px) {
   .d26-hero-grid { grid-template-columns: 1fr !important; gap: 34px !important; }
   .d26-hero-art { order: -1; align-items: flex-start !important; }
