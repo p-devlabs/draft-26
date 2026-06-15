@@ -7,6 +7,7 @@ import {
   isHalfMatch,
   nextUserMatch,
   setupBracket,
+  simulatePenalties,
   userHalfOf,
   userPath,
   type BracketMatch,
@@ -217,5 +218,143 @@ describe('userPath', () => {
     const path = userPath(bracket)
     expect(path.length).toBeGreaterThanOrEqual(1)
     expect(path[0].round).toBe('R32')
+  })
+})
+
+describe('simulatePenalties — early termination (FIFA)', () => {
+  // RNG fake estrito: cada bool força UMA cobrança (true = gol, false = perdeu).
+  // Joga se o código pedir mais rng() que o esperado — pega regressão silenciosa.
+  // simulatePenalties: scored = rng() < prob. prob clampado em [0.3, 0.9], então
+  // 0 sempre converte e 0.99 sempre erra.
+  function fakeRngFor(scores: boolean[]): () => number {
+    let i = 0
+    return () => {
+      if (i >= scores.length) {
+        throw new Error(`fakeRng esgotado na chamada #${i + 1} — terminação prematura esperada?`)
+      }
+      const s = scores[i++]
+      return s ? 0 : 0.99
+    }
+  }
+
+  const homeStr = { code: 'H', averageOverall: 80 }
+  const awayStr = { code: 'A', averageOverall: 80 }
+
+  it('user scenario: 3-1 na rodada 4, encerra após A R4 sem chegar na rodada 5', () => {
+    // R1: H gol, A gol → 1-1
+    // R2: H gol, A perde → 2-1
+    // R3: H perde, A perde → 2-1
+    // R4: H gol (3-1), A perde (3-1). Após A R4: hShot=4, aShot=4, hRem=1, aRem=1.
+    //     as_+aRem = 1+1 = 2 < hs=3 → DECIDIDO.
+    const seq = [true, true, true, false, false, false, true, false]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(3)
+    expect(pks.awayScored).toBe(1)
+    expect(pks.sequence).toHaveLength(8)
+  })
+
+  it('3-0 após 3 rodadas — encerra após A R3 (não vai pra rodada 4)', () => {
+    // R1 H gol, A perde → 1-0
+    // R2 H gol, A perde → 2-0
+    // R3 H gol (3-0), A perde (3-0). Após A R3: hShot=3, aShot=3, aRem=2.
+    //   as_+aRem=2 < hs=3 → DECIDIDO.
+    const seq = [true, false, true, false, true, false]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(3)
+    expect(pks.awayScored).toBe(0)
+    expect(pks.sequence).toHaveLength(6)
+  })
+
+  it('encerra DEPOIS da H R4 quando ela faz 4-1 (A nem chuta a R4)', () => {
+    // R1: 1-1 (não decide com aRem=4)
+    // R2: 2-1 (H gol, A erra) — não decide
+    // R3: 3-1 (H gol, A erra) — após A R3: aRem=2, 3 > 1+2=3? Não estrito. Continua.
+    // R4 H: gol → 4-1. Após H R4: hShot=4, aShot=3, aRem=2.
+    //   as_+aRem = 1+2 = 3 < hs=4 → DECIDIDO antes de A R4.
+    const seq = [true, true, true, false, true, false, true]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(4)
+    expect(pks.awayScored).toBe(1)
+    expect(pks.sequence).toHaveLength(7)
+    expect(pks.sequence[6].team).toBe('home')
+  })
+
+  it('NÃO encerra cedo quando dá pra empatar — vai até completar 5 rodadas', () => {
+    // R1: 1-1, R2: 2-1, R3: 2-1, R4: 2-1, R5: 2-1
+    const seq = [
+      true, true,
+      true, false,
+      false, false,
+      false, false,
+      false, false,
+    ]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(2)
+    expect(pks.awayScored).toBe(1)
+    expect(pks.sequence).toHaveLength(10)
+  })
+
+  it('completa 5 rodadas e decide em 3-4 sem entrar em sudden death', () => {
+    // R1 1-1, R2 2-2, R3 2-3 (H errou), R4 3-3, R5 H erra, A gol → 3-4
+    const seq = [
+      true, true,
+      true, true,
+      false, true,
+      true, false,
+      false, true,
+    ]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(3)
+    expect(pks.awayScored).toBe(4)
+    expect(pks.sequence).toHaveLength(10)
+  })
+
+  it('entra em morte súbita quando empata em 5 rodadas — H gol, A erra no par 1', () => {
+    // 5-5 reg, SD R1: H gol (6-5), A erra (6-5) → decide
+    const seq = [
+      true, true,
+      true, true,
+      true, true,
+      true, true,
+      true, true,
+      true, false,
+    ]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(6)
+    expect(pks.awayScored).toBe(5)
+    expect(pks.sequence).toHaveLength(12)
+  })
+
+  it('SD não encerra no meio do par — H erra, A precisa bater pra decidir', () => {
+    // 5-5 reg, SD R1: H erra (5-5), A gol (5-6) → decide
+    const seq = [
+      true, true,
+      true, true,
+      true, true,
+      true, true,
+      true, true,
+      false, true,
+    ]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(5)
+    expect(pks.awayScored).toBe(6)
+    expect(pks.sequence).toHaveLength(12)
+  })
+
+  it('SD com par empatado (gol-gol) continua pra próximo par', () => {
+    // 5-5 reg, SD R1: 1-1, SD R2: H gol, A erra → 7-6
+    const seq = [
+      true, true,
+      true, true,
+      true, true,
+      true, true,
+      true, true,
+      true, true, // SD R1: 6-6
+      true, false, // SD R2: 7-6 → decide
+    ]
+    const pks = simulatePenalties(homeStr, awayStr, fakeRngFor(seq))
+    expect(pks.homeScored).toBe(7)
+    expect(pks.awayScored).toBe(6)
+    expect(pks.sequence).toHaveLength(14)
   })
 })

@@ -9,6 +9,7 @@ import { Draft } from './routes/Draft'
 import { Copa } from './routes/Copa'
 import { Match } from './routes/Match'
 import { MataMata } from './routes/MataMata'
+import { PenaltiesDev } from './routes/PenaltiesDev'
 import { features } from './lib/features'
 import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
 import { initAnalytics } from './lib/analytics'
@@ -38,6 +39,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/groups" element={<Copa />} />
         <Route path="/bracket" element={<MataMata />} />
         <Route path="/match" element={<Match />} />
+        <Route path="/dev/penalties" element={<PenaltiesDev />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

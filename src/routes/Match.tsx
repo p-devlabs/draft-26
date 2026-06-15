@@ -27,6 +27,7 @@ import {
   type Penalties,
 } from '../lib/bracket'
 import { rosterForKnockout } from '../lib/rosters'
+import { PenaltiesCard } from '../components/PenaltiesCard'
 import { narrateMatch } from '../lib/narrate'
 import {
   loadBracket,
@@ -52,6 +53,17 @@ const SPEED_DURATION: Record<Speed, number> = {
 const TICK_MS = 60
 const SPEED_LABEL: Record<Speed, string> = { slow: '1×', normal: '2×', fast: '4×' }
 const SPEED_ORDER: Speed[] = ['slow', 'normal', 'fast']
+
+/**
+ * Intervalo entre cobranças do shootout, por velocidade. Cobranças saem
+ * "uma a uma" — mais lento que minuto de jogo pra dar tempo de ler quem
+ * bateu e o resultado.
+ */
+const PENALTY_KICK_MS: Record<Speed, number> = {
+  slow: 1500,
+  normal: 850,
+  fast: 380,
+}
 
 type MatchKind = 'group' | 'knockout'
 
@@ -356,6 +368,12 @@ function KnockoutMatchRunner({
     | { events: MatchEvent[]; extraTime?: { homeGoals: number; awayGoals: number }; penalties?: Penalties; winner: 'home' | 'away' }
     | null
   >(null)
+  /**
+   * Quantas cobranças do shootout já foram reveladas. Avança automaticamente
+   * a cada PENALTY_KICK_MS quando o tempo regulamentar (e ET, se houver)
+   * acabou e existe shootout. 0 antes da decisão começar.
+   */
+  const [shootoutKicksRevealed, setShootoutKicksRevealed] = useState(0)
   const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
@@ -378,12 +396,16 @@ function KnockoutMatchRunner({
 
     const home = br.teams[match.homeCode]
     const away = br.teams[match.awayCode]
+    const homeRoster = rosterForKnockout(home.code, persisted.draft, { name: home.name, flag: home.flag })
+    const awayRoster = rosterForKnockout(away.code, persisted.draft, { name: away.name, flag: away.flag })
     const sim = fullySimulate(home, away, Math.random, {
       difficulty: persisted.draft.difficulty,
+      homeRoster,
+      awayRoster,
     })
     const events = narrateMatch({
-      home: rosterForKnockout(home.code, persisted.draft, { name: home.name, flag: home.flag }),
-      away: rosterForKnockout(away.code, persisted.draft, { name: away.name, flag: away.flag }),
+      home: homeRoster,
+      away: awayRoster,
       result: sim.result,
     })
     setSimResult({
@@ -419,9 +441,16 @@ function KnockoutMatchRunner({
   }, [matchId, navigate])
 
   const goalMinute = simResult?.extraTime ? 120 : 90
+  const regulationEnded = !!simResult && virtualMinute >= goalMinute
+  const totalKicks = simResult?.penalties?.sequence.length ?? 0
+  /** Decisão em andamento — cobranças sendo reveladas uma a uma. */
+  const shootoutActive = regulationEnded && totalKicks > 0 && shootoutKicksRevealed < totalKicks
+  /** "Finished" = tudo encerrado: tempo regulamentar + (se houver) todas as cobranças. */
+  const finalShowing = regulationEnded && !shootoutActive
 
   useEffect(() => {
     if (!bracket || !simResult || !playing) return
+    if (regulationEnded) return
     const duration = SPEED_DURATION[speed] * (goalMinute / 90)
     const ratePerTick = (goalMinute / (duration * 1000)) * TICK_MS
     const id = window.setInterval(() => {
@@ -435,9 +464,17 @@ function KnockoutMatchRunner({
       })
     }, TICK_MS)
     return () => window.clearInterval(id)
-  }, [bracket, simResult, playing, speed, goalMinute])
+  }, [bracket, simResult, playing, speed, goalMinute, regulationEnded])
 
-  const finalShowing = !!simResult && virtualMinute >= goalMinute
+  // Timer do shootout: revela uma cobrança por vez no intervalo da velocidade.
+  // Para automaticamente quando todas saíram (shootoutActive vira false).
+  useEffect(() => {
+    if (!shootoutActive || !playing) return
+    const id = window.setTimeout(() => {
+      setShootoutKicksRevealed((n) => Math.min(n + 1, totalKicks))
+    }, PENALTY_KICK_MS[speed])
+    return () => window.clearTimeout(id)
+  }, [shootoutActive, playing, speed, shootoutKicksRevealed, totalKicks])
 
   useEffect(() => {
     if (!bracket || !draft || !finalShowing || persistedRef.current) return
@@ -478,14 +515,26 @@ function KnockoutMatchRunner({
   const homeTeam = bracket.teams[match.homeCode!]
   const awayTeam = bracket.teams[match.awayCode!]
   const wholeMinute = Math.floor(virtualMinute)
-  const revealed = simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, 90))
+  const revealedRegular = simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, 90))
   const inExtraTime = wholeMinute > 90
-  const homeGoals90 = revealed.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
-  const awayGoals90 = revealed.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
+  const homeGoals90 = revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
+  const awayGoals90 = revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
   const extraHome = inExtraTime ? (simResult.extraTime?.homeGoals ?? 0) : 0
   const extraAway = inExtraTime ? (simResult.extraTime?.awayGoals ?? 0) : 0
   const homeGoals = homeGoals90 + extraHome
   const awayGoals = awayGoals90 + extraAway
+
+  // Cobranças do shootout convertidas em MatchEvents pro feed LANCES.
+  // Sai uma a uma conforme shootoutKicksRevealed cresce.
+  const penaltyEvents: MatchEvent[] =
+    simResult.penalties && shootoutKicksRevealed > 0
+      ? penaltyKicksToEvents(
+          simResult.penalties.sequence.slice(0, shootoutKicksRevealed),
+          match.homeCode!,
+          match.awayCode!,
+        )
+      : []
+  const revealed = [...revealedRegular, ...penaltyEvents]
 
   const home: SideTeam = {
     code: homeTeam.code,
@@ -499,7 +548,7 @@ function KnockoutMatchRunner({
     averageOverall: awayTeam.averageOverall,
     isUser: awayTeam.isUser,
   }
-  const goalEvents = (finalShowing ? simResult.events : revealed).filter(
+  const goalEvents = (finalShowing ? simResult.events : revealedRegular).filter(
     (e) => e.type === 'goal' || e.type === 'red',
   )
 
@@ -516,15 +565,18 @@ function KnockoutMatchRunner({
       totalMinutes={goalMinute}
       playing={playing}
       finished={finalShowing}
+      shootoutActive={shootoutActive}
+      shootoutKicksRevealed={shootoutKicksRevealed}
       events={revealed}
       goalAndRedEvents={goalEvents}
-      penalties={finalShowing ? simResult.penalties : undefined}
+      penalties={regulationEnded ? simResult.penalties : undefined}
       penaltyHomeCode={match.homeCode!}
       penaltyAwayCode={match.awayCode!}
       speed={speed}
       onToggle={() => setPlaying((p) => !p)}
       onRestart={() => {
         setVirtualMinute(0)
+        setShootoutKicksRevealed(0)
         setPlaying(true)
         persistedRef.current = false
         setOutcome(null)
@@ -540,7 +592,10 @@ function KnockoutMatchRunner({
             atMinute: Math.floor(virtualMinute),
           })
         }
+        // Pula direto pro fim do tempo regulamentar/ET E revela todas as
+        // cobranças (se houver). Um clique só → resultado final visível.
         setVirtualMinute(goalMinute)
+        if (totalKicks > 0) setShootoutKicksRevealed(totalKicks)
       }}
       outcome={outcome}
       outcomeContext={buildKnockoutOutcomeContext(bracket, stage, draft, match, homeGoals, awayGoals, simResult.penalties)}
@@ -667,6 +722,47 @@ function signed(n: number): string {
   return String(n)
 }
 
+const PENALTY_TEXTS_SCORED = [
+  '%PLAYER% bateu firme e converteu.',
+  '%PLAYER% deslocou o goleiro — gol.',
+  '%PLAYER% no canto: bola na rede.',
+  '%PLAYER% acertou um cavadinha de mestre.',
+]
+const PENALTY_TEXTS_MISSED = [
+  'O goleiro defendeu! %PLAYER% errou.',
+  '%PLAYER% mandou pra fora.',
+  '%PLAYER% carimbou a trave.',
+  '%PLAYER% bateu mal e o goleiro pegou.',
+]
+
+/**
+ * Converte as cobranças reveladas do shootout em MatchEvents pro feed
+ * "LANCES". Usa `label` pra substituir o "minuto" pelo número da cobrança,
+ * e `minute` cresce monotonicamente (200+) só pra manter ordem.
+ */
+function penaltyKicksToEvents(
+  kicks: Penalties['sequence'],
+  homeCode: string,
+  awayCode: string,
+): MatchEvent[] {
+  return kicks.map((k, i) => {
+    const teamCode = k.team === 'home' ? homeCode : awayCode
+    const player = k.kicker ?? 'Batedor'
+    const tpl = k.scored
+      ? PENALTY_TEXTS_SCORED[i % PENALTY_TEXTS_SCORED.length]
+      : PENALTY_TEXTS_MISSED[i % PENALTY_TEXTS_MISSED.length]
+    const round = Math.floor(i / 2) + 1
+    return {
+      minute: 200 + i,
+      type: k.scored ? 'pen-scored' : 'pen-missed',
+      teamCode,
+      player,
+      text: tpl.replace('%PLAYER%', player),
+      label: `${round}ª`,
+    }
+  })
+}
+
 // ============================================================
 // PARTIDA SHELL — the design
 // ============================================================
@@ -730,6 +826,10 @@ interface PartidaShellProps {
   totalMinutes: number
   playing: boolean
   finished: boolean
+  /** Tempo regulamentar+ET acabou, mas cobranças ainda saindo uma a uma. */
+  shootoutActive?: boolean
+  /** Quantas cobranças do shootout já estão visíveis (0 antes de começar). */
+  shootoutKicksRevealed?: number
   events: MatchEvent[]
   goalAndRedEvents: MatchEvent[]
   speed: Speed
@@ -765,6 +865,8 @@ function PartidaShell(p: PartidaShellProps) {
         totalMinutes={p.totalMinutes}
         playing={p.playing}
         finished={p.finished}
+        shootoutActive={p.shootoutActive}
+        shootoutKicksRevealed={p.shootoutKicksRevealed ?? 0}
         markers={p.goalAndRedEvents}
       />
       <Body>
@@ -772,6 +874,8 @@ function PartidaShell(p: PartidaShellProps) {
         <RightColumn
           playing={p.playing}
           finished={p.finished}
+          shootoutActive={p.shootoutActive}
+          shootoutKicksRevealed={p.shootoutKicksRevealed ?? 0}
           speed={p.speed}
           onToggle={p.onToggle}
           onRestart={p.onRestart}
@@ -957,7 +1061,7 @@ function dotStyle(justify?: 'end' | 'center'): CSSProperties {
 // ---------- Scoreboard ----------
 
 function ScoreboardHero({
-  home, away, homeGoals, awayGoals, clockMinute, totalMinutes, playing, finished, markers,
+  home, away, homeGoals, awayGoals, clockMinute, totalMinutes, playing, finished, shootoutActive, shootoutKicksRevealed, markers,
 }: {
   home: SideTeam
   away: SideTeam
@@ -967,9 +1071,13 @@ function ScoreboardHero({
   totalMinutes: number
   playing: boolean
   finished: boolean
+  shootoutActive?: boolean
+  shootoutKicksRevealed: number
   markers: MatchEvent[]
 }) {
-  const statusLabel = computeStatusLabel(clockMinute, totalMinutes, playing, finished)
+  const statusLabel = shootoutActive
+    ? `PÊNALTIS ${shootoutKicksRevealed}`
+    : computeStatusLabel(clockMinute, totalMinutes, playing, finished)
   const pct = (Math.min(clockMinute, totalMinutes) / totalMinutes) * 100
   return (
     <div style={{ background: 'linear-gradient(180deg, #101310, #0a0b09)', borderBottom: '1px solid var(--color-d-line)' }}>
@@ -1310,7 +1418,9 @@ function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: Si
           flex: '0 0 auto',
         }}
       >
-        <span style={{ fontFamily: 'Anton', fontSize: 18, color: styling.minColor }}>{ev.minute}'</span>
+        <span style={{ fontFamily: 'Anton', fontSize: ev.label ? 13 : 18, color: styling.minColor, whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>
+          {ev.label ?? `${ev.minute}'`}
+        </span>
         <span style={{ fontSize: 14, lineHeight: 1 }}>{styling.emoji}</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -1397,6 +1507,52 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
       chip: { label: 'EXPULSÃO', bg: 'var(--color-d-red)', fg: '#fff' },
     }
   }
+  if (type === 'pen-scored') {
+    if (byUser) {
+      return {
+        bg: 'rgba(212,255,61,0.07)',
+        bd: 'rgba(212,255,61,0.3)',
+        minColor: 'var(--color-d-lime)',
+        emoji: '⚽',
+        textColor: 'var(--color-d-ink)',
+        nameColor: 'var(--color-d-ink)',
+        chip: { label: 'PÊNALTI', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
+      }
+    }
+    return {
+      bg: 'rgba(255,59,59,0.04)',
+      bd: 'rgba(255,59,59,0.18)',
+      minColor: 'var(--color-d-red)',
+      emoji: '⚽',
+      textColor: 'var(--color-d-mut)',
+      nameColor: 'var(--color-d-mut)',
+      chip: { label: 'PÊNALTI', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+    }
+  }
+  if (type === 'pen-missed') {
+    if (byUser) {
+      // Nossa cobrança perdida — vermelho apagado (frustrante)
+      return {
+        bg: 'rgba(255,59,59,0.08)',
+        bd: 'rgba(255,59,59,0.3)',
+        minColor: 'var(--color-d-red)',
+        emoji: '🧤',
+        textColor: 'var(--color-d-ink)',
+        nameColor: 'var(--color-d-ink)',
+        chip: { label: 'PERDEU', bg: 'var(--color-d-red)', fg: '#fff' },
+      }
+    }
+    // Adversário perdeu — alívio lima
+    return {
+      bg: 'rgba(212,255,61,0.06)',
+      bd: 'rgba(212,255,61,0.24)',
+      minColor: 'var(--color-d-lime)',
+      emoji: '🧤',
+      textColor: 'var(--color-d-ink)',
+      nameColor: 'var(--color-d-ink)',
+      chip: { label: 'PERDEU', bg: 'rgba(212,255,61,0.22)', fg: 'var(--color-d-lime)' },
+    }
+  }
   // yellow
   return {
     bg: 'rgba(255,138,59,0.06)',
@@ -1412,6 +1568,8 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
 function RightColumn(props: {
   playing: boolean
   finished: boolean
+  shootoutActive?: boolean
+  shootoutKicksRevealed: number
   speed: Speed
   onToggle: () => void
   onRestart: () => void
@@ -1431,13 +1589,21 @@ function RightColumn(props: {
   return (
     <div style={{ flex: '2 1 250px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
       <SimulationPanel {...props} />
-      {props.finished && props.penalties && (
+      {props.penalties && (
         <PenaltiesCard
           penalties={props.penalties}
-          homeCode={props.penaltyHomeCode!}
-          awayCode={props.penaltyAwayCode!}
-          home={props.home}
-          away={props.away}
+          kicksRevealed={
+            props.shootoutActive ? props.shootoutKicksRevealed : props.penalties.sequence.length
+          }
+          home={{
+            label: props.home.isUser ? 'SEU XI' : props.penaltyHomeCode!.toUpperCase(),
+            isUser: props.home.isUser,
+          }}
+          away={{
+            label: props.away.isUser ? 'SEU XI' : props.penaltyAwayCode!.toUpperCase(),
+            isUser: props.away.isUser,
+          }}
+          active={!!props.shootoutActive}
         />
       )}
       <LineupCard
@@ -1452,6 +1618,7 @@ function RightColumn(props: {
 function SimulationPanel(props: {
   playing: boolean
   finished: boolean
+  shootoutActive?: boolean
   speed: Speed
   onToggle: () => void
   onRestart: () => void
@@ -1460,7 +1627,15 @@ function SimulationPanel(props: {
   onShowOutcome: (o: OutcomeKind) => void
   outcome: OutcomeKind | null
 }) {
-  const playLabel = props.finished ? 'PARTIDA ENCERRADA' : props.playing ? '❚❚ PAUSAR' : '▶ CONTINUAR'
+  const playLabel = props.finished
+    ? 'PARTIDA ENCERRADA'
+    : props.shootoutActive
+      ? props.playing
+        ? '❚❚ PAUSAR COBRANÇAS'
+        : '▶ CONTINUAR COBRANÇAS'
+      : props.playing
+        ? '❚❚ PAUSAR'
+        : '▶ CONTINUAR'
 
   return (
     <div
@@ -1607,56 +1782,6 @@ function SimulationPanel(props: {
   )
 }
 
-function PenaltiesCard({
-  penalties,
-  homeCode,
-  awayCode,
-  home,
-  away,
-}: {
-  penalties: Penalties
-  homeCode: string
-  awayCode: string
-  home: SideTeam
-  away: SideTeam
-}) {
-  const homeKicks = penalties.sequence.filter((s) => s.team === 'home')
-  const awayKicks = penalties.sequence.filter((s) => s.team === 'away')
-  return (
-    <div
-      style={{
-        background: 'var(--color-d-surface)',
-        border: '1px solid var(--color-d-line)',
-        borderRadius: 14,
-        padding: 18,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'Space Mono',
-          fontSize: 11,
-          letterSpacing: '0.12em',
-          color: 'var(--color-d-mut)',
-          marginBottom: 12,
-        }}
-      >
-        DECISÃO POR PÊNALTIS
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontFamily: 'Anton', fontSize: 22 }}>
-        <span style={{ color: home.isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)' }}>
-          {penalties.homeScored}
-        </span>
-        <span style={{ color: 'var(--color-d-mut)' }}>—</span>
-        <span style={{ color: away.isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)' }}>
-          {penalties.awayScored}
-        </span>
-      </div>
-      <PenRow label={home.isUser ? 'SEU XI' : homeCode.toUpperCase()} kicks={homeKicks} />
-      <div style={{ height: 8 }} />
-      <PenRow label={away.isUser ? 'SEU XI' : awayCode.toUpperCase()} kicks={awayKicks} />
-    </div>
-  )
-}
 
 // ---------- Sidebar "SEU XI EM CAMPO" ----------
 
@@ -1909,28 +2034,6 @@ function LineupRowItem({ row }: { row: LineupRow }) {
             }}
           />
         )}
-      </div>
-    </div>
-  )
-}
-
-function PenRow({ label, kicks }: { label: string; kicks: Penalties['sequence'] }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontFamily: 'Space Mono', fontSize: 10, color: 'var(--color-d-mut)', width: 60 }}>{label}</span>
-      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-        {kicks.map((k, i) => (
-          <span
-            key={i}
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: '50%',
-              background: k.scored ? 'var(--color-d-lime)' : 'transparent',
-              border: `1.5px solid ${k.scored ? 'var(--color-d-lime)' : 'var(--color-d-red)'}`,
-            }}
-          />
-        ))}
       </div>
     </div>
   )
@@ -2369,6 +2472,9 @@ function PenaltyDots({
 }) {
   const userKicks = penalties.sequence.filter((k) => k.isUser)
   const oppKicks = penalties.sequence.filter((k) => !k.isUser)
+  // Slots por lateral: 5 (regulamentar) + 1 por par de morte súbita.
+  // Cobranças não-batidas (encerrou cedo) ficam pontilhadas no row.
+  const totalSlots = 5 + Math.ceil(Math.max(0, penalties.sequence.length - 10) / 2)
   return (
     <div
       style={{
@@ -2400,9 +2506,9 @@ function PenaltyDots({
           </span>
         </span>
       </div>
-      <PenaltyRow label="SEU XI" kicks={userKicks} ours scoredColor="var(--color-d-lime)" />
+      <PenaltyRow label="SEU XI" kicks={userKicks} totalSlots={totalSlots} ours scoredColor="var(--color-d-lime)" />
       <div style={{ height: 6 }} />
-      <PenaltyRow label={penalties.sequence.length ? 'OPP' : ''} kicks={oppKicks} scoredColor="var(--color-d-ink)" />
+      <PenaltyRow label="OPP" kicks={oppKicks} totalSlots={totalSlots} scoredColor="var(--color-d-ink)" />
     </div>
   )
 }
@@ -2410,14 +2516,17 @@ function PenaltyDots({
 function PenaltyRow({
   label,
   kicks,
+  totalSlots,
   ours,
   scoredColor,
 }: {
   label: string
   kicks: NonNullable<OutcomeContext['matchResult']['penalties']>['sequence']
+  totalSlots: number
   ours?: boolean
   scoredColor: string
 }) {
+  const pending = Math.max(0, totalSlots - kicks.length)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <span
@@ -2435,7 +2544,7 @@ function PenaltyRow({
       <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
         {kicks.map((k, i) => (
           <span
-            key={i}
+            key={`shot-${i}`}
             title={k.scored ? 'Convertida' : 'Perdida'}
             style={{
               width: 13,
@@ -2444,6 +2553,19 @@ function PenaltyRow({
               background: k.scored ? scoredColor : 'transparent',
               border: `1.5px solid ${k.scored ? scoredColor : 'var(--color-d-mut)'}`,
               opacity: k.scored ? 1 : 0.5,
+            }}
+          />
+        ))}
+        {Array.from({ length: pending }).map((_, i) => (
+          <span
+            key={`pending-${i}`}
+            style={{
+              width: 13,
+              height: 13,
+              borderRadius: '50%',
+              background: 'transparent',
+              border: '1.5px dashed var(--color-d-line)',
+              opacity: 0.5,
             }}
           />
         ))}

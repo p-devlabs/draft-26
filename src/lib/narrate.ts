@@ -7,7 +7,7 @@
 import type { Player } from '../data/squads'
 import type { MatchResult } from './simulate'
 
-export type EventType = 'goal' | 'yellow' | 'red'
+export type EventType = 'goal' | 'yellow' | 'red' | 'pen-scored' | 'pen-missed'
 
 export interface MatchEvent {
   minute: number
@@ -15,6 +15,11 @@ export interface MatchEvent {
   teamCode: string
   player: string
   text: string
+  /**
+   * Rótulo opcional pra substituir "{minute}'" no feed (ex: "PÊN", "PEN 3").
+   * Usado por cobranças do shootout, onde "minuto" não faz sentido.
+   */
+  label?: string
 }
 
 /** Roster mínimo necessário pra narração. */
