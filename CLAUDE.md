@@ -32,6 +32,8 @@ Tests live next to the code they test (`src/lib/*.test.ts`). Engine has both det
 
 E2E (Playwright, `e2e/`) ficam separados — não rodam no `pnpm test` nem no CI default. Use `pnpm sim:distortions` pra rodar 50 (ou `DRAFT26_RUNS=200`) campanhas inteiras via `window.__draft26__` (exposto em dev mode em `src/main.tsx`) e gerar `reports/distortions-{timestamp}.{json,md}`. O harness vive em `src/lib/sim-harness.ts` (`simulateFullCup(seed)` retorna `RunResult` estruturado). Configuração em `playwright.config.ts` — sobe o vite dev server automaticamente.
 
+Playwright 1.38+ não baixa o Chromium no `pnpm install` — os scripts `test:e2e`, `test:e2e:ui` e `sim:distortions` rodam `playwright install chromium` antes do test (no-op se já cacheado, ~150MB no primeiro run). Pra instalar separado: `pnpm setup:e2e`.
+
 `pnpm install` requires `allowBuilds: { esbuild: true }` in `pnpm-workspace.yaml` (already set) — CI will break without it.
 
 ## Architecture
