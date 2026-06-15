@@ -10,9 +10,10 @@
  *   - Total: 32 → R32
  */
 import { groupedSquads, squads, type Player, type Squad } from '../data/squads'
+
 import { averageOverall, type DraftState } from './draft'
-import { simulateMatch, type MatchResult, type Team } from './simulate'
 import { narrateMatch, type MatchEvent, type NarrationRoster } from './narrate'
+import { simulateMatch, type MatchResult, type Team } from './simulate'
 
 export const USER_TEAM_CODE = 'YOU'
 
@@ -71,7 +72,7 @@ function teamFromDraft(draft: DraftState): GroupTeam {
 }
 
 /** Pareamento padrão pra grupo de 4: cada rodada tem 2 jogos. */
-function pairings(): Array<[number, number]>[] {
+function pairings(): [number, number][][] {
   return [
     [
       [0, 1],
@@ -193,10 +194,7 @@ function createCpuGroup(g: { letter: string; squads: Squad[] }): GroupStage {
  * Cria os 12 grupos do mundial: 11 CPU + 1 com o user. A letra do grupo do
  * user é sorteada via `rng`. Os 11 grupos restantes ainda não têm resultados.
  */
-export function createWorldCup(
-  draft: DraftState,
-  rng: () => number = Math.random,
-): WorldCupGroups {
+export function createWorldCup(draft: DraftState, rng: () => number = Math.random): WorldCupGroups {
   const groupIndex = Math.floor(rng() * groupedSquads.length)
   const userLetter = groupedSquads[groupIndex].letter
   const groups: GroupStage[] = groupedSquads.map((g) =>
@@ -229,11 +227,7 @@ export function playCpuRound(
   return { ...worldCup, groups }
 }
 
-function simulateCpuGroupRound(
-  stage: GroupStage,
-  round: 1 | 2 | 3,
-  rng: () => number,
-): GroupStage {
+function simulateCpuGroupRound(stage: GroupStage, round: 1 | 2 | 3, rng: () => number): GroupStage {
   const teamByCode = new Map(stage.teams.map((t) => [t.code, t as Team]))
   const newMatches = stage.matches.map((m) => {
     if (m.round !== round || m.result) return m
@@ -381,15 +375,11 @@ export function findTeam(stage: GroupStage, code: string): GroupTeam | undefined
 }
 
 export function userMatches(stage: GroupStage): GroupMatch[] {
-  return stage.matches.filter(
-    (m) => m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE,
-  )
+  return stage.matches.filter((m) => m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE)
 }
 
 export function parallelMatches(stage: GroupStage): GroupMatch[] {
-  return stage.matches.filter(
-    (m) => m.homeCode !== USER_TEAM_CODE && m.awayCode !== USER_TEAM_CODE,
-  )
+  return stage.matches.filter((m) => m.homeCode !== USER_TEAM_CODE && m.awayCode !== USER_TEAM_CODE)
 }
 
 /** Simula todos os jogos de uma rodada e gera narração. Retorna novo state imutável. */
@@ -414,11 +404,7 @@ export function playRound(
 }
 
 /** Constrói o roster pra narração: 1 GK + alguns ZAG/MEI/ATA. */
-export function rosterFor(
-  code: string,
-  stage: GroupStage,
-  draft: DraftState,
-): NarrationRoster {
+export function rosterFor(code: string, stage: GroupStage, draft: DraftState): NarrationRoster {
   const team = stage.teams.find((t) => t.code === code)!
   if (code === USER_TEAM_CODE) {
     const players = draft.slots.map((s) => s.player!.player).filter(Boolean)
@@ -434,9 +420,7 @@ export function rosterFor(
   }
   const squad = squads.find((s) => s.code === code)!
   const byPos = (pos: Player['position']) =>
-    squad.players
-      .filter((p) => p.position === pos)
-      .sort((a, b) => b.overall - a.overall)
+    squad.players.filter((p) => p.position === pos).sort((a, b) => b.overall - a.overall)
   return {
     code,
     name: team.name,

@@ -1,20 +1,16 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { SetupDrawer } from '../components/SetupDrawer'
-import { PickDrawer } from '../components/PickDrawer'
+
 import { Field } from '../components/Field'
-import {
-  averageOverall,
-  createDraft,
-  isComplete,
-  pickPlayer,
-  type DraftState,
-} from '../lib/draft'
+import { PickDrawer } from '../components/PickDrawer'
+import { SetupDrawer } from '../components/SetupDrawer'
 import { autoFillXI } from '../lib/autofill'
+import { averageOverall, createDraft, isComplete, pickPlayer, type DraftState } from '../lib/draft'
 import { features } from '../lib/features'
 import { saveDraft, clearWorldCup } from '../lib/persistence'
-import type { Difficulty, Style } from '../lib/formations'
 import { track } from '../lib/track'
+
+import type { Difficulty, Style } from '../lib/formations'
 
 export function Draft() {
   const navigate = useNavigate()
@@ -80,10 +76,7 @@ export function Draft() {
 
   return (
     <div className="d26-scope" style={{ position: 'relative', overflowX: 'hidden' }}>
-      <AppBar
-        ovr={ovr}
-        onReset={buildPhase ? handleReset : undefined}
-      />
+      <AppBar ovr={ovr} onReset={buildPhase ? handleReset : undefined} />
       {buildPhase && draft && (
         <ProgressStrip
           formation={draft.formationName}
@@ -92,13 +85,12 @@ export function Draft() {
           filled={filled}
         />
       )}
-      <div className="az-wrap" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 28px 120px' }}>
+      <div
+        className="az-wrap"
+        style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 28px 120px' }}
+      >
         {buildPhase ? (
-          <Field
-            slots={slotsForRender}
-            buildPhase
-            onSlotClick={(i) => setPickingSlot(i)}
-          />
+          <Field slots={slotsForRender} buildPhase onSlotClick={(i) => setPickingSlot(i)} />
         ) : (
           // Placeholder field rendered while setup sheet is open
           <Field slots={emptyPreviewSlots()} buildPhase={false} onSlotClick={() => {}} />
@@ -128,9 +120,7 @@ export function Draft() {
 
       <SetupDrawer open={!buildPhase} onStart={handleStart} />
 
-      {buildPhase && (
-        <SimBar complete={complete} filled={filled} onSimulate={handleSimulate} />
-      )}
+      {buildPhase && <SimBar complete={complete} filled={filled} onSimulate={handleSimulate} />}
 
       {buildPhase && draft && (
         <PickDrawer
@@ -261,7 +251,12 @@ function NavPill({ to, label, active }: { to?: string; label: string; active?: b
     return (
       <span
         className="az-navpill"
-        style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}
+        style={{
+          ...base,
+          fontWeight: 700,
+          background: 'var(--color-d-lime)',
+          color: 'var(--color-d-bg)',
+        }}
       >
         {label}
       </span>
@@ -276,7 +271,12 @@ function NavPill({ to, label, active }: { to?: string; label: string; active?: b
 
 function DiceMark() {
   const dot = (justify?: 'end' | 'center'): CSSProperties => {
-    const s: CSSProperties = { width: 4, height: 4, borderRadius: '50%', background: 'var(--color-d-bg)' }
+    const s: CSSProperties = {
+      width: 4,
+      height: 4,
+      borderRadius: '50%',
+      background: 'var(--color-d-bg)',
+    }
     if (justify === 'end') s.justifySelf = 'end'
     if (justify === 'center') s.justifySelf = 'center'
     return s
@@ -363,7 +363,9 @@ function ProgressStrip({
         >
           XI
         </span>
-        <span style={{ fontFamily: 'Anton', fontSize: 18, color: 'var(--color-d-lime)' }}>{filled}</span>
+        <span style={{ fontFamily: 'Anton', fontSize: 18, color: 'var(--color-d-lime)' }}>
+          {filled}
+        </span>
         <span style={{ fontFamily: 'Anton', fontSize: 18, color: 'var(--color-d-mut)' }}>/11</span>
         <div
           className="az-bar"
@@ -389,7 +391,15 @@ function ProgressStrip({
   )
 }
 
-function Chip({ children, muted, lime }: { children: React.ReactNode; muted?: boolean; lime?: boolean }) {
+function Chip({
+  children,
+  muted,
+  lime,
+}: {
+  children: React.ReactNode
+  muted?: boolean
+  lime?: boolean
+}) {
   return (
     <span
       style={{

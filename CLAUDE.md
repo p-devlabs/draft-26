@@ -20,19 +20,30 @@ codebase is consistently Portuguese for in-product copy and inline notes.
 Default to pt-BR when adding new comments or strings; default to en-US
 when adding new docs.
 
+**Agent harness.** `AGENTS.md` (top-level) carries the non-negotiables.
+`ai/agents/` defines role-scoped personas (dev-fe, reviewer, validator-qa,
+adr-proposer, design-implementer); `ai/conventions/` covers commit / PR /
+branch shape; `ai/skills/` holds adopted skills (accesslint, impeccable,
+playwright, spec-driven, supabase). These were imported from a sibling
+project and still reference Next.js patterns in places — adapt as needed.
+
 ## Commands
 
 ```bash
 pnpm dev               # vite dev server (localhost:5173)
 pnpm build             # tsc -b && vite build → dist/
 pnpm preview           # serve dist/
-pnpm lint              # tsc -b --noEmit
-pnpm test              # vitest run (~200ms, 96+ tests)
-pnpm test:watch        # vitest in watch mode
-pnpm test:coverage     # vitest run --coverage (HTML report at coverage/)
+pnpm format            # prettier --write .
+pnpm format:check      # prettier --check .
+pnpm lint              # eslint . --max-warnings=15
+pnpm typecheck         # tsc -b --noEmit
+pnpm test              # jest (104+ tests)
+pnpm test:watch        # jest --watch
+pnpm test:coverage     # jest --coverage (HTML report at coverage/)
 pnpm test:e2e          # playwright (e2e/)
 pnpm sim:distortions   # run 50 end-to-end campaigns and emit reports/distortions-*.{json,md}
 pnpm data:rebuild      # full data pipeline (network-bound, ~minutes)
+pnpm check             # format:check + lint + typecheck + test:coverage + build
 ```
 
 Individual pipeline steps (run in order if rebuilding manually):
@@ -50,9 +61,10 @@ with OLS, trained on the FIFA-matched players that also appear in the Top
 5 leagues, and applies the model to players without FIFA to upgrade their
 overall (`ratingSource` becomes `'fbref-fit'`).
 
-CI runs `lint + test + build` on PRs and pushes to `main`
-(`.github/workflows/ci.yml`). When asked to verify, run
-`pnpm lint && pnpm test` and exercise the UI in the dev server.
+CI runs `format:check + lint + typecheck + test + build` on PRs and
+pushes to `main` (`.github/workflows/ci.yml`). When asked to verify,
+run `pnpm check` (full gate) or at minimum `pnpm lint && pnpm test`
+and exercise the UI in the dev server.
 
 Tests live next to the code they test (`src/lib/*.test.ts`). The engine has
 both deterministic suites (correctness) and seeded statistical suites
@@ -84,15 +96,15 @@ first run). To install separately: `pnpm setup:e2e`.
 Vite 6 + React 19 + TS + Tailwind v4. Routing via React Router 7
 (`BrowserRouter`, defined in `src/main.tsx`):
 
-| Route          | Component                       | Purpose                                              |
-|----------------|---------------------------------|------------------------------------------------------|
-| `/`            | `routes/Home`                   | Landing (dark-themed, scoped via `.d26-scope`)       |
-| `/teams`       | `routes/Selecoes`               | 48-nation grid (wrapped in `AppLayout`)              |
-| `/teams/:code` | `routes/SelecaoDetalhe`         | Single squad detail                                  |
-| `/draft`       | `routes/Draft`                  | Formation/style/difficulty setup → roll-by-slot      |
-| `/groups`      | `routes/Copa`                   | 3-round group stage                                  |
-| `/match`       | `routes/Match`                  | Live match (group or knockout via `?kind=`)          |
-| `/bracket`     | `routes/MataMata`               | 32-team knockout, renders the user's half + final    |
+| Route          | Component               | Purpose                                           |
+| -------------- | ----------------------- | ------------------------------------------------- |
+| `/`            | `routes/Home`           | Landing (dark-themed, scoped via `.d26-scope`)    |
+| `/teams`       | `routes/Selecoes`       | 48-nation grid (wrapped in `AppLayout`)           |
+| `/teams/:code` | `routes/SelecaoDetalhe` | Single squad detail                               |
+| `/draft`       | `routes/Draft`          | Formation/style/difficulty setup → roll-by-slot   |
+| `/groups`      | `routes/Copa`           | 3-round group stage                               |
+| `/match`       | `routes/Match`          | Live match (group or knockout via `?kind=`)       |
+| `/bracket`     | `routes/MataMata`       | 32-team knockout, renders the user's half + final |
 
 ### Core domain (everything important lives in `src/lib/`)
 

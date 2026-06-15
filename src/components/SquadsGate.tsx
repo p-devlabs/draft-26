@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+
 import { loadSquads } from '../data/squads'
 
 /**
@@ -62,13 +63,11 @@ export function SquadsGate({ children }: { children: ReactNode }) {
             Não consegui carregar os dados das seleções
           </h1>
           <p style={{ margin: '0 0 16px', opacity: 0.8 }}>
-            Cheque sua conexão e recarregue. Se o problema persistir, o servidor
-            pode estar fora do ar.
+            Cheque sua conexão e recarregue. Se o problema persistir, o servidor pode estar fora do
+            ar.
           </p>
           {errorMsg ? (
-            <p style={{ margin: '0 0 16px', fontSize: '0.85rem', opacity: 0.6 }}>
-              {errorMsg}
-            </p>
+            <p style={{ margin: '0 0 16px', fontSize: '0.85rem', opacity: 0.6 }}>{errorMsg}</p>
           ) : null}
           <button
             type="button"

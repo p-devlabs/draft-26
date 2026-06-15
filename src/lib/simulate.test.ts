@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@jest/globals'
+
 import { seededRng, simulateMatch, type Team } from './simulate'
 
 describe('seededRng (Mulberry32)', () => {

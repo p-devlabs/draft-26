@@ -2,7 +2,6 @@
  * Preenche o XI automaticamente pra dev — escolhe o melhor jogador compatível
  * para cada slot, respeitando o cooldown de 5 países.
  */
-import { compatiblePlayers } from './positions'
 import {
   COUNTRY_COOLDOWN,
   applyRoll,
@@ -10,6 +9,7 @@ import {
   pickPlayer,
   type DraftState,
 } from './draft'
+import { compatiblePlayers } from './positions'
 
 export function autoFillXI(state: DraftState): DraftState {
   let current = state

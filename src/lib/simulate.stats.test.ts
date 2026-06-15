@@ -9,13 +9,15 @@
  * Filosofia: prefer testes RELATIVOS (rubber-band em hard < no-difficulty)
  * em vez de absolutos sempre que possível — mais resistentes a recalibração.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@jest/globals'
+
 import simParams from '../../data/sim-params.json'
+
 import { fullySimulate } from './bracket'
 import { seededRng, simulateMatch, type Team } from './simulate'
 
 const N = 3000
-const TOLERANCE = 0.10 // ±10%
+const TOLERANCE = 0.1 // ±10%
 
 function within(observed: number, expected: number, tol = TOLERANCE) {
   const lo = expected * (1 - tol)
@@ -30,7 +32,11 @@ function runMatches(
   opts?: { difficulty?: 'easy' | 'medium' | 'hard'; baseSeed?: number },
 ) {
   const base = opts?.baseSeed ?? 0
-  let w = 0, d = 0, l = 0, gf = 0, ga = 0
+  let w = 0,
+    d = 0,
+    l = 0,
+    gf = 0,
+    ga = 0
   const scoreCounts: Record<string, number> = {}
   for (let i = 0; i < n; i++) {
     const rng = seededRng(base + i)
@@ -58,22 +64,12 @@ function runMatches(
 describe('Calibração — gols por jogo', () => {
   it('média total de gols ≈ 2.6 em jogos equilibrados (±10%)', () => {
     // Dois times médios (75) sem código de host → jogo neutro, sem rubber-band
-    const stats = runMatches(
-      { averageOverall: 75 },
-      { averageOverall: 75 },
-      N,
-      { baseSeed: 1_000 },
-    )
+    const stats = runMatches({ averageOverall: 75 }, { averageOverall: 75 }, N, { baseSeed: 1_000 })
     expect(within(stats.avgTotalGoals, simParams.avgGoalsPerMatch)).toBe(true)
   })
 
   it('time mais forte marca mais gols na média', () => {
-    const stats = runMatches(
-      { averageOverall: 83 },
-      { averageOverall: 70 },
-      N,
-      { baseSeed: 2_000 },
-    )
+    const stats = runMatches({ averageOverall: 83 }, { averageOverall: 70 }, N, { baseSeed: 2_000 })
     expect(stats.avgHomeGoals).toBeGreaterThan(stats.avgAwayGoals)
     expect(stats.winRate).toBeGreaterThan(stats.lossRate)
   })
@@ -82,19 +78,16 @@ describe('Calibração — gols por jogo', () => {
 describe('Distribuição Dixon-Coles — placares baixos', () => {
   it('freq de 0-0 e 1-1 alinha com calibração (±15%, tolerância mais larga)', () => {
     // Setup similar ao calibrate-sim.ts: amostra grande de jogo médio.
-    const stats = runMatches(
-      { averageOverall: 75 },
-      { averageOverall: 73 },
-      N * 2,
-      { baseSeed: 3_000 },
-    )
+    const stats = runMatches({ averageOverall: 75 }, { averageOverall: 73 }, N * 2, {
+      baseSeed: 3_000,
+    })
     const obs00 = (stats.scoreCounts['0-0'] ?? 0) / (N * 2)
     const obs11 = (stats.scoreCounts['1-1'] ?? 0) / (N * 2)
     const expected00 = simParams.calibration.fittedFreq['0-0']
     const expected11 = simParams.calibration.fittedFreq['1-1']
     // DC com 2 times médios desviam um pouco da calibração global → tol mais frouxa
-    expect(within(obs00, expected00, 0.20)).toBe(true)
-    expect(within(obs11, expected11, 0.20)).toBe(true)
+    expect(within(obs00, expected00, 0.2)).toBe(true)
+    expect(within(obs11, expected11, 0.2)).toBe(true)
   })
 })
 
@@ -170,12 +163,9 @@ describe('Mando — só pra países-sede', () => {
       N,
       { baseSeed: 9_000 },
     )
-    const noCodes = runMatches(
-      { averageOverall: 74.7 },
-      { averageOverall: 72.1 },
-      N,
-      { baseSeed: 9_000 },
-    )
+    const noCodes = runMatches({ averageOverall: 74.7 }, { averageOverall: 72.1 }, N, {
+      baseSeed: 9_000,
+    })
     // Diferença em win-rate < 2pp (mesma seed, mesmo overall, sem boost) → seqüências quase idênticas
     expect(Math.abs(withHostCodes.winRate - noCodes.winRate)).toBeLessThan(0.02)
   })
@@ -188,12 +178,9 @@ describe('Mando — só pra países-sede', () => {
       N,
       { baseSeed: 9_500 },
     )
-    const noBoost = runMatches(
-      { averageOverall: 74.7 },
-      { averageOverall: 81.1 },
-      N,
-      { baseSeed: 9_500 },
-    )
+    const noBoost = runMatches({ averageOverall: 74.7 }, { averageOverall: 81.1 }, N, {
+      baseSeed: 9_500,
+    })
     // USA com mando ganha mais e perde menos que sem mando
     expect(withHostBoost.winRate).toBeGreaterThan(noBoost.winRate)
     expect(withHostBoost.lossRate).toBeLessThan(noBoost.lossRate)
@@ -222,7 +209,7 @@ describe('Knockout (full game com ET + pênaltis)', () => {
     }
     expect(etCount).toBeGreaterThan(0)
     // Tipicamente ~25-30% empates no tempo normal entre times iguais → ET
-    expect(etCount / N_KO).toBeGreaterThan(0.10)
+    expect(etCount / N_KO).toBeGreaterThan(0.1)
     expect(etCount / N_KO).toBeLessThan(0.45)
   })
 })

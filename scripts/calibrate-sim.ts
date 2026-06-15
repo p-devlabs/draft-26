@@ -22,6 +22,7 @@
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+
 import Papa from 'papaparse'
 
 const MIN_DATE = '2018-01-01' // pós-Copa 2018, regime moderno de jogo
@@ -64,7 +65,9 @@ function predictedFreqs(
       total += poissonPmf(x, lambda) * poissonPmf(y, mu) * tau(x, y, lambda, mu, rho)
     }
   }
-  return cells.map(([x, y]) => (poissonPmf(x, lambda) * poissonPmf(y, mu) * tau(x, y, lambda, mu, rho)) / total)
+  return cells.map(
+    ([x, y]) => (poissonPmf(x, lambda) * poissonPmf(y, mu) * tau(x, y, lambda, mu, rho)) / total,
+  )
 }
 
 async function main() {
@@ -90,7 +93,9 @@ async function main() {
   // Quebra por tipo pra dar visibilidade
   const byTournament: Record<string, number> = {}
   for (const r of filtered) byTournament[r.tournament] = (byTournament[r.tournament] || 0) + 1
-  const topTournaments = Object.entries(byTournament).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  const topTournaments = Object.entries(byTournament)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
   console.log(`▸ Top torneios na amostra:`)
   for (const [t, n] of topTournaments) console.log(`    ${n.toString().padStart(5)}  ${t}`)
   console.log()
@@ -122,12 +127,19 @@ async function main() {
   console.log(`▸ % empates: ${((draws / n) * 100).toFixed(1)}%`)
   console.log()
 
-  const cells: Array<[number, number]> = [[0, 0], [1, 0], [0, 1], [1, 1]]
+  const cells: Array<[number, number]> = [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [1, 1],
+  ]
   const observedFreqs = cells.map(([x, y]) => obs[`${x}-${y}`] / n)
   console.log(`▸ Frequências observadas:`)
   for (let i = 0; i < cells.length; i++) {
     const [x, y] = cells[i]
-    console.log(`    ${x}-${y}:  ${(observedFreqs[i] * 100).toFixed(2)}%  (${obs[`${x}-${y}`]} jogos)`)
+    console.log(
+      `    ${x}-${y}:  ${(observedFreqs[i] * 100).toFixed(2)}%  (${obs[`${x}-${y}`]} jogos)`,
+    )
   }
   console.log()
 
@@ -180,8 +192,12 @@ async function main() {
       nMatches: n,
       empiricalAvgGoalsHome: Math.round(lambdaAvg * 1000) / 1000,
       empiricalAvgGoalsAway: Math.round(muAvg * 1000) / 1000,
-      observedFreq: Object.fromEntries(cells.map(([x, y], i) => [`${x}-${y}`, Math.round(observedFreqs[i] * 10000) / 10000])),
-      fittedFreq: Object.fromEntries(cells.map(([x, y], i) => [`${x}-${y}`, Math.round(bestPred[i] * 10000) / 10000])),
+      observedFreq: Object.fromEntries(
+        cells.map(([x, y], i) => [`${x}-${y}`, Math.round(observedFreqs[i] * 10000) / 10000]),
+      ),
+      fittedFreq: Object.fromEntries(
+        cells.map(([x, y], i) => [`${x}-${y}`, Math.round(bestPred[i] * 10000) / 10000]),
+      ),
       mse: Number(bestMse.toExponential(4)),
       mseBaseline: Number(baselineMse.toExponential(4)),
     },

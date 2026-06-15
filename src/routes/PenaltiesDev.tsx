@@ -14,13 +14,14 @@
  */
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import { simulatePenalties, type Penalties } from '../lib/bracket'
-import { seededRng } from '../lib/simulate'
-import { squads } from '../data/squads'
+
 import { PenaltiesCard } from '../components/PenaltiesCard'
-import { rosterForKnockout } from '../lib/rosters'
+import { squads } from '../data/squads'
+import { simulatePenalties, type Penalties } from '../lib/bracket'
 import { createDraft } from '../lib/draft'
 import { features } from '../lib/features'
+import { rosterForKnockout } from '../lib/rosters'
+import { seededRng } from '../lib/simulate'
 
 type Speed = 'slow' | 'normal' | 'fast'
 const SPEED_LABEL: Record<Speed, string> = { slow: '1×', normal: '2×', fast: '4×' }
@@ -36,8 +37,8 @@ export function PenaltiesDev() {
     return (
       <div className="d26-scope" style={{ padding: 40, minHeight: '60vh' }}>
         <p style={{ fontFamily: 'Space Mono', color: 'var(--color-d-mut)' }}>
-          Esta rota só existe em dev mode. Adicione <code>?dev=1</code> em qualquer URL
-          do app pra ligar o flag.
+          Esta rota só existe em dev mode. Adicione <code>?dev=1</code> em qualquer URL do app pra
+          ligar o flag.
         </p>
         <Link to="/" style={{ color: 'var(--color-d-lime)' }}>
           ← voltar
@@ -230,8 +231,7 @@ export function PenaltiesDev() {
               >
                 <span
                   style={{
-                    color:
-                      winnerSide === 'home' ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
+                    color: winnerSide === 'home' ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
                   }}
                 >
                   {homeScored}
@@ -239,8 +239,7 @@ export function PenaltiesDev() {
                 <span style={{ fontSize: 22, color: 'var(--color-d-mut)' }}>—</span>
                 <span
                   style={{
-                    color:
-                      winnerSide === 'away' ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
+                    color: winnerSide === 'away' ? 'var(--color-d-lime)' : 'var(--color-d-ink)',
                   }}
                 >
                   {awayScored}
@@ -276,7 +275,11 @@ export function PenaltiesDev() {
             />
           </div>
 
-          <KicksFeed kicks={sim.penalties.sequence.slice(0, kicksRevealed)} home={sim.home} away={sim.away} />
+          <KicksFeed
+            kicks={sim.penalties.sequence.slice(0, kicksRevealed)}
+            home={sim.home}
+            away={sim.away}
+          />
         </section>
 
         <aside style={{ flex: '1 1 280px', minWidth: 0 }}>
@@ -376,10 +379,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function TeamSelect({ value, onChange }: { value: string; onChange: (c: string) => void }) {
-  const sorted = useMemo(
-    () => [...squads].sort((a, b) => a.country.localeCompare(b.country)),
-    [],
-  )
+  const sorted = useMemo(() => [...squads].sort((a, b) => a.country.localeCompare(b.country)), [])
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle}>
       {sorted.map((s) => (
@@ -577,15 +577,17 @@ function KicksFeed({
             CLIQUE EM RODAR PRA COMEÇAR
           </div>
         ) : (
-          [...kicks].reverse().map((k, i) => (
-            <KickRow
-              key={kicks.length - 1 - i}
-              kick={k}
-              index={kicks.length - 1 - i}
-              homeCountry={home.country}
-              awayCountry={away.country}
-            />
-          ))
+          [...kicks]
+            .reverse()
+            .map((k, i) => (
+              <KickRow
+                key={kicks.length - 1 - i}
+                kick={k}
+                index={kicks.length - 1 - i}
+                homeCountry={home.country}
+                awayCountry={away.country}
+              />
+            ))
         )}
       </div>
     </div>
@@ -614,9 +616,7 @@ function KickRow({
         padding: '10px 12px',
         borderRadius: 10,
         background: kick.scored ? 'rgba(212,255,61,0.06)' : 'rgba(255,59,59,0.05)',
-        border: `1px solid ${
-          kick.scored ? 'rgba(212,255,61,0.25)' : 'rgba(255,59,59,0.2)'
-        }`,
+        border: `1px solid ${kick.scored ? 'rgba(212,255,61,0.25)' : 'rgba(255,59,59,0.2)'}`,
       }}
     >
       <div
@@ -628,9 +628,7 @@ function KickRow({
           gap: 3,
         }}
       >
-        <span style={{ fontFamily: 'Anton', fontSize: 13, color: scoredColor }}>
-          {round}ª
-        </span>
+        <span style={{ fontFamily: 'Anton', fontSize: 13, color: scoredColor }}>{round}ª</span>
         <span style={{ fontSize: 15 }}>{kick.scored ? '⚽' : '🧤'}</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>

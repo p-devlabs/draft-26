@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from './supabase'
+
 import { ensureAnonUser } from './runs'
 import { collectSessionContext } from './session'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 const SESSION_KEY = 'd26:sessionId'
 const SESSION_INIT_KEY = 'd26:sessionInitSent'

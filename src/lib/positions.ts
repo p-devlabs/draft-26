@@ -46,14 +46,15 @@ export function isCompatible(
 ): boolean {
   const allowed = COMPAT[slot]
   if (primary && allowed.includes(primary)) return true
-  if (alt && alt.some((p) => allowed.includes(p))) return true
+  if (alt?.some((p) => allowed.includes(p))) return true
   return false
 }
 
 /** Para filtrar jogadores que servem num slot. */
-export function compatiblePlayers<
-  T extends { primaryPosition?: string; altPositions?: string[] },
->(slot: SlotPosition, players: T[]): T[] {
+export function compatiblePlayers<T extends { primaryPosition?: string; altPositions?: string[] }>(
+  slot: SlotPosition,
+  players: T[],
+): T[] {
   return players.filter((p) => isCompatible(slot, p.primaryPosition, p.altPositions))
 }
 

@@ -1,13 +1,13 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
-  --font-display: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Source Serif 4', ui-serif, Georgia, serif;
+  --font-display: 'Source Serif 4', ui-serif, Georgia, serif;
 
-  --font-anton: "Anton", ui-sans-serif, system-ui, sans-serif;
-  --font-archivo: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-mono-tech: "Space Mono", ui-monospace, monospace;
+  --font-anton: 'Anton', ui-sans-serif, system-ui, sans-serif;
+  --font-archivo: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+  --font-mono-tech: 'Space Mono', ui-monospace, monospace;
 
   --color-paper: oklch(98% 0.005 80);
   --color-ink: oklch(22% 0.02 50);
@@ -38,7 +38,9 @@
   html {
     scroll-behavior: smooth;
   }
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100%;
   }
   body {
@@ -56,51 +58,113 @@
 
 /* Draft 26 dark theme — used on the Partida route */
 @keyframes d26-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 255, 61, 0.5); }
-  50% { box-shadow: 0 0 0 7px rgba(212, 255, 61, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 255, 61, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(212, 255, 61, 0);
+  }
 }
 @keyframes d26-goal-flash {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.18); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 @keyframes d26-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 @keyframes d26-sheet-up {
-  from { transform: translateY(102%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(102%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 @keyframes d26-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes d26-spin {
-  0% { transform: rotate(0); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 @keyframes d26-pop-in {
-  from { opacity: 0; transform: scale(.82); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 @keyframes d26-stamp-in {
-  0%   { opacity: 0; transform: scale(1.45) rotate(-7deg); }
-  55%  { opacity: 1; transform: scale(.92) rotate(2deg); }
-  100% { transform: scale(1) rotate(0); }
+  0% {
+    opacity: 0;
+    transform: scale(1.45) rotate(-7deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.92) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
 }
 @keyframes d26-reveal-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @media (max-width: 760px) {
-  .d26-hero-grid { grid-template-columns: 1fr !important; gap: 34px !important; }
-  .d26-hero-art { order: -1; align-items: flex-start !important; }
-  .d26-hero-dice { width: 104px !important; height: 104px !important; padding: 24px !important; }
+  .d26-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 34px !important;
+  }
+  .d26-hero-art {
+    order: -1;
+    align-items: flex-start !important;
+  }
+  .d26-hero-dice {
+    width: 104px !important;
+    height: 104px !important;
+    padding: 24px !important;
+  }
 }
 @media (max-width: 480px) {
-  .d26-hero-stats { gap: 18px 22px !important; }
-  .d26-path-card { flex-basis: 100% !important; }
+  .d26-hero-stats {
+    gap: 18px 22px !important;
+  }
+  .d26-path-card {
+    flex-basis: 100% !important;
+  }
 }
 
 .d26-scope {
@@ -109,9 +173,17 @@
   font-family: var(--font-archivo);
   min-height: 100vh;
 }
-.d26-scope ::-webkit-scrollbar { width: 9px; height: 9px; }
-.d26-scope ::-webkit-scrollbar-track { background: var(--color-d-bg); }
-.d26-scope ::-webkit-scrollbar-thumb { background: var(--color-d-line); border-radius: 8px; }
+.d26-scope ::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+.d26-scope ::-webkit-scrollbar-track {
+  background: var(--color-d-bg);
+}
+.d26-scope ::-webkit-scrollbar-thumb {
+  background: var(--color-d-line);
+  border-radius: 8px;
+}
 
 /* Foco visível pra navegação por teclado — não interfere com mouse focus.
    Lime no tema dark (alto contraste sobre #0a0b09), moss no tema light. */
@@ -130,38 +202,116 @@
    Escalação responsive (classes az-*) — vence as inline styles via !important
    ======================================================================== */
 @media (max-width: 820px) {
-  .az-appbar { flex-wrap: wrap !important; gap: 12px !important; padding: 12px 16px !important; }
-  .az-nav { order: 3 !important; flex-basis: 100% !important; overflow-x: auto !important; justify-content: flex-start !important; }
-  .az-navpill { flex: 0 0 auto !important; }
+  .az-appbar {
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+  }
+  .az-nav {
+    order: 3 !important;
+    flex-basis: 100% !important;
+    overflow-x: auto !important;
+    justify-content: flex-start !important;
+  }
+  .az-navpill {
+    flex: 0 0 auto !important;
+  }
   /* strip fica numa linha só — chips encolhem, bar com largura fixa */
-  .az-strip { gap: 10px !important; padding: 14px 16px 0 !important; }
-  .az-bar { flex: 0 0 100px !important; width: 100px !important; max-width: 100px !important; }
-  .az-strip-h { font-size: 15px !important; }
-  .az-wrap { padding: 14px 16px 124px !important; }
-  .az-fieldcard { padding: 9px !important; border-radius: 13px !important; }
-  .az-pitch { height: 64vh !important; min-height: 430px !important; }
-  .az-chipwrap { width: 66px !important; }
-  .az-chipcircle { width: 46px !important; height: 46px !important; font-size: 19px !important; }
-  .az-chipname { font-size: 10px !important; }
-  .az-plus { width: 46px !important; height: 46px !important; font-size: 23px !important; }
-  .az-simbar { padding: 11px 16px !important; }
-  .az-simtxt { font-size: 11px !important; }
-  .az-simbtn { padding: 13px 20px !important; font-size: 16px !important; }
-  .az-sheet { padding: 22px 18px 26px !important; }
-  .az-sheettitle { font-size: 30px !important; }
-  .az-formbtn { font-size: 19px !important; padding: 14px 0 !important; }
+  .az-strip {
+    gap: 10px !important;
+    padding: 14px 16px 0 !important;
+  }
+  .az-bar {
+    flex: 0 0 100px !important;
+    width: 100px !important;
+    max-width: 100px !important;
+  }
+  .az-strip-h {
+    font-size: 15px !important;
+  }
+  .az-wrap {
+    padding: 14px 16px 124px !important;
+  }
+  .az-fieldcard {
+    padding: 9px !important;
+    border-radius: 13px !important;
+  }
+  .az-pitch {
+    height: 64vh !important;
+    min-height: 430px !important;
+  }
+  .az-chipwrap {
+    width: 66px !important;
+  }
+  .az-chipcircle {
+    width: 46px !important;
+    height: 46px !important;
+    font-size: 19px !important;
+  }
+  .az-chipname {
+    font-size: 10px !important;
+  }
+  .az-plus {
+    width: 46px !important;
+    height: 46px !important;
+    font-size: 23px !important;
+  }
+  .az-simbar {
+    padding: 11px 16px !important;
+  }
+  .az-simtxt {
+    font-size: 11px !important;
+  }
+  .az-simbtn {
+    padding: 13px 20px !important;
+    font-size: 16px !important;
+  }
+  .az-sheet {
+    padding: 22px 18px 26px !important;
+  }
+  .az-sheettitle {
+    font-size: 30px !important;
+  }
+  .az-formbtn {
+    font-size: 19px !important;
+    padding: 14px 0 !important;
+  }
 }
 @media (max-width: 640px) {
   /* abaixo de 640 o strip não cabe inline — quebra com o XI progress numa linha própria */
-  .az-strip { flex-wrap: wrap !important; gap: 8px 12px !important; }
-  .az-stripprog { flex-basis: 100% !important; justify-content: space-between !important; }
-  .az-bar { flex: 1 !important; width: auto !important; max-width: none !important; }
+  .az-strip {
+    flex-wrap: wrap !important;
+    gap: 8px 12px !important;
+  }
+  .az-stripprog {
+    flex-basis: 100% !important;
+    justify-content: space-between !important;
+  }
+  .az-bar {
+    flex: 1 !important;
+    width: auto !important;
+    max-width: none !important;
+  }
 }
 @media (max-width: 480px) {
-  .az-navpill { font-size: 11px !important; padding: 8px 10px !important; }
-  .az-strip-h { display: none !important; }
-  .az-pitch { height: 60vh !important; min-height: 400px !important; }
-  .az-sheettitle { font-size: 26px !important; }
-  .az-formbtn { font-size: 17px !important; }
-  .az-diffbtn-skips { font-size: 9px !important; }
+  .az-navpill {
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+  }
+  .az-strip-h {
+    display: none !important;
+  }
+  .az-pitch {
+    height: 60vh !important;
+    min-height: 400px !important;
+  }
+  .az-sheettitle {
+    font-size: 26px !important;
+  }
+  .az-formbtn {
+    font-size: 17px !important;
+  }
+  .az-diffbtn-skips {
+    font-size: 9px !important;
+  }
 }

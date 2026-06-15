@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
+
 import {
   isHalfMatch,
   ROUND_LABEL,
@@ -166,7 +167,9 @@ function BracketColumn({
                 lineHeight: 0.9,
               }}
             >
-              CAMPEÃO<br />DO MUNDO
+              CAMPEÃO
+              <br />
+              DO MUNDO
             </div>
           </div>
         )}
@@ -201,8 +204,7 @@ function BracketCell({
   merges: boolean
   indexInCol: number
 }) {
-  const isUserMatch =
-    match.homeCode === bracket.userCode || match.awayCode === bracket.userCode
+  const isUserMatch = match.homeCode === bracket.userCode || match.awayCode === bracket.userCode
   const userWon = match.winnerCode === bracket.userCode
   const playable = isUserMatch && !match.winnerCode && match.homeCode && match.awayCode
 
@@ -474,7 +476,6 @@ function TeamChip({ code, compact }: { code: string; compact?: boolean }) {
   )
 }
 
-
 function cellScore(match: BracketMatch, side: 'home' | 'away'): number | null {
   if (!match.result) return null
   const reg = side === 'home' ? match.result.homeGoals : match.result.awayGoals
@@ -513,8 +514,7 @@ function BracketMobile({ bracket }: { bracket: KnockoutBracket }) {
     for (const r of userRoundsOrder) {
       const userMatchInRound = bracket.matches.find(
         (m) =>
-          m.round === r &&
-          (m.homeCode === bracket.userCode || m.awayCode === bracket.userCode),
+          m.round === r && (m.homeCode === bracket.userCode || m.awayCode === bracket.userCode),
       )
       if (userMatchInRound && !userMatchInRound.winnerCode) {
         setActiveRound(r)
@@ -528,9 +528,7 @@ function BracketMobile({ bracket }: { bracket: KnockoutBracket }) {
     .sort((a, b) => a.position - b.position)
 
   const isFinal = activeRound === 'F'
-  const yourSide = isFinal
-    ? roundMatches
-    : roundMatches.filter((m) => isHalfMatch(m, userHalf))
+  const yourSide = isFinal ? roundMatches : roundMatches.filter((m) => isHalfMatch(m, userHalf))
   const otherSide = isFinal ? [] : roundMatches.filter((m) => !isHalfMatch(m, userHalf))
 
   return (
@@ -577,7 +575,11 @@ function BracketMobile({ bracket }: { bracket: KnockoutBracket }) {
         <FinalView matches={roundMatches} bracket={bracket} />
       ) : (
         <>
-          <SideHeader title="SEU LADO" sublabel={MOBILE_ROUNDS.find((r) => r.key === activeRound)!.label} primary />
+          <SideHeader
+            title="SEU LADO"
+            sublabel={MOBILE_ROUNDS.find((r) => r.key === activeRound)!.label}
+            primary
+          />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 26 }}>
             {yourSide.map((m) => (
               <MobileMatchCard key={m.id} match={m} bracket={bracket} />
@@ -667,8 +669,7 @@ function SideHeader({
 }
 
 function MobileMatchCard({ match, bracket }: { match: BracketMatch; bracket: KnockoutBracket }) {
-  const isUserMatch =
-    match.homeCode === bracket.userCode || match.awayCode === bracket.userCode
+  const isUserMatch = match.homeCode === bracket.userCode || match.awayCode === bracket.userCode
   const playable = isUserMatch && !match.winnerCode && match.homeCode && match.awayCode
   const border = playable
     ? 'var(--color-d-lime)'
@@ -748,11 +749,7 @@ function SmallSide({
   won: boolean
   alignRight?: boolean
 }) {
-  const color = !team
-    ? 'var(--color-d-mut)'
-    : won
-      ? 'var(--color-d-ink)'
-      : 'var(--color-d-mut)'
+  const color = !team ? 'var(--color-d-mut)' : won ? 'var(--color-d-ink)' : 'var(--color-d-mut)'
   const baseStyle: CSSProperties = {
     display: 'flex',
     alignItems: 'center',
@@ -813,7 +810,13 @@ function ScoreInline({
 }) {
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 52, justifyContent: 'center' }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        minWidth: 52,
+        justifyContent: 'center',
+      }}
     >
       <span
         style={{
@@ -869,7 +872,9 @@ function FinalView({ matches, bracket }: { matches: BracketMatch[]; bracket: Kno
             marginBottom: 18,
           }}
         >
-          A GRANDE<br />FINAL
+          A GRANDE
+          <br />
+          FINAL
         </div>
       </div>
       {matches.map((m) => (

@@ -18,6 +18,7 @@
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+
 import Papa from 'papaparse'
 
 interface FbrefRow {
@@ -136,11 +137,14 @@ function tokensMatch(wanted: string, candidate: string): boolean {
   const want = wanted.split(' ').filter((t) => t.length >= 2)
   if (want.length === 0) return false
   const tokens = new Set(candidate.split(' '))
-  return want.every((t) => tokens.has(t) || [...tokens].some((c) => c.startsWith(t) || t.startsWith(c)))
+  return want.every(
+    (t) => tokens.has(t) || [...tokens].some((c) => c.startsWith(t) || t.startsWith(c)),
+  )
 }
 
 function levenshtein(a: string, b: string): number {
-  const m = a.length, n = b.length
+  const m = a.length,
+    n = b.length
   if (m === 0) return n
   if (n === 0) return m
   const dp = new Array<number>(n + 1)
@@ -237,7 +241,8 @@ async function main() {
       for (const x of candidates) {
         const n = normalize(x.Player)
         if (n === wantedName) viable.push({ row: x, nameScore: 100 })
-        else if (n.includes(wantedName) || wantedName.includes(n)) viable.push({ row: x, nameScore: 70 })
+        else if (n.includes(wantedName) || wantedName.includes(n))
+          viable.push({ row: x, nameScore: 70 })
         else if (tokensMatch(wantedName, n)) viable.push({ row: x, nameScore: 60 })
       }
 
@@ -247,7 +252,10 @@ async function main() {
         let bestDist = Infinity
         for (const x of candidates) {
           const d = levenshtein(wantedName, normalize(x.Player))
-          if (d < bestDist) { bestDist = d; best = x }
+          if (d < bestDist) {
+            bestDist = d
+            best = x
+          }
         }
         const threshold = Math.max(2, Math.floor(wantedName.length * 0.15))
         if (best && bestDist <= threshold) viable.push({ row: best, nameScore: 40 })
@@ -260,8 +268,10 @@ async function main() {
         if (wantedClub && normalize(v.row.Squad) === wantedClub) score += 30
         else if (
           wantedClub &&
-          (normalize(v.row.Squad).includes(wantedClub) || wantedClub.includes(normalize(v.row.Squad)))
-        ) score += 15
+          (normalize(v.row.Squad).includes(wantedClub) ||
+            wantedClub.includes(normalize(v.row.Squad)))
+        )
+          score += 15
         if (player.age != null && v.row.Age) {
           const fbAge = parseFloat(v.row.Age)
           if (Number.isFinite(fbAge) && Math.abs(fbAge - player.age) <= 1) score += 10

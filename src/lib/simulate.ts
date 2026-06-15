@@ -24,15 +24,13 @@
  * Referência: Dixon &amp; Coles (1997), "Modelling Association Football Scores...".
  */
 import simParams from '../../data/sim-params.json'
+
 import type { Difficulty } from './formations'
 
 const AVG_GOALS_PER_MATCH = simParams.avgGoalsPerMatch
 const HOME_ADVANTAGE = simParams.homeAdvantage
 const DC_RHO = simParams.rho
-const RUBBER_BAND = simParams.rubberBand as {
-  base: number
-  byDifficulty: Record<Difficulty, number>
-}
+const RUBBER_BAND = simParams.rubberBand
 
 /**
  * Países-sede da Copa 2026 — só eles recebem mando de campo. A label "home"

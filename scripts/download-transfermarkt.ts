@@ -7,13 +7,12 @@
  *
  * Uso: pnpm download:transfermarkt
  */
+import { execSync } from 'node:child_process'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { execSync } from 'node:child_process'
 
-const URL =
-  'https://pub-e682421888d945d684bcae8890b0ec20.r2.dev/data/transfermarkt-datasets.zip'
+const URL = 'https://pub-e682421888d945d684bcae8890b0ec20.r2.dev/data/transfermarkt-datasets.zip'
 
 async function main() {
   const root = process.cwd()

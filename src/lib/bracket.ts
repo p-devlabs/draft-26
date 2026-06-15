@@ -8,11 +8,11 @@
  * Pareamento snake NCAA-style garante que seeds 1 e 2 só se encontram na
  * final.
  */
-import { simulateMatch, type MatchResult, type SimOptions, type Team } from './simulate'
-import { narrateMatch, type MatchEvent } from './narrate'
 import { USER_TEAM_CODE, computeQualifiers, type Qualifier, type WorldCupGroups } from './groups'
+import { narrateMatch, type MatchEvent, type NarrationRoster } from './narrate'
 import { rosterForKnockout } from './rosters'
-import type { NarrationRoster } from './narrate'
+import { simulateMatch, type MatchResult, type SimOptions, type Team } from './simulate'
+
 import type { Player } from '../data/squads'
 
 export type KORound = 'R32' | 'R16' | 'QF' | 'SF' | 'F'
@@ -54,7 +54,7 @@ export interface KnockoutTeam {
 }
 
 /** Uma cobrança individual no shootout. */
-export type PenaltyKick = {
+export interface PenaltyKick {
   team: 'home' | 'away'
   scored: boolean
   /** Nome do batedor — opcional, populado quando rosters foram passados pra shootout. */
@@ -65,7 +65,7 @@ export type PenaltyKick = {
   kickerBucket?: 'GK' | 'DEF' | 'MID' | 'FWD'
 }
 
-export type Penalties = {
+export interface Penalties {
   homeScored: number
   awayScored: number
   /** Cobranças em ordem cronológica. Alternadas home/away por round; em sudden death continua alternando. */
@@ -295,16 +295,17 @@ function samplePoisson(lambda: number, rng: () => number): number {
  */
 function penaltyOrder(roster?: NarrationRoster): Player[] {
   if (!roster) return []
-  const outfield = [
-    ...roster.attackers,
-    ...roster.midfielders,
-    ...roster.defenders,
-  ].sort((a, b) => b.overall - a.overall)
+  const outfield = [...roster.attackers, ...roster.midfielders, ...roster.defenders].sort(
+    (a, b) => b.overall - a.overall,
+  )
   const gk = roster.goalkeeper ? [roster.goalkeeper] : []
   return [...outfield, ...gk]
 }
 
-function bucketOf(roster: NarrationRoster | undefined, player: Player): PenaltyKick['kickerBucket'] {
+function bucketOf(
+  roster: NarrationRoster | undefined,
+  player: Player,
+): PenaltyKick['kickerBucket'] {
   if (!roster) return undefined
   if (roster.goalkeeper?.name === player.name) return 'GK'
   if (roster.attackers.some((p) => p.name === player.name)) return 'FWD'
@@ -471,9 +472,7 @@ export function ensureRoundsSimulated(
   for (const round of ROUND_ORDER) {
     next = simulateNonUserRound(next, round, rng)
     const userMatch = next.matches.find(
-      (m) =>
-        m.round === round &&
-        (m.homeCode === next.userCode || m.awayCode === next.userCode),
+      (m) => m.round === round && (m.homeCode === next.userCode || m.awayCode === next.userCode),
     )
     // Se o user tem jogo pendente nessa rodada, para — espera ele jogar.
     if (userMatch && !userMatch.winnerCode) break

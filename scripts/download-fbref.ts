@@ -25,7 +25,9 @@ if (!existsSync(CSV_PATH)) {
   console.error()
   console.error('Pra baixar (uma vez):')
   console.error('  1. Cadastra grátis em kaggle.com')
-  console.error('  2. https://www.kaggle.com/datasets/hubertsidorowicz/football-players-stats-2025-2026')
+  console.error(
+    '  2. https://www.kaggle.com/datasets/hubertsidorowicz/football-players-stats-2025-2026',
+  )
   console.error('  3. Baixa o ZIP, extrai players_data_light-2025_2026.csv')
   console.error('  4. Renomeia pra data/fbref-players.csv')
   console.error()
@@ -35,7 +37,11 @@ if (!existsSync(CSV_PATH)) {
 
 const stat = statSync(CSV_PATH)
 const ageDays = (Date.now() - stat.mtimeMs) / (1000 * 60 * 60 * 24)
-console.log(`▸ data/fbref-players.csv OK (${(stat.size / 1024).toFixed(0)} KB, ${ageDays.toFixed(0)}d atrás)`)
+console.log(
+  `▸ data/fbref-players.csv OK (${(stat.size / 1024).toFixed(0)} KB, ${ageDays.toFixed(0)}d atrás)`,
+)
 if (ageDays > 30) {
-  console.log(`  ⚠ Tem mais de um mês — considera rebaixar do Kaggle pra cobrir transfers recentes.`)
+  console.log(
+    `  ⚠ Tem mais de um mês — considera rebaixar do Kaggle pra cobrir transfers recentes.`,
+  )
 }

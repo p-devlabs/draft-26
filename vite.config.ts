@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
 // Release name pro Sentry. Em build do Cloudflare Pages vira o SHA curto
 // (CF expõe CF_PAGES_COMMIT_SHA no env de build); local vira 'dev'.

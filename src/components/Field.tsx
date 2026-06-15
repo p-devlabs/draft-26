@@ -1,6 +1,7 @@
-import type { CSSProperties } from 'react'
 import { SLOT_LABEL } from '../lib/positions'
+
 import type { DraftSlot } from '../lib/draft'
+import type { CSSProperties } from 'react'
 
 interface FieldProps {
   slots: DraftSlot[]

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { compatiblePlayers, SLOT_LABEL } from '../lib/positions'
+
+import { findSquad, squads, type Player, type Squad } from '../data/squads'
 import {
   clearPendingRoll,
   COUNTRY_COOLDOWN,
@@ -8,7 +9,7 @@ import {
   type DraftState,
 } from '../lib/draft'
 import { nationGradient } from '../lib/nation-colors'
-import { findSquad, squads, type Player, type Squad } from '../data/squads'
+import { compatiblePlayers, SLOT_LABEL } from '../lib/positions'
 import { track } from '../lib/track'
 
 /**
@@ -136,6 +137,8 @@ export function PickDrawer({
   const handleSkip = () => {
     if (!canSkip || phase.kind !== 'result') return
     // Pula gasta um skip e descarta o sorteio pendente antes de rodar de novo.
+    // `useSkip` é apenas o naming do utilitário em draft.ts (não é hook).
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     rollFrom(clearPendingRoll(useSkip(state), slotIndex))
   }
 
@@ -268,7 +271,12 @@ function RollState({
   onRoll: () => void
 }) {
   const dot = (justify?: 'end' | 'center'): CSSProperties => {
-    const s: CSSProperties = { width: 8, height: 8, borderRadius: '50%', background: 'var(--color-d-lime)' }
+    const s: CSSProperties = {
+      width: 8,
+      height: 8,
+      borderRadius: '50%',
+      background: 'var(--color-d-lime)',
+    }
     if (justify === 'end') s.justifySelf = 'end'
     if (justify === 'center') s.justifySelf = 'center'
     return s
@@ -767,7 +775,14 @@ function CandidateRow({ player, onPick }: { player: Player; onPick: () => void }
           {player.primaryPosition ?? player.position} · {player.club}
         </div>
       </div>
-      <div style={{ fontFamily: 'Anton', fontSize: 22, color: 'var(--color-d-lime)', flex: '0 0 auto' }}>
+      <div
+        style={{
+          fontFamily: 'Anton',
+          fontSize: 22,
+          color: 'var(--color-d-lime)',
+          flex: '0 0 auto',
+        }}
+      >
         {player.overall}
       </div>
       <div

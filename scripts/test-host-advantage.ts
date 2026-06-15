@@ -6,7 +6,9 @@ import { simulateMatch } from '../src/lib/simulate'
 const N = 30_000
 
 function run(homeCode: string, homeOverall: number, awayCode: string, awayOverall: number) {
-  let w = 0, d = 0, l = 0
+  let w = 0,
+    d = 0,
+    l = 0
   for (let i = 0; i < N; i++) {
     const r = simulateMatch(
       { code: homeCode, averageOverall: homeOverall },
@@ -26,7 +28,7 @@ console.log('▸ Hosts em casa (mando ativo):')
 run('USA', 74.7, 'BRA', 80.6)
 run('MEX', 72.1, 'BRA', 80.6)
 run('CAN', 71.7, 'BRA', 80.6)
-run('USA', 74.7, 'MEX', 72.1)  // host vs host = neutro
+run('USA', 74.7, 'MEX', 72.1) // host vs host = neutro
 
 console.log()
 console.log('▸ Neutros (sem mando):')

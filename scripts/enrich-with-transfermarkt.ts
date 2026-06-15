@@ -14,6 +14,7 @@
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+
 import Papa from 'papaparse'
 
 const WIKI_TO_TM: Record<string, string> = {
@@ -129,9 +130,7 @@ async function main() {
   const root = process.cwd()
   const csv = await readFile(resolve(root, 'data/transfermarkt-players.csv'), 'utf8')
   const { data: rows } = Papa.parse<TmRow>(csv, { header: true, skipEmptyLines: true })
-  const players = rows.filter(
-    (r) => r.name && r.country_of_citizenship && r.market_value_in_eur,
-  )
+  const players = rows.filter((r) => r.name && r.country_of_citizenship && r.market_value_in_eur)
 
   const byNationality = new Map<string, TmRow[]>()
   for (const p of players) {
@@ -164,8 +163,7 @@ async function main() {
         else if (ln && ln === wantedName) viable.push({ row: x, nameScore: 90, isFuzzy: false })
         else if (n.includes(wantedName) || wantedName.includes(n))
           viable.push({ row: x, nameScore: 70, isFuzzy: false })
-        else if (tokensMatch(wantedName, n))
-          viable.push({ row: x, nameScore: 60, isFuzzy: false })
+        else if (tokensMatch(wantedName, n)) viable.push({ row: x, nameScore: 60, isFuzzy: false })
       }
 
       if (viable.length === 0) {

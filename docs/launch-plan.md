@@ -40,8 +40,8 @@ through the final on Jul 19).
 - **Single handle** everywhere: `@draft26` (or `@usadraft26` if the short
   one is taken). Check X / IG / TikTok / YT **before** committing — handle
   consistency is non-negotiable for recognition.
-- **Single bio:** *"Role o dado. Faça o draft. Conquiste o mundo. —
-  Simulador 1P da Copa 2026"* + link `draft-26.pages.dev`.
+- **Single bio:** _"Role o dado. Faça o draft. Conquiste o mundo. —
+  Simulador 1P da Copa 2026"_ + link `draft-26.pages.dev`.
 - **Avatar:** monochrome logo on a dark background (matches the
   `.d26-scope` home theme).
 - **Cover / banner:** screenshot of the country-rolling slot machine.
@@ -118,10 +118,10 @@ brand-new when someone clicks through.
   a different hook (funny, serious, surprise).
 - **1-on-1 outreach:** DM 3-5 micro-influencers (10-50k followers) in
   Brazilian football twitter/IG. **Don't ask for promotion — ask them to
-  play.** Something like *"yo, made a Copa simulator, would you draft live
-  on your next stream?"* Conversion is much higher than mass DM.
-- **X:** meme of the day. E.g., *"POV: you drafted Bolivia and your first
-  match is Argentina."*
+  play.** Something like _"yo, made a Copa simulator, would you draft live
+  on your next stream?"_ Conversion is much higher than mass DM.
+- **X:** meme of the day. E.g., _"POV: you drafted Bolivia and your first
+  match is Argentina."_
 
 ## D5 — Sat Jun 20 · Weekend peak
 
@@ -176,15 +176,15 @@ brand-new when someone clicks through.
 
 The current telemetry covers everything needed to decide what's working:
 
-| Metric                                | Source                       |
-|---------------------------------------|------------------------------|
-| Sessions / DAU                        | `view_page` + `session_id`   |
-| Funnel draft → groups → bracket       | `country_rolled`, `player_picked`, `match_completed` |
-| Run completion rate                   | `cup_ended` / `draft_started` |
-| Share rate                            | `share_clicked` (to be instrumented) |
-| Traffic origin                        | UTM in `track-session-once`  |
-| Most drafted nations                  | aggregate of `country_rolled` |
-| Nations that win most Copas           | aggregate of `cup_ended` `champion` |
+| Metric                          | Source                                               |
+| ------------------------------- | ---------------------------------------------------- |
+| Sessions / DAU                  | `view_page` + `session_id`                           |
+| Funnel draft → groups → bracket | `country_rolled`, `player_picked`, `match_completed` |
+| Run completion rate             | `cup_ended` / `draft_started`                        |
+| Share rate                      | `share_clicked` (to be instrumented)                 |
+| Traffic origin                  | UTM in `track-session-once`                          |
+| Most drafted nations            | aggregate of `country_rolled`                        |
+| Nations that win most Copas     | aggregate of `cup_ended` `champion`                  |
 
 Week-1 success criterion: >500 completed runs AND share rate >5%. Below
 that, re-plan week 2 prioritizing whichever channel is converting.

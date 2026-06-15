@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@jest/globals'
+
 import { compatiblePlayers, isCompatible } from './positions'
 
 describe('isCompatible', () => {

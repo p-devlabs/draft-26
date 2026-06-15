@@ -13,9 +13,9 @@ concurrency:
 
 jobs:
   check:
-    name: lint · test · build
+    name: format · lint · typecheck · test · build
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -35,8 +35,14 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Lint (tsc)
+      - name: Format (prettier --check)
+        run: pnpm format:check
+
+      - name: Lint (eslint)
         run: pnpm lint
+
+      - name: Typecheck (tsc --noEmit)
+        run: pnpm typecheck
 
       - name: Test
         run: pnpm test

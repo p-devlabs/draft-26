@@ -34,15 +34,15 @@ Last reviewed: 2026-06-15.
 SPA routing lives in `src/main.tsx`. Every route except `Home` is lazy-loaded
 through `React.lazy` so the initial bundle only carries the landing page.
 
-| Path           | Component (file)                   | Purpose                                                   |
-|----------------|------------------------------------|-----------------------------------------------------------|
-| `/`            | `routes/Home.tsx`                  | Landing page (dark Draft 26 theme, scoped via `.d26-scope`) |
-| `/teams`       | `routes/Selecoes.tsx`              | 48-nation grid grouped by Copa 2026 group letter           |
-| `/teams/:code` | `routes/SelecaoDetalhe.tsx`        | Single squad detail (full roster, market values)           |
-| `/draft`       | `routes/Draft.tsx`                 | Formation/style/difficulty setup → roll-by-slot drafting   |
-| `/groups`      | `routes/Copa.tsx`                  | 3-round group stage + standings                            |
-| `/match`       | `routes/Match.tsx`                 | Live match playback (group or knockout via `?kind=`)       |
-| `/bracket`     | `routes/MataMata.tsx`              | 32-team knockout, renders the user's half + the final      |
+| Path           | Component (file)            | Purpose                                                     |
+| -------------- | --------------------------- | ----------------------------------------------------------- |
+| `/`            | `routes/Home.tsx`           | Landing page (dark Draft 26 theme, scoped via `.d26-scope`) |
+| `/teams`       | `routes/Selecoes.tsx`       | 48-nation grid grouped by Copa 2026 group letter            |
+| `/teams/:code` | `routes/SelecaoDetalhe.tsx` | Single squad detail (full roster, market values)            |
+| `/draft`       | `routes/Draft.tsx`          | Formation/style/difficulty setup → roll-by-slot drafting    |
+| `/groups`      | `routes/Copa.tsx`           | 3-round group stage + standings                             |
+| `/match`       | `routes/Match.tsx`          | Live match playback (group or knockout via `?kind=`)        |
+| `/bracket`     | `routes/MataMata.tsx`       | 32-team knockout, renders the user's half + the final       |
 
 ### Landing page (`/`) — sections
 
@@ -326,7 +326,7 @@ Source: `src/lib/bracket.ts`.
 ### Seeding & pairing
 
 - The 32 qualifiers are ranked by `(groupPosition asc, points desc,
-  goalDiff desc, goalsFor desc, averageOverall desc)` → seeds 1 through 32
+goalDiff desc, goalsFor desc, averageOverall desc)` → seeds 1 through 32
 - Pairs follow the **NCAA snake** order
   `SEED_ORDER_32 = [1, 32, 16, 17, 8, 25, 9, 24, …]` (full list in code),
   guaranteeing the top two seeds can only meet in the final
@@ -524,8 +524,8 @@ mirror is fire-and-forget.
 Schema in `supabase/migrations/0001_runs.sql`. Two tables:
 
 - `runs` — `user_id, draft_json, stage_json, bracket_json, formation,
-  difficulty, average_overall, replaced_code, champion_code,
-  finished_round, completed_at`
+difficulty, average_overall, replaced_code, champion_code,
+finished_round, completed_at`
 - `events` — `user_id, session_id, event_type, props (jsonb)`
 
 Both tables have RLS policies:
@@ -583,14 +583,14 @@ Tracked events:
 - `player_picked` — `{ playerName, countryCode, slotPos, overall, candidatesCount }`
 - `autofill_clicked` — `{ filledBefore }`
 - `draft_completed` — `{ formation, style, difficulty, avgOverall, rollsUsed,
-  skipsUsed, autoFillUsed, topPicks[] }`
+skipsUsed, autoFillUsed, topPicks[] }`
 - `reset_clicked` — `{ from, hadDraft }`
 - `match_started` — `{ kind, round?, userIsHome, oppCode, initialSpeed }`
 - `match_speed_changed` — `{ kind, round?, from, to }`
 - `match_completed` — `{ kind, round?, oppCode, userGoals, oppGoals,
-  result, margin }`
+result, margin }`
 - `group_round_completed` — `{ round, userGoals, oppGoals, result, oppCode,
-  posAfter, pointsAfter }`
+posAfter, pointsAfter }`
 - `group_completed` — `{ fate, qualified }`
 - `team_detail_viewed` — `{ code, country }`
 - `cup_ended` — `{ finishedRound, champion, userWon }`
@@ -833,22 +833,22 @@ Every script lives in `scripts/` and is invoked through `pnpm`. Run in the
 order below for a full rebuild, or invoke individually for incremental
 work. `pnpm data:rebuild` chains them all.
 
-| Command                    | Script                              | Purpose                                                                |
-|----------------------------|-------------------------------------|------------------------------------------------------------------------|
-| `pnpm scrape:squads`       | `scrape-squads.ts`                  | Scrapes 48 squads from the Wikipedia "2026 FIFA World Cup squads" page |
-| `pnpm enrich:squads`       | `enrich-squads.ts`                  | Adds ISO codes, flags, heuristic formation, club-tier overall          |
-| `pnpm download:fifa`       | `download-fifa-dataset.ts`          | Downloads the EA FC 26 player CSV (~10 MB, gitignored)                 |
-| `pnpm enrich:fifa`         | `enrich-with-fifa.ts`               | Joins EA FC ratings with disambiguation; populates `primaryPosition` + `altPositions[]` |
-| `pnpm download:transfermarkt` | `download-transfermarkt.ts`      | Pulls the dcaribou/transfermarkt-datasets ZIP and extracts players.csv (~4 MB) |
-| `pnpm enrich:transfermarkt` | `enrich-with-transfermarkt.ts`     | Cross-references market value; doesn't overwrite EA FC ratings         |
-| `pnpm enrich:alt-positions`| `enrich-alt-positions.ts`           | Layers TM `sub_position` + heuristic bridges into `altPositions[]`     |
-| `pnpm recalibrate:heuristic` | `recalibrate-heuristic.ts`        | Recomputes the club-tier fallback overall formula                      |
-| `pnpm download:fbref`      | `download-fbref.ts`                 | Prints instructions for the Kaggle FBref download (manual)             |
-| `pnpm enrich:fbref`        | `enrich-with-fbref.ts`              | Joins FBref per-90 stats; stores them on `player.fbref`                |
-| `pnpm calibrate:fbref`     | `calibrate-from-fbref.ts`           | Per-bucket OLS regression (GK/DEF/MID/FWD) to fit overall for FBref-only players (`ratingSource = 'fbref-fit'`) |
-| `pnpm download:matches`    | `download-matches.ts`               | Downloads international match results (~2018+) for sim calibration     |
-| `pnpm calibrate:sim`       | `calibrate-sim.ts`                  | Fits the Poisson model and Dixon-Coles ρ against the historical matches |
-| `pnpm data:rebuild`        | (chain)                             | Runs every step above in order                                         |
+| Command                       | Script                         | Purpose                                                                                                         |
+| ----------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `pnpm scrape:squads`          | `scrape-squads.ts`             | Scrapes 48 squads from the Wikipedia "2026 FIFA World Cup squads" page                                          |
+| `pnpm enrich:squads`          | `enrich-squads.ts`             | Adds ISO codes, flags, heuristic formation, club-tier overall                                                   |
+| `pnpm download:fifa`          | `download-fifa-dataset.ts`     | Downloads the EA FC 26 player CSV (~10 MB, gitignored)                                                          |
+| `pnpm enrich:fifa`            | `enrich-with-fifa.ts`          | Joins EA FC ratings with disambiguation; populates `primaryPosition` + `altPositions[]`                         |
+| `pnpm download:transfermarkt` | `download-transfermarkt.ts`    | Pulls the dcaribou/transfermarkt-datasets ZIP and extracts players.csv (~4 MB)                                  |
+| `pnpm enrich:transfermarkt`   | `enrich-with-transfermarkt.ts` | Cross-references market value; doesn't overwrite EA FC ratings                                                  |
+| `pnpm enrich:alt-positions`   | `enrich-alt-positions.ts`      | Layers TM `sub_position` + heuristic bridges into `altPositions[]`                                              |
+| `pnpm recalibrate:heuristic`  | `recalibrate-heuristic.ts`     | Recomputes the club-tier fallback overall formula                                                               |
+| `pnpm download:fbref`         | `download-fbref.ts`            | Prints instructions for the Kaggle FBref download (manual)                                                      |
+| `pnpm enrich:fbref`           | `enrich-with-fbref.ts`         | Joins FBref per-90 stats; stores them on `player.fbref`                                                         |
+| `pnpm calibrate:fbref`        | `calibrate-from-fbref.ts`      | Per-bucket OLS regression (GK/DEF/MID/FWD) to fit overall for FBref-only players (`ratingSource = 'fbref-fit'`) |
+| `pnpm download:matches`       | `download-matches.ts`          | Downloads international match results (~2018+) for sim calibration                                              |
+| `pnpm calibrate:sim`          | `calibrate-sim.ts`             | Fits the Poisson model and Dixon-Coles ρ against the historical matches                                         |
+| `pnpm data:rebuild`           | (chain)                        | Runs every step above in order                                                                                  |
 
 `data/squads-enriched.json` is committed and is the runtime source of
 truth. The raw CSVs are gitignored.

@@ -1,0 +1,17 @@
+node_modules
+dist
+coverage
+playwright-report
+test-results
+pnpm-lock.yaml
+public/data
+data
+reports
+.claude/
+scratch/
+tmp/
+supabase/.temp/
+handoff-claude-design/
+# Marketing assets standalone — não compilam, só servem como kit social.
+*.html
+!index.html
