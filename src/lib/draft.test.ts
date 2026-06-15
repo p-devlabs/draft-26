@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@jest/globals'
+
+import { squads } from '../data/squads'
+
 import {
   COUNTRY_COOLDOWN,
   applyRoll,
@@ -11,7 +14,6 @@ import {
   setPendingRoll,
   useSkip,
 } from './draft'
-import { squads } from '../data/squads'
 import { seededRng } from './simulate'
 
 describe('createDraft', () => {

@@ -83,7 +83,8 @@ function ErrorFallback({ error }: { error: Error }) {
           Algo quebrou por aqui.
         </h1>
         <p style={{ color: 'var(--color-ink-soft)', margin: '0 0 24px' }}>
-          Já reportamos o erro. Tenta recarregar — sua campanha em andamento fica salva no navegador.
+          Já reportamos o erro. Tenta recarregar — sua campanha em andamento fica salva no
+          navegador.
         </p>
         <button
           type="button"

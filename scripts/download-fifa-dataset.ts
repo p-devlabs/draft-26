@@ -11,8 +11,7 @@
 import { writeFile, mkdir } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 
-const URL =
-  'https://raw.githubusercontent.com/ismailoksuz/EAFC26-DataHub/main/data/players.csv'
+const URL = 'https://raw.githubusercontent.com/ismailoksuz/EAFC26-DataHub/main/data/players.csv'
 
 async function main() {
   const out = resolve(process.cwd(), 'data/eafc26-players.csv')

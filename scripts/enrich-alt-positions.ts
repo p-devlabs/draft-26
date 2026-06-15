@@ -17,9 +17,10 @@
  * Roda DEPOIS de enrich:transfermarkt:
  *   pnpm enrich:alt-positions
  */
-import { readFile, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
+import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+
 import Papa from 'papaparse'
 
 type Bucket = 'GK' | 'DEF' | 'MID' | 'FWD'
@@ -87,9 +88,22 @@ const TM_SUB_TO_GRANULAR: Record<string, string> = {
 
 const POSITION_BUCKET: Record<string, Bucket> = {
   GK: 'GK',
-  CB: 'DEF', LB: 'DEF', RB: 'DEF', LWB: 'DEF', RWB: 'DEF',
-  CDM: 'MID', CM: 'MID', CAM: 'MID', LM: 'MID', RM: 'MID',
-  LW: 'FWD', RW: 'FWD', LF: 'FWD', RF: 'FWD', CF: 'FWD', ST: 'FWD',
+  CB: 'DEF',
+  LB: 'DEF',
+  RB: 'DEF',
+  LWB: 'DEF',
+  RWB: 'DEF',
+  CDM: 'MID',
+  CM: 'MID',
+  CAM: 'MID',
+  LM: 'MID',
+  RM: 'MID',
+  LW: 'FWD',
+  RW: 'FWD',
+  LF: 'FWD',
+  RF: 'FWD',
+  CF: 'FWD',
+  ST: 'FWD',
 }
 
 /**
@@ -147,7 +161,8 @@ function ageFromDob(dob: string): number | null {
 }
 
 function levenshtein(a: string, b: string): number {
-  const m = a.length, n = b.length
+  const m = a.length,
+    n = b.length
   if (m === 0) return n
   if (n === 0) return m
   const dp = new Array<number>(n + 1)
@@ -176,11 +191,13 @@ function findTmRow(player: PlayerEnriched, candidates: TmRow[]): TmRow | undefin
     const ln = x.last_name ? normalize(x.last_name) : ''
     if (n === wantedName) viable.push({ row: x, nameScore: 100 })
     else if (ln && ln === wantedName) viable.push({ row: x, nameScore: 90 })
-    else if (n.includes(wantedName) || wantedName.includes(n)) viable.push({ row: x, nameScore: 70 })
+    else if (n.includes(wantedName) || wantedName.includes(n))
+      viable.push({ row: x, nameScore: 70 })
     else {
       const tokens = new Set(n.split(' '))
       const want = wantedName.split(' ').filter((t) => t.length >= 2)
-      if (want.length > 0 && want.every((t) => tokens.has(t))) viable.push({ row: x, nameScore: 60 })
+      if (want.length > 0 && want.every((t) => tokens.has(t)))
+        viable.push({ row: x, nameScore: 60 })
     }
   }
   if (viable.length === 0) {
@@ -188,7 +205,10 @@ function findTmRow(player: PlayerEnriched, candidates: TmRow[]): TmRow | undefin
     let bestDist = Infinity
     for (const x of candidates) {
       const d = levenshtein(wantedName, normalize(x.name))
-      if (d < bestDist) { bestDist = d; best = x }
+      if (d < bestDist) {
+        bestDist = d
+        best = x
+      }
     }
     const threshold = Math.max(2, Math.floor(wantedName.length * 0.15))
     if (best && bestDist <= threshold) viable.push({ row: best, nameScore: 40 })
@@ -202,7 +222,8 @@ function findTmRow(player: PlayerEnriched, candidates: TmRow[]): TmRow | undefin
       wantedClub &&
       (normalize(v.row.current_club_name).includes(wantedClub) ||
         wantedClub.includes(normalize(v.row.current_club_name)))
-    ) score += 15
+    )
+      score += 15
     if (player.age != null && v.row.date_of_birth) {
       const tmAge = ageFromDob(v.row.date_of_birth)
       if (tmAge != null && Math.abs(tmAge - player.age) <= 1) score += 10
@@ -257,10 +278,10 @@ async function main() {
   }
 
   const stats = {
-    tmPromoted: 0,           // jogador heurístico ganhou primary granular via TM
-    overrideApplied: 0,      // overlay curado mexeu em primary ou alts
-    heuristicAltsAdded: 0,   // bridges heurísticos adicionaram >= 1 alt
-    playersWithAlts: 0,      // jogadores que terminam com alguma alt
+    tmPromoted: 0, // jogador heurístico ganhou primary granular via TM
+    overrideApplied: 0, // overlay curado mexeu em primary ou alts
+    heuristicAltsAdded: 0, // bridges heurísticos adicionaram >= 1 alt
+    playersWithAlts: 0, // jogadores que terminam com alguma alt
     playersWithoutAlts: 0,
   }
 

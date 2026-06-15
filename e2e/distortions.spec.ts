@@ -11,16 +11,24 @@
  * Uso: pnpm sim:distortions
  *      pnpm sim:distortions --count=200    (override via env DRAFT26_RUNS)
  */
-import { test, expect } from '@playwright/test'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
+
+import { test, expect } from '@playwright/test'
 
 type RunResult = {
   seed: number
   xi: {
     formation: string
     overall: number
-    players: Array<{ name: string; country: string; countryCode: string; primary: string; overall: number; position: string }>
+    players: Array<{
+      name: string
+      country: string
+      countryCode: string
+      primary: string
+      overall: number
+      position: string
+    }>
   }
   groupStage: {
     letter: string
@@ -33,11 +41,31 @@ type RunResult = {
     goalsAgainst: number
     fate: string
     replaced: { code: string; name: string }
-    matches: Array<{ round: 1 | 2 | 3; opp: string; oppCode: string; oppOverall: number; userGoals: number; oppGoals: number; result: 'W' | 'D' | 'L'; margin: number }>
+    matches: Array<{
+      round: 1 | 2 | 3
+      opp: string
+      oppCode: string
+      oppOverall: number
+      userGoals: number
+      oppGoals: number
+      result: 'W' | 'D' | 'L'
+      margin: number
+    }>
   }
   qualified: boolean
   knockout: {
-    matches: Array<{ round: string; opp: string; oppCode: string; oppOverall: number; userGoals: number; oppGoals: number; extraTime?: { userGoals: number; oppGoals: number }; penalties?: { userScored: number; oppScored: number }; result: 'W' | 'L'; margin: number }>
+    matches: Array<{
+      round: string
+      opp: string
+      oppCode: string
+      oppOverall: number
+      userGoals: number
+      oppGoals: number
+      extraTime?: { userGoals: number; oppGoals: number }
+      penalties?: { userScored: number; oppScored: number }
+      result: 'W' | 'L'
+      margin: number
+    }>
     finalPhase: string
     eliminatedBy?: { code: string; name: string; round: string }
   }
@@ -59,10 +87,15 @@ test('distorções: roda N campanhas e grava report', async ({ page }) => {
   console.log(`▸ rodando ${RUNS} simulações no browser…`)
   const start = Date.now()
 
-  const results: RunResult[] = await page.evaluate(({ count }) => {
-    const w = window as unknown as { __draft26__: { runDistortionBatch: (n: number, seed: number) => RunResult[] } }
-    return w.__draft26__.runDistortionBatch(count, 1_000)
-  }, { count: RUNS })
+  const results: RunResult[] = await page.evaluate(
+    ({ count }) => {
+      const w = window as unknown as {
+        __draft26__: { runDistortionBatch: (n: number, seed: number) => RunResult[] }
+      }
+      return w.__draft26__.runDistortionBatch(count, 1_000)
+    },
+    { count: RUNS },
+  )
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1)
   console.log(`▸ ${results.length} runs em ${elapsed}s`)
@@ -96,8 +129,8 @@ interface Report {
   phaseDistribution: Record<string, number>
   qualificationRate: number
   groupPositions: Record<1 | 2 | 3 | 4, number>
-  biggestWinEver: NonNullable<RunResult['biggestWin']> & { seed: number } | null
-  worstLossEver: NonNullable<RunResult['worstLoss']> & { seed: number } | null
+  biggestWinEver: (NonNullable<RunResult['biggestWin']> & { seed: number }) | null
+  worstLossEver: (NonNullable<RunResult['worstLoss']> & { seed: number }) | null
   topPlayers: Array<{ name: string; country: string; count: number }>
   topReplacedTeams: Array<{ code: string; name: string; count: number }>
   champions: Array<{ seed: number; xiOverall: number; players: string[] }>
@@ -127,7 +160,8 @@ function analyze(runs: RunResult[]): Report {
     phaseDistribution[r.knockout.finalPhase] = (phaseDistribution[r.knockout.finalPhase] ?? 0) + 1
     groupPositions[r.groupStage.position]++
     formationDistribution[r.xi.formation] = (formationDistribution[r.xi.formation] ?? 0) + 1
-    groupLetterDistribution[r.groupStage.letter] = (groupLetterDistribution[r.groupStage.letter] ?? 0) + 1
+    groupLetterDistribution[r.groupStage.letter] =
+      (groupLetterDistribution[r.groupStage.letter] ?? 0) + 1
 
     for (const p of r.xi.players) {
       const k = p.country + '/' + p.name
@@ -189,12 +223,8 @@ function analyze(runs: RunResult[]): Report {
     }
   }
 
-  const topPlayers = [...playerCounts.values()]
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 15)
-  const topReplaced = [...replacedCounts.values()]
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 15)
+  const topPlayers = [...playerCounts.values()].sort((a, b) => b.count - a.count).slice(0, 15)
+  const topReplaced = [...replacedCounts.values()].sort((a, b) => b.count - a.count).slice(0, 15)
 
   return {
     totalRuns: runs.length,
@@ -213,32 +243,46 @@ function analyze(runs: RunResult[]): Report {
   }
 }
 
-function round1(n: number) { return Math.round(n * 10) / 10 }
-function round3(n: number) { return Math.round(n * 1000) / 1000 }
+function round1(n: number) {
+  return Math.round(n * 10) / 10
+}
+function round3(n: number) {
+  return Math.round(n * 1000) / 1000
+}
 
 function printSummary(r: Report) {
   console.log()
   console.log('═════════════════════════════════════════════════════')
   console.log(`▸ ${r.totalRuns} runs`)
-  console.log(`▸ XI overall: min ${r.xiOverall.min} | mean ${r.xiOverall.mean} | median ${r.xiOverall.median} | max ${r.xiOverall.max}`)
+  console.log(
+    `▸ XI overall: min ${r.xiOverall.min} | mean ${r.xiOverall.mean} | median ${r.xiOverall.median} | max ${r.xiOverall.max}`,
+  )
   console.log(`▸ Taxa de classificação: ${(r.qualificationRate * 100).toFixed(1)}%`)
   console.log()
   console.log('Distribuição de fase final:')
   for (const [k, v] of Object.entries(r.phaseDistribution).sort((a, b) => b[1] - a[1])) {
-    console.log(`  ${k.padEnd(16)} ${v.toString().padStart(3)}  (${((v / r.totalRuns) * 100).toFixed(1)}%)`)
+    console.log(
+      `  ${k.padEnd(16)} ${v.toString().padStart(3)}  (${((v / r.totalRuns) * 100).toFixed(1)}%)`,
+    )
   }
   console.log()
   console.log('Posição final no grupo:')
   for (const pos of [1, 2, 3, 4] as const) {
     const n = r.groupPositions[pos]
-    console.log(`  ${pos}º  ${n.toString().padStart(3)}  (${((n / r.totalRuns) * 100).toFixed(1)}%)`)
+    console.log(
+      `  ${pos}º  ${n.toString().padStart(3)}  (${((n / r.totalRuns) * 100).toFixed(1)}%)`,
+    )
   }
   console.log()
   if (r.biggestWinEver) {
-    console.log(`▸ Maior vitória: ${r.biggestWinEver.score} vs ${r.biggestWinEver.opp} (${r.biggestWinEver.phase}) [seed ${r.biggestWinEver.seed}]`)
+    console.log(
+      `▸ Maior vitória: ${r.biggestWinEver.score} vs ${r.biggestWinEver.opp} (${r.biggestWinEver.phase}) [seed ${r.biggestWinEver.seed}]`,
+    )
   }
   if (r.worstLossEver) {
-    console.log(`▸ Pior derrota:  ${r.worstLossEver.score} vs ${r.worstLossEver.opp} (${r.worstLossEver.phase}) [seed ${r.worstLossEver.seed}]`)
+    console.log(
+      `▸ Pior derrota:  ${r.worstLossEver.score} vs ${r.worstLossEver.opp} (${r.worstLossEver.phase}) [seed ${r.worstLossEver.seed}]`,
+    )
   }
   console.log()
   if (r.champions.length > 0) {

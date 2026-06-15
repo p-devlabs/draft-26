@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import {
   DIFFICULTIES,
   FORMATION_OPTIONS,
@@ -212,7 +213,10 @@ export function SetupDrawer({ open, onStart }: SetupDrawerProps) {
                   }}
                 >
                   <span style={{ fontWeight: 800, fontSize: 14 }}>{d.label}</span>
-                  <span className="az-diffbtn-skips" style={{ fontFamily: 'Space Mono', fontSize: 10 }}>
+                  <span
+                    className="az-diffbtn-skips"
+                    style={{ fontFamily: 'Space Mono', fontSize: 10 }}
+                  >
                     ⚄ {d.skips} pulos
                   </span>
                 </button>

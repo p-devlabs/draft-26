@@ -13,7 +13,11 @@ const N = 30_000
 // Pra simular bases diferentes sem mexer no sim-params.json, ajusto o overall
 // do user na mão ANTES de chamar simulateMatch (sem passar difficulty pra ele).
 function runScenario(userOverall: number, oppOverall: number, intensity: number) {
-  let w = 0, d = 0, l = 0, gf = 0, ga = 0
+  let w = 0,
+    d = 0,
+    l = 0,
+    gf = 0,
+    ga = 0
   for (let i = 0; i < N; i++) {
     const effective = userOverall - intensity * (oppOverall - userOverall)
     const home = { averageOverall: effective }
@@ -30,13 +34,15 @@ function runScenario(userOverall: number, oppOverall: number, intensity: number)
 
 function run(userOverall: number, oppOverall: number, label: string) {
   console.log()
-  console.log(`▸ ${label} — XI ${userOverall} vs adversário ${oppOverall} (gap ${(oppOverall - userOverall).toFixed(1)})`)
+  console.log(
+    `▸ ${label} — XI ${userOverall} vs adversário ${oppOverall} (gap ${(oppOverall - userOverall).toFixed(1)})`,
+  )
   console.log('  intensidade        | overall efetivo |  vitórias |  empates |  derrotas')
   for (const [label, intensity] of [
-    ['none',                 0.00],
-    ['suave   (base 0.35)',  0.35],
-    ['médio   (base 0.70)',  0.70],
-    ['forte   (base 1.00)',  1.00],
+    ['none', 0.0],
+    ['suave   (base 0.35)', 0.35],
+    ['médio   (base 0.70)', 0.7],
+    ['forte   (base 1.00)', 1.0],
   ] as const) {
     const r = runScenario(userOverall, oppOverall, intensity)
     const eff = userOverall - intensity * (oppOverall - userOverall)

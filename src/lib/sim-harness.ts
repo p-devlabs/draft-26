@@ -10,6 +10,15 @@
  * runs estranhas.
  */
 import {
+  applyResult,
+  createBracket,
+  ensureRoundsSimulated,
+  fullySimulate,
+  nextUserMatch,
+  ROUND_LABEL,
+  type KORound,
+} from './bracket'
+import {
   createDraft,
   pickPlayer,
   rollUntilCompatible,
@@ -27,15 +36,6 @@ import {
   USER_TEAM_CODE,
   type WorldCupGroups,
 } from './groups'
-import {
-  applyResult,
-  createBracket,
-  ensureRoundsSimulated,
-  fullySimulate,
-  nextUserMatch,
-  ROUND_LABEL,
-  type KORound,
-} from './bracket'
 import { seededRng } from './simulate'
 
 // ────────────────────────────────────────────────────────────────────────
@@ -234,8 +234,7 @@ function summarizeGroupStage(worldCup: WorldCupGroups): GroupStageSummary {
       const oppGoals = userIsHome ? m.result.awayGoals : m.result.homeGoals
       const oppCode = userIsHome ? m.awayCode : m.homeCode
       const oppTeam = ug.teams.find((t) => t.code === oppCode)!
-      const result: 'W' | 'D' | 'L' =
-        userGoals > oppGoals ? 'W' : userGoals < oppGoals ? 'L' : 'D'
+      const result: 'W' | 'D' | 'L' = userGoals > oppGoals ? 'W' : userGoals < oppGoals ? 'L' : 'D'
       return {
         round: m.round,
         opp: oppTeam.name,
@@ -267,7 +266,11 @@ function playKnockoutToEnd(
   worldCup: WorldCupGroups,
   rng: () => number,
   difficulty: 'easy' | 'medium' | 'hard',
-): { matches: KnockoutMatchSummary[]; finalPhase: FinalPhase; eliminatedBy?: RunResult['knockout']['eliminatedBy'] } {
+): {
+  matches: KnockoutMatchSummary[]
+  finalPhase: FinalPhase
+  eliminatedBy?: RunResult['knockout']['eliminatedBy']
+} {
   let bracket = ensureRoundsSimulated(createBracket(worldCup), rng)
   const matches: KnockoutMatchSummary[] = []
   let finalPhase: FinalPhase = 'R32'
@@ -275,7 +278,7 @@ function playKnockoutToEnd(
 
   while (true) {
     const next = nextUserMatch(bracket)
-    if (!next || !next.homeCode || !next.awayCode) break
+    if (!next?.homeCode || !next.awayCode) break
 
     const home = bracket.teams[next.homeCode]
     const away = bracket.teams[next.awayCode]
@@ -348,12 +351,7 @@ function computeExtremes(
   let biggestWin: RunResult['biggestWin'] = null
   let worstLoss: RunResult['worstLoss'] = null
 
-  const consider = (
-    margin: number,
-    opp: string,
-    phase: string,
-    score: string,
-  ) => {
+  const consider = (margin: number, opp: string, phase: string, score: string) => {
     if (margin > 0 && (!biggestWin || margin > biggestWin.margin)) {
       biggestWin = { margin, opp, phase, score }
     }
@@ -376,11 +374,10 @@ function computeExtremes(
 
 // Helper exposto pro page.evaluate, pra que o Playwright não precise saber
 // dos detalhes internos.
-export function runDistortionBatch(count: number, baseSeed: number = 0): RunResult[] {
+export function runDistortionBatch(count: number, baseSeed = 0): RunResult[] {
   const results: RunResult[] = []
   for (let i = 0; i < count; i++) {
     results.push(simulateFullCup(baseSeed + i))
   }
   return results
 }
-

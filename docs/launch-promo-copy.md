@@ -89,6 +89,7 @@ All Reddit links: `utm_source=reddit&utm_medium=post`.
 > Como funciona: sorteia um país aleatório por posição (igual o "rola o dado"), você escolhe um jogador da lista oficial, repete pelas 11 posições. Depois joga a fase de grupos + mata-mata contra as outras 47 seleções.
 >
 > O que mudou em relação ao 7a0:
+>
 > - elenco real (scrape da Wikipedia dos 26 convocados de cada seleção)
 > - rating vem da EA FC 26 nos jogadores que a EA cobre (~73%), com Transfermarkt e FBref pra preencher o resto
 > - regras de desempate da FIFA 2026 implementadas (head-to-head primeiro, mudou pra esse ciclo)
@@ -157,6 +158,7 @@ All Reddit links: `utm_source=reddit&utm_medium=post`.
 > Pra quem viciou em 7a0 e 38a0 ano passado: lançou um chamado **Draft 26**, mesmo conceito (sorteia país por posição, monta XI, joga o torneio) mas com escopo 100% Copa 2026.
 >
 > O que ganha em relação aos antecessores:
+>
 > - elenco oficial dos 26 convocados de cada seleção
 > - ratings reais (EA FC 26, com fallback de Transfermarkt + FBref)
 > - regras FIFA 2026 (desempate começa por confronto direto)
@@ -171,18 +173,18 @@ All Reddit links: `utm_source=reddit&utm_medium=post`.
 
 ## Quick reference — URL slugs
 
-| # | Channel | utm_content |
-|---|---------|-------------|
-| 1 | YouTube — post-match reaction | `yt-postjogo` |
-| 2 | YouTube — absurd XI (Cape Verde) | `yt-caboverde` |
-| 3 | YouTube — pre-match | `yt-prejogo` |
-| 4 | YouTube — 7a0 recommendation | `yt-rec7a0` |
-| 5 | YouTube — underdog (Uzbekistan) | `yt-uzbequistao` |
-| 6 | r/futebol — OC | `rfutebol-oc` |
-| 7 | r/brasil — Tecnologia flair | `rbrasil-tech` |
-| 8 | r/SoccerGaming — en-US | `rsoccergaming-en` |
-| 9 | r/futebol — campaign variant | `rfutebol-caboverde` |
-| 10 | r/desimpedidos — 7a0 successor | `rdesimpedidos-7a0` |
+| #   | Channel                          | utm_content          |
+| --- | -------------------------------- | -------------------- |
+| 1   | YouTube — post-match reaction    | `yt-postjogo`        |
+| 2   | YouTube — absurd XI (Cape Verde) | `yt-caboverde`       |
+| 3   | YouTube — pre-match              | `yt-prejogo`         |
+| 4   | YouTube — 7a0 recommendation     | `yt-rec7a0`          |
+| 5   | YouTube — underdog (Uzbekistan)  | `yt-uzbequistao`     |
+| 6   | r/futebol — OC                   | `rfutebol-oc`        |
+| 7   | r/brasil — Tecnologia flair      | `rbrasil-tech`       |
+| 8   | r/SoccerGaming — en-US           | `rsoccergaming-en`   |
+| 9   | r/futebol — campaign variant     | `rfutebol-caboverde` |
+| 10  | r/desimpedidos — 7a0 successor   | `rdesimpedidos-7a0`  |
 
 ## Usage notes
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+
 import { BracketView } from '../components/BracketView'
 import {
   nextUserMatch,
@@ -12,9 +13,10 @@ import {
   type KORound,
 } from '../lib/bracket'
 import { clearBracket, loadBracket, loadWorldCup, saveBracket } from '../lib/persistence'
-import type { DraftState } from '../lib/draft'
 import { syncRun, type FinishedRound } from '../lib/runs'
 import { track } from '../lib/track'
+
+import type { DraftState } from '../lib/draft'
 
 export function MataMata() {
   const navigate = useNavigate()
@@ -179,9 +181,9 @@ function computePhaseLabel(
           (m.homeCode === bracket.userCode || m.awayCode === bracket.userCode) &&
           m.winnerCode !== bracket.userCode,
       )
-    return `SEU XI · ELIMINADO ${lost ? `· ${ROUND_LABEL[lost.round as KORound].toUpperCase()}` : ''}`
+    return `SEU XI · ELIMINADO ${lost ? `· ${ROUND_LABEL[lost.round].toUpperCase()}` : ''}`
   }
-  if (next) return `SEU XI · ${ROUND_LABEL[next.round as KORound].toUpperCase()}`
+  if (next) return `SEU XI · ${ROUND_LABEL[next.round].toUpperCase()}`
   return 'CHAVEAMENTO'
 }
 
@@ -300,7 +302,12 @@ function NavPill({
   if (active) {
     return (
       <span
-        style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}
+        style={{
+          ...base,
+          fontWeight: 700,
+          background: 'var(--color-d-lime)',
+          color: 'var(--color-d-bg)',
+        }}
       >
         {label}
       </span>
@@ -325,7 +332,12 @@ function NavPill({
 
 function DiceMark() {
   const dot = (justify?: 'end' | 'center'): CSSProperties => {
-    const s: CSSProperties = { width: 4, height: 4, borderRadius: '50%', background: 'var(--color-d-bg)' }
+    const s: CSSProperties = {
+      width: 4,
+      height: 4,
+      borderRadius: '50%',
+      background: 'var(--color-d-bg)',
+    }
     if (justify === 'end') s.justifySelf = 'end'
     if (justify === 'center') s.justifySelf = 'center'
     return s
@@ -462,7 +474,7 @@ function buildPath(bracket: KnockoutBracket): PathStep[] {
   return ROUND_ORDER.map((round) => {
     const m = path.find((pm) => pm.round === round)
     const label = ROUND_LABEL[round].toUpperCase()
-    if (m && m.winnerCode) {
+    if (m?.winnerCode) {
       const won = m.winnerCode === bracket.userCode
       const hg = (m.result?.homeGoals ?? 0) + (m.extraTime?.homeGoals ?? 0)
       const ag = (m.result?.awayGoals ?? 0) + (m.extraTime?.awayGoals ?? 0)
@@ -476,7 +488,7 @@ function buildPath(bracket: KnockoutBracket): PathStep[] {
         result: `${u}–${o}`,
       }
     }
-    if (next && next.round === round) {
+    if (next?.round === round) {
       const oppCode = next.homeCode === bracket.userCode ? next.awayCode : next.homeCode
       const opp = oppCode ? bracket.teams[oppCode] : null
       return {
@@ -642,7 +654,14 @@ function FooterNav({
   userChampion: boolean
   onPlay: () => void
 }) {
-  let cta: { label: string; to?: string; onClick?: () => void; bg: string; color: string; border: string } = {
+  let cta: {
+    label: string
+    to?: string
+    onClick?: () => void
+    bg: string
+    color: string
+    border: string
+  } = {
     label: 'IR PARA A PARTIDA →',
     onClick: onPlay,
     bg: 'var(--color-d-ink)',
@@ -728,7 +747,11 @@ function FooterNav({
           {cta.label}
         </Link>
       ) : (
-        <button type="button" onClick={cta.onClick} style={{ ...ctaStyle, border: ctaStyle.border }}>
+        <button
+          type="button"
+          onClick={cta.onClick}
+          style={{ ...ctaStyle, border: ctaStyle.border }}
+        >
           {cta.label}
         </button>
       )}

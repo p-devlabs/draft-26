@@ -3,7 +3,9 @@
  * Para o XI do user usa os 11 escolhidos; para uma seleção usa os top por bucket.
  */
 import { squads, type Player } from '../data/squads'
+
 import { USER_TEAM_CODE } from './groups'
+
 import type { DraftState } from './draft'
 import type { NarrationRoster } from './narrate'
 

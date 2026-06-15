@@ -3,9 +3,10 @@
  * sobreviver a refresh durante uma partida.
  */
 import { FORMATIONS, type Formation } from './formations'
+
+import type { KnockoutBracket } from './bracket'
 import type { DraftState } from './draft'
 import type { WorldCupGroups } from './groups'
-import type { KnockoutBracket } from './bracket'
 
 const KEY_DRAFT = 'd26:draft'
 // Versão antiga (d26:stage) guardava só GroupStage. Bumped pra worldcup quando

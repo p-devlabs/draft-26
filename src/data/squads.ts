@@ -66,7 +66,7 @@ export interface Squad {
 export const squads: Squad[] = []
 
 /** Index code→squad. Vazio até `loadSquads()` resolver. */
-export const squadsByCode: Map<string, Squad> = new Map()
+export const squadsByCode = new Map<string, Squad>()
 
 /** Grupos da Copa agrupados por letra. Vazio até `loadSquads()` resolver. */
 export const groupedSquads: { letter: string; squads: Squad[] }[] = []

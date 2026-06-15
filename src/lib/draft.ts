@@ -1,7 +1,8 @@
 /**
  * Lógica do draft: sorteio de país com cooldown, escolha de jogador, estado do XI.
  */
-import { compatiblePlayers } from './positions'
+import { squads, type Player, type Squad } from '../data/squads'
+
 import {
   DIFFICULTY_SKIPS,
   FORMATIONS,
@@ -10,7 +11,7 @@ import {
   type Style,
   type SlotPosition,
 } from './formations'
-import { squads, type Player, type Squad } from '../data/squads'
+import { compatiblePlayers } from './positions'
 
 export const COUNTRY_COOLDOWN = 5
 
@@ -91,7 +92,11 @@ export interface RollResult {
   candidates: Player[]
 }
 
-export function rollForSlot(state: DraftState, slotIndex: number, rng: () => number = Math.random): RollResult {
+export function rollForSlot(
+  state: DraftState,
+  slotIndex: number,
+  rng: () => number = Math.random,
+): RollResult {
   const slot = state.slots[slotIndex]
   if (!slot) throw new Error(`slot inválido: ${slotIndex}`)
   if (slot.player) throw new Error(`slot ${slotIndex} já tem jogador (${slot.player.player.name})`)
@@ -160,7 +165,11 @@ export function rollUntilCompatible(
 }
 
 /** Marca um sorteio pendente num slot. Limpa em pickPlayer ou clearPendingRoll. */
-export function setPendingRoll(state: DraftState, slotIndex: number, squadCode: string): DraftState {
+export function setPendingRoll(
+  state: DraftState,
+  slotIndex: number,
+  squadCode: string,
+): DraftState {
   const slots = state.slots.map((s, i) =>
     i === slotIndex ? { ...s, pendingSquadCode: squadCode } : s,
   )

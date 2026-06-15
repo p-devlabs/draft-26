@@ -80,17 +80,17 @@ cache headers and security headers (HSTS, CSP, XFO, etc).
 
 The `data/` directory mixes hand-curation and generated files:
 
-| File                        | Origin                                            | In git?            |
-|-----------------------------|---------------------------------------------------|--------------------|
-| `country-codes.json`        | curated manually                                  | ✅                 |
-| `tactics.json`              | curated manually                                  | ✅                 |
-| `position-overrides.json`   | curated overlay for alt-positions                 | ✅                 |
-| `sim-params.json`           | output of `calibrate:sim` (Poisson + Dixon-Coles) | ✅                 |
-| `squads.json`               | `pnpm scrape:squads` (Wikipedia)                  | ✅ (reference)     |
-| `squads-enriched.json`      | full enrichment pipeline (see below)              | ✅ (runtime data)  |
-| `eafc26-players.csv`        | `pnpm download:fifa` (~10 MB)                     | ❌ (gitignored)    |
-| `transfermarkt-players.csv` | `pnpm download:transfermarkt` (~4 MB from a 222 MB ZIP) | ❌ (gitignored) |
-| `fbref-players.csv`         | Kaggle manual download (free account required)    | ❌ (gitignored)    |
+| File                        | Origin                                                  | In git?           |
+| --------------------------- | ------------------------------------------------------- | ----------------- |
+| `country-codes.json`        | curated manually                                        | ✅                |
+| `tactics.json`              | curated manually                                        | ✅                |
+| `position-overrides.json`   | curated overlay for alt-positions                       | ✅                |
+| `sim-params.json`           | output of `calibrate:sim` (Poisson + Dixon-Coles)       | ✅                |
+| `squads.json`               | `pnpm scrape:squads` (Wikipedia)                        | ✅ (reference)    |
+| `squads-enriched.json`      | full enrichment pipeline (see below)                    | ✅ (runtime data) |
+| `eafc26-players.csv`        | `pnpm download:fifa` (~10 MB)                           | ❌ (gitignored)   |
+| `transfermarkt-players.csv` | `pnpm download:transfermarkt` (~4 MB from a 222 MB ZIP) | ❌ (gitignored)   |
+| `fbref-players.csv`         | Kaggle manual download (free account required)          | ❌ (gitignored)   |
 
 To rebuild everything from scratch:
 

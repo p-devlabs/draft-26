@@ -12,6 +12,7 @@ a PR, or is dropped with a note.
 ### Draft system
 
 - [ ] **3 options per roll instead of 1** — anonymous (+351 910 603 982)
+
   > "Coloca 3 selecoes pra escolha. Ao invés de uma. Daí tu tem mais opcoes.
   > Aqui tu fica entre escolher o vini jr, dembele ou messi por exemplo.
   > Te deixa na duvida. Da selecao, tu sempre vai escolher os melhores."
@@ -27,6 +28,7 @@ a PR, or is dropped with a note.
     leave the pool per roll).
 
 - [ ] **Variant: total randomness** — same author
+
   > "Ou um de cada selecao ba aleatoriedade total"
 
   Probably: show 1 player from each nation in the full pool and pick freely.
@@ -34,6 +36,7 @@ a PR, or is dropped with a note.
   Likely a separate mode, not a replacement for the main one.
 
 - [ ] **Pick by sector (defense / midfield / attack) instead of by slot** — Mauricio Pieper
+
   > "Eu já tava pensando em uma mudança pra deixar tu escolher alguém do
   > setor ao invés de da posição em específico. Ai tu escolhe entre defesa
   > (goleiros entram), meio e ataque e tu só escolhe 1.
@@ -52,6 +55,7 @@ a PR, or is dropped with a note.
 ### Reported bugs
 
 - [ ] **3rd-place flagged as eliminated, but actually advanced** — anonymous
+
   > "Fiquei em terceiro lugar e disse que fui eliminado. Mas eu passei pra
   > próxima fase (talvez rever a logica de ranking e classificacao - passam
   > todos 1os e 2os e os 8 melhores 3os)"
@@ -63,6 +67,7 @@ a PR, or is dropped with a note.
   the 8-best-3rds rule runs?
 
 - [ ] **Navigation stuck after the group stage** — anonymous
+
   > "Outra coisa que notei, quando eu passo da fase de grupos eu posso
   > clicar pra ver o chaveamento. Mas depois não consigo clicar pra ver os
   > grupos. E tipo se eu clicar na tab partida eu volto pra tab de grupos"

@@ -17,14 +17,21 @@ function runScenario(label: string, opts?: { difficulty?: 'easy' | 'medium' | 'h
   const user: Team = { code: 'YOU', averageOverall: 80, isUser: true }
   const jpn: Team = { code: 'JPN', averageOverall: 73 }
 
-  let w = 0, d = 0, l = 0
+  let w = 0,
+    d = 0,
+    l = 0
   let blowoutLoss = 0 // derrota por 3+ gols de diferença
   let exact_1_4 = 0
   const scoreCounts: Record<string, number> = {}
 
   for (let i = 0; i < N; i++) {
     const rng = seededRng(i)
-    const r = simulateMatch(user, jpn, rng, opts?.difficulty ? { difficulty: opts.difficulty } : undefined)
+    const r = simulateMatch(
+      user,
+      jpn,
+      rng,
+      opts?.difficulty ? { difficulty: opts.difficulty } : undefined,
+    )
     const k = `${r.homeGoals}-${r.awayGoals}`
     scoreCounts[k] = (scoreCounts[k] ?? 0) + 1
     if (r.homeGoals > r.awayGoals) w++
@@ -43,7 +50,9 @@ function runScenario(label: string, opts?: { difficulty?: 'easy' | 'medium' | 'h
   console.log(`  derrota por 3+ gols (1-4, 0-3, etc): ${pct(blowoutLoss)}`)
   console.log(`  exato 1-4: ${pct(exact_1_4)}`)
   console.log(`  top 8 placares mais comuns:`)
-  for (const [k, n] of Object.entries(scoreCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)) {
+  for (const [k, n] of Object.entries(scoreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)) {
     console.log(`    ${k}: ${pct(n)}`)
   }
 }

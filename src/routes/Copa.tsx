@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+
+import { autoFillXI } from '../lib/autofill'
+import { createDraft, isComplete, type DraftState } from '../lib/draft'
 import { features } from '../lib/features'
 import {
   createWorldCup,
@@ -15,12 +18,16 @@ import {
   type Standing,
   type WorldCupGroups,
 } from '../lib/groups'
-import { autoFillXI } from '../lib/autofill'
-import { createDraft, isComplete, type DraftState } from '../lib/draft'
-import { loadDraft, saveWorldCup, loadWorldCup, clearWorldCup, clearDraft } from '../lib/persistence'
+import { nationGradient } from '../lib/nation-colors'
+import {
+  loadDraft,
+  saveWorldCup,
+  loadWorldCup,
+  clearWorldCup,
+  clearDraft,
+} from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
 import { track } from '../lib/track'
-import { nationGradient } from '../lib/nation-colors'
 
 export function Copa() {
   const navigate = useNavigate()
@@ -43,8 +50,7 @@ export function Copa() {
       void createRun({ draft: fromDraft, stage: getUserGroup(newWorldCup) })
       return
     }
-    const isDemo =
-      new URLSearchParams(window.location.search).get('demo') === '1' || features.dev
+    const isDemo = new URLSearchParams(window.location.search).get('demo') === '1' || features.dev
     if (isDemo) {
       const demoDraft = autoFillXI(createDraft('4-3-3', 'equilibrado', 'medium'))
       const newWorldCup = createWorldCup(demoDraft)
@@ -138,10 +144,10 @@ export function Copa() {
     : `FASE DE GRUPOS · JOGO ${playedRoundsCount + 1}/3`
 
   const userMatchInRound = round
-    ? stage.matches.find(
+    ? (stage.matches.find(
         (m) =>
           m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
-      ) ?? null
+      ) ?? null)
     : null
 
   const handlePlay = () => {
@@ -316,7 +322,12 @@ function NavPill({
   if (active) {
     return (
       <span
-        style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}
+        style={{
+          ...base,
+          fontWeight: 700,
+          background: 'var(--color-d-lime)',
+          color: 'var(--color-d-bg)',
+        }}
       >
         {label}
       </span>
@@ -341,7 +352,12 @@ function NavPill({
 
 function DiceMark() {
   const dot = (justify?: 'end' | 'center'): CSSProperties => {
-    const s: CSSProperties = { width: 4, height: 4, borderRadius: '50%', background: 'var(--color-d-bg)' }
+    const s: CSSProperties = {
+      width: 4,
+      height: 4,
+      borderRadius: '50%',
+      background: 'var(--color-d-bg)',
+    }
     if (justify === 'end') s.justifySelf = 'end'
     if (justify === 'center') s.justifySelf = 'center'
     return s
@@ -469,7 +485,12 @@ function Masthead({
             }}
           >
             <div
-              style={{ width: `${pct}%`, height: '100%', background: 'var(--color-d-lime)', transition: 'width .4s' }}
+              style={{
+                width: `${pct}%`,
+                height: '100%',
+                background: 'var(--color-d-lime)',
+                transition: 'width .4s',
+              }}
             />
           </div>
         </div>
@@ -489,9 +510,17 @@ function computeStatusPill(
   }
   if (finished) {
     if (pos === 1)
-      return { label: `1º LUGAR · ${s.points} PTS`, bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
+      return {
+        label: `1º LUGAR · ${s.points} PTS`,
+        bg: 'var(--color-d-lime)',
+        fg: 'var(--color-d-bg)',
+      }
     if (pos === 2)
-      return { label: `CLASSIFICADO · ${s.points} PTS`, bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
+      return {
+        label: `CLASSIFICADO · ${s.points} PTS`,
+        bg: 'var(--color-d-lime)',
+        fg: 'var(--color-d-bg)',
+      }
     // 3º colocado: depende se entrou nos 8 melhores
     if (pos === 3 && fate?.kind === 'qualified-3rd-rank') {
       return {
@@ -517,11 +546,12 @@ function computeStatusPill(
   }
   // pos 1-2: zona segura (lime). pos 3: amarelo/warn (pode classificar via
   // 8 melhores 3ºs). pos 4: cinza.
-  const tone = pos <= 2
-    ? { bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
-    : pos === 3
-      ? { bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' }
-      : { bg: 'rgba(255,138,59,0.10)', fg: 'var(--color-d-mut)' }
+  const tone =
+    pos <= 2
+      ? { bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' }
+      : pos === 3
+        ? { bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' }
+        : { bg: 'rgba(255,138,59,0.10)', fg: 'var(--color-d-mut)' }
   return { label: `${labels[pos] ?? `${pos}º`} · ${s.points} PTS`, ...tone }
 }
 
@@ -596,7 +626,14 @@ function NextMatchBanner({
           VENÇA PARA CARIMBAR A VAGA
         </span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(14px, 3vw, 28px)', flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'clamp(14px, 3vw, 28px)',
+          flexWrap: 'wrap',
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -607,7 +644,13 @@ function NextMatchBanner({
           }}
         >
           <BannerTeam team={home} />
-          <span style={{ fontFamily: 'Anton', fontSize: 'clamp(20px, 3vw, 26px)', color: 'var(--color-d-mut)' }}>
+          <span
+            style={{
+              fontFamily: 'Anton',
+              fontSize: 'clamp(20px, 3vw, 26px)',
+              color: 'var(--color-d-mut)',
+            }}
+          >
             VS
           </span>
           <BannerTeam team={away} />
@@ -642,7 +685,9 @@ function NextMatchBanner({
 
 function BannerTeam({ team }: { team: GroupTeam }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, flex: 1 }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, flex: 1 }}
+    >
       <BadgeLarge team={team} />
       <div
         style={{
@@ -727,7 +772,6 @@ function BadgeChip({
   )
 }
 
-
 // ============================================================
 // Standings
 // ============================================================
@@ -741,11 +785,7 @@ function StandingsSection({
   round: 1 | 2 | 3 | null
   finished: boolean
 }) {
-  const subtitle = finished
-    ? 'FINAL'
-    : round
-      ? `APÓS RODADA ${(round as number) - 1}`
-      : 'INICIAL'
+  const subtitle = finished ? 'FINAL' : round ? `APÓS RODADA ${(round as number) - 1}` : 'INICIAL'
   return (
     <>
       <div
@@ -818,8 +858,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   )
 }
 
-const ROW_GRID =
-  '38px minmax(120px, 1fr) 46px 34px 34px 34px 34px 52px'
+const ROW_GRID = '38px minmax(120px, 1fr) 46px 34px 34px 34px 34px 52px'
 
 function StandingsHeader() {
   return (
@@ -855,7 +894,8 @@ function StandingsRow({ standing, pos }: { standing: Standing; pos: number }) {
   const accent = isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)'
   const sg = standing.goalsFor - standing.goalsAgainst
   const sgFormatted = sg > 0 ? `+${sg}` : String(sg)
-  const sgColor = sg > 0 ? 'var(--color-d-lime)' : sg < 0 ? 'var(--color-d-mut)' : 'var(--color-d-ink)'
+  const sgColor =
+    sg > 0 ? 'var(--color-d-lime)' : sg < 0 ? 'var(--color-d-mut)' : 'var(--color-d-ink)'
   return (
     <div
       style={{
@@ -886,9 +926,7 @@ function StandingsRow({ standing, pos }: { standing: Standing; pos: number }) {
           {isUser ? 'SEU XI' : standing.team.name.toUpperCase()}
         </b>
       </span>
-      <span
-        style={{ fontFamily: 'Anton', fontSize: 18, color: accent, textAlign: 'center' }}
-      >
+      <span style={{ fontFamily: 'Anton', fontSize: 18, color: accent, textAlign: 'center' }}>
         {standing.points}
       </span>
       <Cell value={standing.played} muted />
@@ -1078,10 +1116,7 @@ function RoundCard({
             color: meta.tagColor,
             whiteSpace: 'nowrap',
             flexShrink: 0,
-            border:
-              state === 'next'
-                ? '1px solid var(--color-d-line)'
-                : '1px solid transparent',
+            border: state === 'next' ? '1px solid var(--color-d-line)' : '1px solid transparent',
           }}
         >
           {meta.tag}

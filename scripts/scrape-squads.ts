@@ -6,13 +6,13 @@
  *
  * Uso: pnpm scrape:squads
  */
-import { load } from 'cheerio'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
+import { load } from 'cheerio'
+
 const URL = 'https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_squads'
-const USER_AGENT =
-  'Draft26Scraper/0.1 (rlpereira@inf.ufpel.edu.br) - personal use'
+const USER_AGENT = 'Draft26Scraper/0.1 (rlpereira@inf.ufpel.edu.br) - personal use'
 
 type Position = 'GK' | 'DEF' | 'MID' | 'FWD'
 
@@ -86,7 +86,11 @@ async function main() {
     const country = text
     const coachAnchor = $el.nextUntil('table').find('a').first()
     const coachP = $el.nextUntil('table').filter('p').first()
-    const coachText = coachP.text().match(/Coach:\s*(.+?)\s*(?:\.|$)/)?.[1]?.trim() ?? null
+    const coachText =
+      coachP
+        .text()
+        .match(/Coach:\s*(.+?)\s*(?:\.|$)/)?.[1]
+        ?.trim() ?? null
     const coach = coachAnchor.text().trim() || coachText || null
 
     const players: ScrapedPlayer[] = []
@@ -107,7 +111,8 @@ async function main() {
       const nameCell = $(cells[2])
       const fullText = nameCell.text().trim()
       const isCaptain = /\bcaptain\b/i.test(fullText)
-      const name = nameCell.find('a').first().text().trim() || fullText.replace(/\(captain\)/i, '').trim()
+      const name =
+        nameCell.find('a').first().text().trim() || fullText.replace(/\(captain\)/i, '').trim()
 
       const dobCell = $(cells[3])
       const dateOfBirth = dobCell.find('.bday').first().text().trim() || null
@@ -122,7 +127,9 @@ async function main() {
       const clubAnchors = clubCell.find('a')
       const club =
         clubAnchors.length > 0
-          ? $(clubAnchors[clubAnchors.length - 1]).text().trim()
+          ? $(clubAnchors[clubAnchors.length - 1])
+              .text()
+              .trim()
           : clubCell.text().trim()
 
       players.push({

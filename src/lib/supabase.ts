@@ -18,7 +18,7 @@ if (!isSupabaseConfigured) {
  * ser gateada por `isSupabaseConfigured` (track.ts e runs.ts já fazem).
  */
 export const supabase: SupabaseClient = isSupabaseConfigured
-  ? createClient(url!, anonKey!, {
+  ? createClient(url, anonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,

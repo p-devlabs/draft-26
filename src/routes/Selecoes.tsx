@@ -1,7 +1,9 @@
-import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+
 import { groupedSquads, type Squad } from '../data/squads'
 import { NATION_GRADIENTS } from '../lib/nation-colors'
+
+import type { CSSProperties, ReactNode } from 'react'
 
 // Computado em render (não em module-load) pra rodar depois do <SquadsGate>
 // ter hidratado `groupedSquads`.
@@ -171,8 +173,8 @@ function Hero() {
             margin: 0,
           }}
         >
-          Clique numa seleção pra ver elenco completo, ratings do EA FC 26, formação
-          preferida do técnico e o valor de mercado dos convocados.
+          Clique numa seleção pra ver elenco completo, ratings do EA FC 26, formação preferida do
+          técnico e o valor de mercado dos convocados.
         </p>
       </div>
     </div>

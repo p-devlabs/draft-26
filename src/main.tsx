@@ -1,38 +1,29 @@
 import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+
 import './index.css'
-import { Home } from './routes/Home'
-import { features } from './lib/features'
-import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
-import { initAnalytics } from './lib/analytics'
-import { trackSessionOnce, PageViewTracker } from './lib/track'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { SquadsGate } from './components/SquadsGate'
 import { loadSquads } from './data/squads'
+import { initAnalytics } from './lib/analytics'
+import { features } from './lib/features'
+import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
+import { trackSessionOnce, PageViewTracker } from './lib/track'
+import { Home } from './routes/Home'
 
 // Rotas pesadas viram lazy chunks. Home fica eager porque é a landing —
 // a primeira renderização não pode pagar o custo de um round-trip extra.
 // Todas as rotas exportam named (export function X), por isso o wrapper
 // `.then(m => ({ default: m.X }))` pra alimentar o React.lazy.
-const Selecoes = lazy(() =>
-  import('./routes/Selecoes').then((m) => ({ default: m.Selecoes })),
-)
+const Selecoes = lazy(() => import('./routes/Selecoes').then((m) => ({ default: m.Selecoes })))
 const SelecaoDetalhe = lazy(() =>
   import('./routes/SelecaoDetalhe').then((m) => ({ default: m.SelecaoDetalhe })),
 )
-const Draft = lazy(() =>
-  import('./routes/Draft').then((m) => ({ default: m.Draft })),
-)
-const Copa = lazy(() =>
-  import('./routes/Copa').then((m) => ({ default: m.Copa })),
-)
-const Match = lazy(() =>
-  import('./routes/Match').then((m) => ({ default: m.Match })),
-)
-const MataMata = lazy(() =>
-  import('./routes/MataMata').then((m) => ({ default: m.MataMata })),
-)
+const Draft = lazy(() => import('./routes/Draft').then((m) => ({ default: m.Draft })))
+const Copa = lazy(() => import('./routes/Copa').then((m) => ({ default: m.Copa })))
+const Match = lazy(() => import('./routes/Match').then((m) => ({ default: m.Match })))
+const MataMata = lazy(() => import('./routes/MataMata').then((m) => ({ default: m.MataMata })))
 const PenaltiesDev = lazy(() =>
   import('./routes/PenaltiesDev').then((m) => ({ default: m.PenaltiesDev })),
 )

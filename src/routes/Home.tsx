@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+
 import { features } from '../lib/features'
 
 export function Home() {
@@ -72,8 +73,17 @@ function Wordmark({ small }: { small?: boolean } = {}) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
       {!small && <DiceMark size={36} dotSize={4} padding={7} />}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-        <span style={{ fontFamily: 'Anton', fontSize: wordSize, letterSpacing: '0.02em' }}>DRAFT</span>
-        <span style={{ fontFamily: 'Space Mono', fontSize: tagSize, color: 'var(--color-d-lime)', fontWeight: 700 }}>
+        <span style={{ fontFamily: 'Anton', fontSize: wordSize, letterSpacing: '0.02em' }}>
+          DRAFT
+        </span>
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: tagSize,
+            color: 'var(--color-d-lime)',
+            fontWeight: 700,
+          }}
+        >
           26
         </span>
       </div>
@@ -95,7 +105,12 @@ function DiceMark({
   dotBg?: string
 }) {
   const dot = (justify?: 'end' | 'center'): CSSProperties => {
-    const s: CSSProperties = { width: dotSize, height: dotSize, borderRadius: '50%', background: dotBg }
+    const s: CSSProperties = {
+      width: dotSize,
+      height: dotSize,
+      borderRadius: '50%',
+      background: dotBg,
+    }
     if (justify === 'end') s.justifySelf = 'end'
     if (justify === 'center') s.justifySelf = 'center'
     return s
@@ -177,8 +192,8 @@ function Hero() {
               margin: '0 0 30px',
             }}
           >
-            Sorteie seu time no dado entre os 26 convocados de cada uma das 48 seleções,
-            atravesse a fase de grupos e o mata-mata — e seja{' '}
+            Sorteie seu time no dado entre os 26 convocados de cada uma das 48 seleções, atravesse a
+            fase de grupos e o mata-mata — e seja{' '}
             <span style={{ color: 'var(--color-d-ink)', fontWeight: 700 }}>campeão do mundo</span>.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
@@ -262,7 +277,12 @@ function Hero() {
             {Array.from({ length: 4 }).map((_, i) => (
               <span
                 key={i}
-                style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--color-d-bg)' }}
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: '50%',
+                  background: 'var(--color-d-bg)',
+                }}
               />
             ))}
           </div>
@@ -286,7 +306,12 @@ function Hero() {
 }
 
 function SmallDice() {
-  const dot: CSSProperties = { width: 3, height: 3, borderRadius: '50%', background: 'var(--color-d-bg)' }
+  const dot: CSSProperties = {
+    width: 3,
+    height: 3,
+    borderRadius: '50%',
+    background: 'var(--color-d-bg)',
+  }
   return (
     <span
       style={{
@@ -324,7 +349,15 @@ function HeroStats() {
   )
 }
 
-function StatPair({ value, label, highlight }: { value: string; label: string; highlight?: boolean }) {
+function StatPair({
+  value,
+  label,
+  highlight,
+}: {
+  value: string
+  label: string
+  highlight?: boolean
+}) {
   return (
     <div>
       <div
@@ -467,7 +500,11 @@ function ComoFuncionaSection() {
           num="04"
           title="Conquiste o mundo"
           body="Vença as cinco fases do mata-mata, ganhe a final e erga o caneco. O time que o dado te deu, campeão do mundo."
-          icon={<span style={{ fontFamily: 'Anton', fontSize: 26, color: 'var(--color-d-lime)' }}>★</span>}
+          icon={
+            <span style={{ fontFamily: 'Anton', fontSize: 26, color: 'var(--color-d-lime)' }}>
+              ★
+            </span>
+          }
           highlight
         />
       </div>
@@ -509,17 +546,26 @@ function StepCard({
           marginBottom: 16,
         }}
       >
-        <span style={{ fontFamily: 'Anton', fontSize: 34, color: 'var(--color-d-lime)' }}>{num}</span>
+        <span style={{ fontFamily: 'Anton', fontSize: 34, color: 'var(--color-d-lime)' }}>
+          {num}
+        </span>
         {icon}
       </div>
       <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 7 }}>{title}</div>
-      <p style={{ color: 'var(--color-d-mut)', fontSize: 14, lineHeight: 1.55, margin: 0 }}>{body}</p>
+      <p style={{ color: 'var(--color-d-mut)', fontSize: 14, lineHeight: 1.55, margin: 0 }}>
+        {body}
+      </p>
     </div>
   )
 }
 
 function MiniDice() {
-  const dot: CSSProperties = { width: 4, height: 4, borderRadius: '50%', background: 'var(--color-d-lime)' }
+  const dot: CSSProperties = {
+    width: 4,
+    height: 4,
+    borderRadius: '50%',
+    background: 'var(--color-d-lime)',
+  }
   return (
     <span
       style={{
@@ -646,7 +692,9 @@ function RegraCard({
         {num} · {tag}
       </div>
       <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 6 }}>{title}</div>
-      <p style={{ color: 'var(--color-d-mut)', fontSize: 14, lineHeight: 1.55, margin: 0 }}>{body}</p>
+      <p style={{ color: 'var(--color-d-mut)', fontSize: 14, lineHeight: 1.55, margin: 0 }}>
+        {body}
+      </p>
     </div>
   )
 }
@@ -702,7 +750,9 @@ function DifficultyChip({ value, label, color }: { value: string; label: string;
         minWidth: 88,
       }}
     >
-      <div style={{ fontFamily: 'Anton', fontSize: 30, color: color ?? 'var(--color-d-ink)' }}>{value}</div>
+      <div style={{ fontFamily: 'Anton', fontSize: 30, color: color ?? 'var(--color-d-ink)' }}>
+        {value}
+      </div>
       <div
         style={{
           fontFamily: 'Space Mono',
@@ -736,7 +786,17 @@ function CaminhoSection() {
   )
 }
 
-function PathCard({ num, title, sub, to }: { num: string; title: string; sub: string; to: string }) {
+function PathCard({
+  num,
+  title,
+  sub,
+  to,
+}: {
+  num: string
+  title: string
+  sub: string
+  to: string
+}) {
   return (
     <Link
       to={to}
@@ -754,7 +814,9 @@ function PathCard({ num, title, sub, to }: { num: string; title: string; sub: st
         textDecoration: 'none',
       }}
     >
-      <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-lime)' }}>{num}</span>
+      <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-lime)' }}>
+        {num}
+      </span>
       <span style={{ fontFamily: 'Anton', fontSize: 19 }}>{title}</span>
       <span style={{ fontSize: 12, color: 'var(--color-d-mut)' }}>{sub}</span>
     </Link>
@@ -817,7 +879,8 @@ function SelecoesSection() {
             maxWidth: 340,
           }}
         >
-          Cada seleção é um par de cores e um código de três letras. Limpo, rápido de ler e funciona pras 48.
+          Cada seleção é um par de cores e um código de três letras. Limpo, rápido de ler e funciona
+          pras 48.
         </p>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
@@ -1097,24 +1160,24 @@ function PrivacyDrawer({ onClose }: { onClose: () => void }) {
             <PrivacySection title="O QUE COLETAMOS">
               Tudo o que você joga no Draft 26 — formação escolhida, time montado, resultados de
               partidas e progressão na Copa — fica gravado{' '}
-              <b style={{ color: 'var(--color-d-ink)' }}>localmente no seu navegador</b> (localStorage).
-              Não pedimos cadastro, nome ou email pra jogar.
+              <b style={{ color: 'var(--color-d-ink)' }}>localmente no seu navegador</b>{' '}
+              (localStorage). Não pedimos cadastro, nome ou email pra jogar.
             </PrivacySection>
             <PrivacySection title="O QUE COMPARTILHAMOS">
-              Quando você termina uma campanha, um espelho anônimo do seu run pode ser enviado
-              pro nosso backend (Supabase, RLS-protected) pra alimentar leaderboards e estatísticas
+              Quando você termina uma campanha, um espelho anônimo do seu run pode ser enviado pro
+              nosso backend (Supabase, RLS-protected) pra alimentar leaderboards e estatísticas
               agregadas. Sem dados pessoais — só o XI, o desempenho e um ID anônimo.
             </PrivacySection>
             <PrivacySection title="COOKIES E TRACKING">
-              Usamos apenas armazenamento local pra manter seu progresso entre sessões. Sem
-              cookies de terceiros, sem analytics invasivo. Fontes Google (Anton / Archivo /
-              Space Mono) são carregadas via CDN.
+              Usamos apenas armazenamento local pra manter seu progresso entre sessões. Sem cookies
+              de terceiros, sem analytics invasivo. Fontes Google (Anton / Archivo / Space Mono) são
+              carregadas via CDN.
             </PrivacySection>
             <PrivacySection title="SEUS DIREITOS · LGPD">
-              Sob a Lei Geral de Proteção de Dados, você pode pedir acesso, correção ou exclusão
-              dos seus dados a qualquer momento. Como o jogo não exige cadastro, limpar o
-              localStorage do navegador já apaga tudo do seu lado. Pra remover o run espelhado
-              no backend, é só nos contatar.
+              Sob a Lei Geral de Proteção de Dados, você pode pedir acesso, correção ou exclusão dos
+              seus dados a qualquer momento. Como o jogo não exige cadastro, limpar o localStorage
+              do navegador já apaga tudo do seu lado. Pra remover o run espelhado no backend, é só
+              nos contatar.
             </PrivacySection>
             <PrivacySection title="CONTATO" last>
               Esta é uma versão preliminar. Quando finalizarmos os termos, adicionamos email de

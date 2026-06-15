@@ -1,5 +1,6 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+
 import {
   findSquad,
   POSITION_LABEL,
@@ -495,7 +496,11 @@ function PositionSection({ position, players }: { position: Position; players: P
         }}
       >
         {players.map((p, idx) => (
-          <PlayerRow key={`${p.name}-${p.shirt ?? idx}`} player={p} isLast={idx === players.length - 1} />
+          <PlayerRow
+            key={`${p.name}-${p.shirt ?? idx}`}
+            player={p}
+            isLast={idx === players.length - 1}
+          />
         ))}
       </div>
     </section>

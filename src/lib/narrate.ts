@@ -4,8 +4,8 @@
  * Não recalcula o resultado — só distribui os gols, cartões e narração
  * entre 1' e 90'.
  */
-import type { Player } from '../data/squads'
 import type { MatchResult } from './simulate'
+import type { Player } from '../data/squads'
 
 export type EventType = 'goal' | 'yellow' | 'red' | 'pen-scored' | 'pen-missed'
 

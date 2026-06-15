@@ -229,11 +229,7 @@ function ageBonus(age: number | null): number {
 
 function computeOverall(player: ScrapedPlayer): number {
   const base = clubBase(player.club)
-  const o =
-    base +
-    capsBonus(player.caps) +
-    ageBonus(player.age) +
-    (player.isCaptain ? 2 : 0)
+  const o = base + capsBonus(player.caps) + ageBonus(player.age) + (player.isCaptain ? 2 : 0)
   return Math.max(40, Math.min(99, Math.round(o)))
 }
 
@@ -263,8 +259,7 @@ async function main() {
       overall: computeOverall(p),
     }))
 
-    const avg =
-      Math.round((players.reduce((s, p) => s + p.overall, 0) / players.length) * 10) / 10
+    const avg = Math.round((players.reduce((s, p) => s + p.overall, 0) / players.length) * 10) / 10
 
     const t = tactics[squad.country]
     const formation = t

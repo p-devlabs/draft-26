@@ -17,6 +17,7 @@
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+
 import Papa from 'papaparse'
 
 // Nomes que diferem entre Wikipedia (convocações) e dataset FIFA
@@ -34,10 +35,37 @@ const WIKI_TO_FIFA: Record<string, string> = {
 // Cobre prefixos árabes ("al-"), holandeses ("van", "de"), espanhóis ("de la"),
 // portugueses ("dos", "da"), alemães ("von", "zu"), franceses ("le", "du"), etc.
 const STOPWORD_TOKENS = new Set([
-  'al', 'el', 'bin', 'ibn', 'abu', 'abd',
-  'van', 'von', 'der', 'den', 'ter', 'de', 'da', 'do', 'dos', 'das',
-  'la', 'le', 'les', 'du', 'di', 'del', 'della', 'lo',
-  'mc', 'mac', 'st', 'jr', 'sr', 'ii', 'iii',
+  'al',
+  'el',
+  'bin',
+  'ibn',
+  'abu',
+  'abd',
+  'van',
+  'von',
+  'der',
+  'den',
+  'ter',
+  'de',
+  'da',
+  'do',
+  'dos',
+  'das',
+  'la',
+  'le',
+  'les',
+  'du',
+  'di',
+  'del',
+  'della',
+  'lo',
+  'mc',
+  'mac',
+  'st',
+  'jr',
+  'sr',
+  'ii',
+  'iii',
 ])
 
 // Apelidos conhecidos onde o "nome de convocação" da Wikipedia difere muito
@@ -179,7 +207,10 @@ function tokensMatch(wanted: string, candidate: string): boolean {
     if (candTokens.has(t)) return true
     if (t.length >= 3 && candAll.some((c) => c.startsWith(t))) return true
     const nicks = nicknameVariants(t)
-    if (nicks.length && candAll.some((c) => nicks.includes(c) || nicks.some((n) => c.startsWith(n))))
+    if (
+      nicks.length &&
+      candAll.some((c) => nicks.includes(c) || nicks.some((n) => c.startsWith(n)))
+    )
       return true
     return false
   })
@@ -264,10 +295,26 @@ async function main() {
         let nameScore = 0
 
         for (const v of variants) {
-          if (ln === v || sn === v) { nameScore = 100; matched = true; break }
-          if (ln.includes(v) || v.includes(ln) || sn.includes(v)) { nameScore = 70; matched = true; break }
-          if (tokensMatch(v, ln) || tokensMatch(v, sn)) { nameScore = 60; matched = true; break }
-          if (initialPlusSurnameMatch(v, sn)) { nameScore = 55; matched = true; break }
+          if (ln === v || sn === v) {
+            nameScore = 100
+            matched = true
+            break
+          }
+          if (ln.includes(v) || v.includes(ln) || sn.includes(v)) {
+            nameScore = 70
+            matched = true
+            break
+          }
+          if (tokensMatch(v, ln) || tokensMatch(v, sn)) {
+            nameScore = 60
+            matched = true
+            break
+          }
+          if (initialPlusSurnameMatch(v, sn)) {
+            nameScore = 55
+            matched = true
+            break
+          }
         }
 
         if (matched) viable.push({ row: x, nameScore, isFuzzy: false })
@@ -282,7 +329,10 @@ async function main() {
           const sn = normalize(x.short_name)
           for (const v of variants) {
             const d = Math.min(levenshtein(v, ln), levenshtein(v, sn))
-            if (d < bestDist) { bestDist = d; best = x }
+            if (d < bestDist) {
+              bestDist = d
+              best = x
+            }
           }
         }
         const threshold = Math.max(2, Math.floor(wantedName.length * 0.2))
@@ -299,7 +349,10 @@ async function main() {
         // Bucket de posição: considera TODAS posições FIFA (primary + alt).
         // Penalidade só se NENHUMA delas cai no bucket da Wiki — versáteis tipo
         // Kimmich (CDM, RB, CM → MID + DEF) não são mais mortos pela penalidade.
-        const allPositions = v.row.player_positions.split(',').map((s) => s.trim()).filter(Boolean)
+        const allPositions = v.row.player_positions
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
         const buckets = new Set(allPositions.map((p) => POSITION_BUCKET[p]).filter(Boolean))
         if (buckets.has(player.position)) score += 50
         else if (buckets.size > 0) score -= 10 // suave (era -30)

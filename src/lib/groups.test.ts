@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@jest/globals'
+
+import { squads } from '../data/squads'
+
+import { createDraft, pickPlayer } from './draft'
 import {
   USER_TEAM_CODE,
   computeQualifiers,
@@ -19,8 +23,6 @@ import {
   type GroupTeam,
   type WorldCupGroups,
 } from './groups'
-import { createDraft, pickPlayer } from './draft'
-import { squads } from '../data/squads'
 import { seededRng } from './simulate'
 
 function makeStage(): GroupStage {
@@ -75,7 +77,7 @@ function team(code: string, overall = 75, isUser = false): GroupTeam {
 
 function fakeStage(
   teams: [GroupTeam, GroupTeam, GroupTeam, GroupTeam],
-  results: Array<{ home: string; away: string; hg: number; ag: number; round: 1 | 2 | 3 }>,
+  results: { home: string; away: string; hg: number; ag: number; round: 1 | 2 | 3 }[],
 ): GroupStage {
   const matches: GroupMatch[] = results.map((r) => ({
     round: r.round,
@@ -192,8 +194,7 @@ function makeStrongDraft() {
     const player = brazil.players.find(
       (p) =>
         !used.has(p.name) &&
-        (p.primaryPosition === slot.pos ||
-          (p.altPositions ?? []).includes(slot.pos)),
+        (p.primaryPosition === slot.pos || (p.altPositions ?? []).includes(slot.pos)),
     )
     if (!player) continue
     used.add(player.name)
@@ -283,11 +284,14 @@ describe('createWorldCup', () => {
         .sort((a, b) => a.averageOverall - b.averageOverall)
       // Posição do replaced dentro do ranking ascendente.
       const replacedOvr = inferReplacedOverall(survivorsAsc, ug.replacedTeam.code)
-      const rank = countLessThan(survivorsAsc.map((t) => t.averageOverall), replacedOvr)
+      const rank = countLessThan(
+        survivorsAsc.map((t) => t.averageOverall),
+        replacedOvr,
+      )
       ranks[rank]++
     }
     // Tolerância larga porque amostragem aleatória + 4 categorias.
-    expect(ranks[0]).toBeGreaterThan(N * 0.30) // weakest esperado ~40%
+    expect(ranks[0]).toBeGreaterThan(N * 0.3) // weakest esperado ~40%
     expect(ranks[3]).toBeGreaterThan(N * 0.05) // strongest esperado ~10%
     // E a ordem deve ser monotonicamente decrescente: weakest > 2nd > 3rd > strongest
     expect(ranks[0]).toBeGreaterThan(ranks[3])
@@ -356,9 +360,7 @@ describe('computeQualifiers', () => {
     const qs = computeQualifiers(worldCup)
     for (const g of worldCup.groups) {
       const champion = standings(g)[0].team.code
-      const isQualified = qs.some(
-        (q) => q.teamCode === champion && q.groupPosition === 1,
-      )
+      const isQualified = qs.some((q) => q.teamCode === champion && q.groupPosition === 1)
       expect(isQualified).toBe(true)
     }
   })
@@ -390,28 +392,62 @@ describe('computeQualifiers', () => {
 
 describe('userQualifies + userFate (Copa 2026 rule)', () => {
   // Helper: monta um worldCup mock onde o user tem standings específicos no grupo dele.
-  function worldCupWithUserStanding(userPoints: number, userGd: number, userGf: number): WorldCupGroups {
+  function worldCupWithUserStanding(
+    userPoints: number,
+    userGd: number,
+    userGf: number,
+  ): WorldCupGroups {
     // 12 grupos: cada um com 4 times. O user fica no grupo "U", os outros 11
     // são "G0"..."G10" gerados sinteticamente.
-    const userTeam: GroupTeam = { code: USER_TEAM_CODE, name: 'You', flag: '⚡', averageOverall: 75, isUser: true }
-    const t = (code: string, ovr = 70): GroupTeam => ({ code, name: code, flag: '🏳️', averageOverall: ovr, isUser: false })
+    const userTeam: GroupTeam = {
+      code: USER_TEAM_CODE,
+      name: 'You',
+      flag: '⚡',
+      averageOverall: 75,
+      isUser: true,
+    }
+    const t = (code: string, ovr = 70): GroupTeam => ({
+      code,
+      name: code,
+      flag: '🏳️',
+      averageOverall: ovr,
+      isUser: false,
+    })
 
     // User group: monto resultados pra dar a standings desejada ao user.
     // Pra simplificar: time A vence B, vence C, e o user tem pontos/gd desejados.
     // Estratégia: A bate B 2-0, A bate C 1-0; user e D dependem.
     const userTeams: [GroupTeam, GroupTeam, GroupTeam, GroupTeam] = [
-      userTeam, t('UA', 76), t('UB', 74), t('UC', 72),
+      userTeam,
+      t('UA', 76),
+      t('UB', 74),
+      t('UC', 72),
     ]
     // 6 jogos: vou construir manualmente
     const userMatchesArr: GroupMatch[] = [
       // round 1
-      { round: 1, homeCode: USER_TEAM_CODE, awayCode: 'UA', result: { homeGoals: userPoints >= 3 ? 1 : 0, awayGoals: 0 } },
+      {
+        round: 1,
+        homeCode: USER_TEAM_CODE,
+        awayCode: 'UA',
+        result: { homeGoals: userPoints >= 3 ? 1 : 0, awayGoals: 0 },
+      },
       { round: 1, homeCode: 'UB', awayCode: 'UC', result: { homeGoals: 3, awayGoals: 0 } },
       // round 2
-      { round: 2, homeCode: USER_TEAM_CODE, awayCode: 'UB', result: { homeGoals: userGf >= 2 ? 1 : 0, awayGoals: 1 } },
+      {
+        round: 2,
+        homeCode: USER_TEAM_CODE,
+        awayCode: 'UB',
+        result: { homeGoals: userGf >= 2 ? 1 : 0, awayGoals: 1 },
+      },
       { round: 2, homeCode: 'UA', awayCode: 'UC', result: { homeGoals: 2, awayGoals: 0 } },
       // round 3
-      { round: 3, homeCode: USER_TEAM_CODE, awayCode: 'UC', result: { homeGoals: userGf, awayGoals: Math.max(0, userGf - userGd) } },
+      {
+        round: 3,
+        homeCode: USER_TEAM_CODE,
+        awayCode: 'UC',
+        result: { homeGoals: userGf, awayGoals: Math.max(0, userGf - userGd) },
+      },
       { round: 3, homeCode: 'UA', awayCode: 'UB', result: { homeGoals: 2, awayGoals: 1 } },
     ]
     const userGroup: GroupStage = {
@@ -427,17 +463,50 @@ describe('userQualifies + userFate (Copa 2026 rule)', () => {
     const cpuGroups: GroupStage[] = []
     for (let i = 0; i < 11; i++) {
       const teams: [GroupTeam, GroupTeam, GroupTeam, GroupTeam] = [
-        t(`G${i}A`, 78), t(`G${i}B`, 76), t(`G${i}C`, 74), t(`G${i}D`, 70),
+        t(`G${i}A`, 78),
+        t(`G${i}B`, 76),
+        t(`G${i}C`, 74),
+        t(`G${i}D`, 70),
       ]
       // Padrão: A bate todos, B bate C e D, C e D fazem 1-1.
       // Standings esperada: A 9, B 6, C 4 (1V 1E 1D = 4), D 1 (1E 2D)
       const matches: GroupMatch[] = [
-        { round: 1, homeCode: `G${i}A`, awayCode: `G${i}B`, result: { homeGoals: 2, awayGoals: 0 } },
-        { round: 1, homeCode: `G${i}C`, awayCode: `G${i}D`, result: { homeGoals: 1, awayGoals: 1 } },
-        { round: 2, homeCode: `G${i}A`, awayCode: `G${i}C`, result: { homeGoals: 3, awayGoals: 0 } },
-        { round: 2, homeCode: `G${i}B`, awayCode: `G${i}D`, result: { homeGoals: 2, awayGoals: 0 } },
-        { round: 3, homeCode: `G${i}A`, awayCode: `G${i}D`, result: { homeGoals: 2, awayGoals: 1 } },
-        { round: 3, homeCode: `G${i}B`, awayCode: `G${i}C`, result: { homeGoals: 1, awayGoals: 0 } },
+        {
+          round: 1,
+          homeCode: `G${i}A`,
+          awayCode: `G${i}B`,
+          result: { homeGoals: 2, awayGoals: 0 },
+        },
+        {
+          round: 1,
+          homeCode: `G${i}C`,
+          awayCode: `G${i}D`,
+          result: { homeGoals: 1, awayGoals: 1 },
+        },
+        {
+          round: 2,
+          homeCode: `G${i}A`,
+          awayCode: `G${i}C`,
+          result: { homeGoals: 3, awayGoals: 0 },
+        },
+        {
+          round: 2,
+          homeCode: `G${i}B`,
+          awayCode: `G${i}D`,
+          result: { homeGoals: 2, awayGoals: 0 },
+        },
+        {
+          round: 3,
+          homeCode: `G${i}A`,
+          awayCode: `G${i}D`,
+          result: { homeGoals: 2, awayGoals: 1 },
+        },
+        {
+          round: 3,
+          homeCode: `G${i}B`,
+          awayCode: `G${i}C`,
+          result: { homeGoals: 1, awayGoals: 0 },
+        },
       ]
       cpuGroups.push({
         letter: String.fromCharCode(65 + i + 1), // B, C, D...

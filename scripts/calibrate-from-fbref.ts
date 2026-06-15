@@ -101,7 +101,9 @@ function invert(m: number[][]): number[][] {
 }
 
 function matMul(a: number[][], b: number[][]): number[][] {
-  const m = a.length, n = a[0].length, p = b[0].length
+  const m = a.length,
+    n = a[0].length,
+    p = b[0].length
   const out = Array.from({ length: m }, () => new Array(p).fill(0))
   for (let i = 0; i < m; i++) {
     for (let j = 0; j < p; j++) {
@@ -114,7 +116,8 @@ function matMul(a: number[][], b: number[][]): number[][] {
 }
 
 function transpose(a: number[][]): number[][] {
-  const m = a.length, n = a[0].length
+  const m = a.length,
+    n = a[0].length
   const out = Array.from({ length: n }, () => new Array(m).fill(0))
   for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) out[j][i] = a[i][j]
   return out
@@ -125,7 +128,10 @@ function ols(X: number[][], y: number[]): number[] {
   const Xt = transpose(X)
   const XtX = matMul(Xt, X)
   const XtXinv = invert(XtX)
-  const Xty = matMul(Xt, y.map((v) => [v]))
+  const Xty = matMul(
+    Xt,
+    y.map((v) => [v]),
+  )
   const beta = matMul(XtXinv, Xty)
   return beta.map((r) => r[0])
 }
@@ -190,8 +196,7 @@ async function main() {
   const allPlayers: PlayerEnriched[] = []
   for (const sq of squads) allPlayers.push(...sq.players)
 
-  const isFifa = (p: PlayerEnriched) =>
-    p.ratingSource === 'fifa' || p.ratingSource === 'fifa-fuzzy'
+  const isFifa = (p: PlayerEnriched) => p.ratingSource === 'fifa' || p.ratingSource === 'fifa-fuzzy'
 
   const models: Partial<Record<Bucket, number[]>> = {}
 
@@ -216,7 +221,8 @@ async function main() {
 
     // R² in-sample pra diagnóstico
     const meanY = yrows.reduce((a, b) => a + b, 0) / yrows.length
-    let ssRes = 0, ssTot = 0
+    let ssRes = 0,
+      ssTot = 0
     for (let i = 0; i < Xrows.length; i++) {
       const pred = Xrows[i].reduce((s, v, j) => s + v * beta[j], 0)
       ssRes += (yrows[i] - pred) ** 2
@@ -225,10 +231,7 @@ async function main() {
     const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0
     console.log(`▸ ${bucket}: fit em ${Xrows.length} jogadores, R²=${r2.toFixed(3)}`)
     console.log(
-      `  β: ` +
-        FEATURE_NAMES[bucket]
-          .map((n, j) => `${n}=${beta[j].toFixed(2)}`)
-          .join(' · '),
+      `  β: ` + FEATURE_NAMES[bucket].map((n, j) => `${n}=${beta[j].toFixed(2)}`).join(' · '),
     )
   }
 

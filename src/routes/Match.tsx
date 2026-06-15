@@ -1,5 +1,19 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+
+import { PenaltiesCard } from '../components/PenaltiesCard'
+import {
+  applyResult,
+  findMatch as findKnockoutMatch,
+  fullySimulate,
+  ROUND_LABEL,
+  ROUND_ORDER,
+  ensureRoundsSimulated,
+  type BracketMatch,
+  type KnockoutBracket,
+  type KORound,
+  type Penalties,
+} from '../lib/bracket'
 import {
   findTeam,
   playCpuRound,
@@ -14,21 +28,8 @@ import {
   type UserFate,
   type WorldCupGroups,
 } from '../lib/groups'
-import {
-  applyResult,
-  findMatch as findKnockoutMatch,
-  fullySimulate,
-  ROUND_LABEL,
-  ROUND_ORDER,
-  ensureRoundsSimulated,
-  type BracketMatch,
-  type KnockoutBracket,
-  type KORound,
-  type Penalties,
-} from '../lib/bracket'
-import { rosterForKnockout } from '../lib/rosters'
-import { PenaltiesCard } from '../components/PenaltiesCard'
 import { narrateMatch } from '../lib/narrate'
+import { nationGradient } from '../lib/nation-colors'
 import {
   loadBracket,
   loadMatchSpeed,
@@ -37,11 +38,12 @@ import {
   saveMatchSpeed,
   saveWorldCup,
 } from '../lib/persistence'
-import { nationGradient } from '../lib/nation-colors'
 import { SLOT_LABEL } from '../lib/positions'
-import type { MatchEvent } from '../lib/narrate'
-import type { DraftState, DraftSlot } from '../lib/draft'
+import { rosterForKnockout } from '../lib/rosters'
 import { track } from '../lib/track'
+
+import type { DraftState, DraftSlot } from '../lib/draft'
+import type { MatchEvent } from '../lib/narrate'
 
 type Speed = 'slow' | 'normal' | 'fast'
 
@@ -72,7 +74,8 @@ export function Match() {
   const navigate = useNavigate()
   const kind: MatchKind = params.get('kind') === 'knockout' ? 'knockout' : 'group'
 
-  if (kind === 'knockout') return <KnockoutMatchRunner navigate={navigate} matchId={params.get('id') ?? ''} />
+  if (kind === 'knockout')
+    return <KnockoutMatchRunner navigate={navigate} matchId={params.get('id') ?? ''} />
   return <GroupMatchRunner navigate={navigate} round={Number(params.get('round')) as 1 | 2 | 3} />
 }
 
@@ -165,7 +168,8 @@ function GroupMatchRunner({
     if (!data) return null
     return (
       data.stage.matches.find(
-        (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
+        (m) =>
+          m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
       ) ?? null
     )
   }, [data, round])
@@ -234,11 +238,17 @@ function GroupMatchRunner({
     [events, wholeMinute],
   )
   const homeGoals = useMemo(
-    () => (homeTeam ? revealed.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length : 0),
+    () =>
+      homeTeam
+        ? revealed.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
+        : 0,
     [revealed, homeTeam],
   )
   const awayGoals = useMemo(
-    () => (awayTeam ? revealed.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length : 0),
+    () =>
+      awayTeam
+        ? revealed.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
+        : 0,
     [revealed, awayTeam],
   )
 
@@ -247,14 +257,24 @@ function GroupMatchRunner({
   const home = useMemo<SideTeam | null>(
     () =>
       homeTeam
-        ? { code: homeTeam.code, name: homeTeam.name, averageOverall: homeTeam.averageOverall, isUser: homeTeam.isUser }
+        ? {
+            code: homeTeam.code,
+            name: homeTeam.name,
+            averageOverall: homeTeam.averageOverall,
+            isUser: homeTeam.isUser,
+          }
         : null,
     [homeTeam],
   )
   const away = useMemo<SideTeam | null>(
     () =>
       awayTeam
-        ? { code: awayTeam.code, name: awayTeam.name, averageOverall: awayTeam.averageOverall, isUser: awayTeam.isUser }
+        ? {
+            code: awayTeam.code,
+            name: awayTeam.name,
+            averageOverall: awayTeam.averageOverall,
+            isUser: awayTeam.isUser,
+          }
         : null,
     [awayTeam],
   )
@@ -266,10 +286,19 @@ function GroupMatchRunner({
 
   const outcomeContext = useMemo(() => {
     if (!data || !homeTeam || !awayTeam) return null
-    return buildGroupOutcomeContext(data.worldCup, data.draft, round, homeTeam, awayTeam, homeGoals, awayGoals)
+    return buildGroupOutcomeContext(
+      data.worldCup,
+      data.draft,
+      round,
+      homeTeam,
+      awayTeam,
+      homeGoals,
+      awayGoals,
+    )
   }, [data, homeTeam, awayTeam, round, homeGoals, awayGoals])
 
-  if (!data || !userMatch || !homeTeam || !awayTeam || !home || !away || !outcomeContext) return <Loading />
+  if (!data || !userMatch || !homeTeam || !awayTeam || !home || !away || !outcomeContext)
+    return <Loading />
 
   return (
     <PartidaShell
@@ -353,7 +382,12 @@ function buildGroupOutcomeContext(
 }
 
 function computeGroupCampaign(stage: GroupStage): CampaignStats {
-  let jogos = 0, w = 0, d = 0, l = 0, gf = 0, ga = 0
+  let jogos = 0,
+    w = 0,
+    d = 0,
+    l = 0,
+    gf = 0,
+    ga = 0
   for (const m of stage.matches) {
     if (!m.result) continue
     if (m.homeCode !== USER_TEAM_CODE && m.awayCode !== USER_TEAM_CODE) continue
@@ -409,10 +443,12 @@ function KnockoutMatchRunner({
     },
     [matchId, speed],
   )
-  const [simResult, setSimResult] = useState<
-    | { events: MatchEvent[]; extraTime?: { homeGoals: number; awayGoals: number }; penalties?: Penalties; winner: 'home' | 'away' }
-    | null
-  >(null)
+  const [simResult, setSimResult] = useState<{
+    events: MatchEvent[]
+    extraTime?: { homeGoals: number; awayGoals: number }
+    penalties?: Penalties
+    winner: 'home' | 'away'
+  } | null>(null)
   /**
    * Quantas cobranças do shootout já foram reveladas. Avança automaticamente
    * a cada PENALTY_KICK_MS quando o tempo regulamentar (e ET, se houver)
@@ -435,7 +471,7 @@ function KnockoutMatchRunner({
       return
     }
     const match = findKnockoutMatch(br, matchId)
-    if (!match || !match.homeCode || !match.awayCode) {
+    if (!match?.homeCode || !match.awayCode) {
       navigate('/bracket', { replace: true })
       return
     }
@@ -444,8 +480,14 @@ function KnockoutMatchRunner({
 
     const home = br.teams[match.homeCode]
     const away = br.teams[match.awayCode]
-    const homeRoster = rosterForKnockout(home.code, persisted.draft, { name: home.name, flag: home.flag })
-    const awayRoster = rosterForKnockout(away.code, persisted.draft, { name: away.name, flag: away.flag })
+    const homeRoster = rosterForKnockout(home.code, persisted.draft, {
+      name: home.name,
+      flag: home.flag,
+    })
+    const awayRoster = rosterForKnockout(away.code, persisted.draft, {
+      name: away.name,
+      flag: away.flag,
+    })
     const sim = fullySimulate(home, away, Math.random, {
       difficulty: persisted.draft.difficulty,
       homeRoster,
@@ -537,10 +579,12 @@ function KnockoutMatchRunner({
     const reg = match.result
     const extra = match.extraTime ?? { homeGoals: 0, awayGoals: 0 }
     const userGoals = reg
-      ? (userIsHome ? reg.homeGoals : reg.awayGoals) + (userIsHome ? extra.homeGoals : extra.awayGoals)
+      ? (userIsHome ? reg.homeGoals : reg.awayGoals) +
+        (userIsHome ? extra.homeGoals : extra.awayGoals)
       : 0
     const oppGoals = reg
-      ? (userIsHome ? reg.awayGoals : reg.homeGoals) + (userIsHome ? extra.awayGoals : extra.homeGoals)
+      ? (userIsHome ? reg.awayGoals : reg.homeGoals) +
+        (userIsHome ? extra.awayGoals : extra.homeGoals)
       : 0
     void track('match_completed', {
       kind: 'knockout',
@@ -618,14 +662,18 @@ function KnockoutMatchRunner({
 
   const homeGoals = useMemo(() => {
     if (!homeTeam) return 0
-    const reg = revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
+    const reg = revealedRegular.filter(
+      (e) => e.type === 'goal' && e.teamCode === homeTeam.code,
+    ).length
     const extra = inExtraTime ? (simResult?.extraTime?.homeGoals ?? 0) : 0
     return reg + extra
   }, [revealedRegular, homeTeam, inExtraTime, simResult])
 
   const awayGoals = useMemo(() => {
     if (!awayTeam) return 0
-    const reg = revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
+    const reg = revealedRegular.filter(
+      (e) => e.type === 'goal' && e.teamCode === awayTeam.code,
+    ).length
     const extra = inExtraTime ? (simResult?.extraTime?.awayGoals ?? 0) : 0
     return reg + extra
   }, [revealedRegular, awayTeam, inExtraTime, simResult])
@@ -633,14 +681,24 @@ function KnockoutMatchRunner({
   const home = useMemo<SideTeam | null>(
     () =>
       homeTeam
-        ? { code: homeTeam.code, name: homeTeam.name, averageOverall: homeTeam.averageOverall, isUser: homeTeam.isUser }
+        ? {
+            code: homeTeam.code,
+            name: homeTeam.name,
+            averageOverall: homeTeam.averageOverall,
+            isUser: homeTeam.isUser,
+          }
         : null,
     [homeTeam],
   )
   const away = useMemo<SideTeam | null>(
     () =>
       awayTeam
-        ? { code: awayTeam.code, name: awayTeam.name, averageOverall: awayTeam.averageOverall, isUser: awayTeam.isUser }
+        ? {
+            code: awayTeam.code,
+            name: awayTeam.name,
+            averageOverall: awayTeam.averageOverall,
+            isUser: awayTeam.isUser,
+          }
         : null,
     [awayTeam],
   )
@@ -653,10 +711,29 @@ function KnockoutMatchRunner({
 
   const outcomeContext = useMemo(() => {
     if (!bracket || !stage || !draft || !match) return null
-    return buildKnockoutOutcomeContext(bracket, stage, draft, match, homeGoals, awayGoals, simResult?.penalties)
+    return buildKnockoutOutcomeContext(
+      bracket,
+      stage,
+      draft,
+      match,
+      homeGoals,
+      awayGoals,
+      simResult?.penalties,
+    )
   }, [bracket, stage, draft, match, homeGoals, awayGoals, simResult])
 
-  if (!bracket || !simResult || !draft || !stage || !match || !homeTeam || !awayTeam || !home || !away || !outcomeContext)
+  if (
+    !bracket ||
+    !simResult ||
+    !draft ||
+    !stage ||
+    !match ||
+    !homeTeam ||
+    !awayTeam ||
+    !home ||
+    !away ||
+    !outcomeContext
+  )
     return <Loading />
 
   const phaseLabel = `${ROUND_LABEL[match.round].toUpperCase()} · COPA 2026`
@@ -752,7 +829,12 @@ function nextRoundOfLabel(r: KORound): string | null {
 }
 
 function computeFullCampaign(stage: GroupStage, bracket: KnockoutBracket): CampaignStats {
-  let jogos = 0, w = 0, d = 0, l = 0, gf = 0, ga = 0
+  let jogos = 0,
+    w = 0,
+    d = 0,
+    l = 0,
+    gf = 0,
+    ga = 0
   for (const m of stage.matches) {
     if (!m.result) continue
     if (m.homeCode !== USER_TEAM_CODE && m.awayCode !== USER_TEAM_CODE) continue
@@ -760,7 +842,8 @@ function computeFullCampaign(stage: GroupStage, bracket: KnockoutBracket): Campa
     const userIsHome = m.homeCode === USER_TEAM_CODE
     const ug = userIsHome ? m.result.homeGoals : m.result.awayGoals
     const og = userIsHome ? m.result.awayGoals : m.result.homeGoals
-    gf += ug; ga += og
+    gf += ug
+    ga += og
     if (ug > og) w++
     else if (ug === og) d++
     else l++
@@ -772,9 +855,14 @@ function computeFullCampaign(stage: GroupStage, bracket: KnockoutBracket): Campa
     const userIsHome = m.homeCode === bracket.userCode
     const reg = m.result
     const extra = m.extraTime ?? { homeGoals: 0, awayGoals: 0 }
-    const userTotal = (userIsHome ? reg.homeGoals : reg.awayGoals) + (userIsHome ? extra.homeGoals : extra.awayGoals)
-    const oppTotal = (userIsHome ? reg.awayGoals : reg.homeGoals) + (userIsHome ? extra.awayGoals : extra.homeGoals)
-    gf += userTotal; ga += oppTotal
+    const userTotal =
+      (userIsHome ? reg.homeGoals : reg.awayGoals) +
+      (userIsHome ? extra.homeGoals : extra.awayGoals)
+    const oppTotal =
+      (userIsHome ? reg.awayGoals : reg.homeGoals) +
+      (userIsHome ? extra.awayGoals : extra.homeGoals)
+    gf += userTotal
+    ga += oppTotal
     if (m.winnerCode === bracket.userCode) w++
     else if (m.winnerCode) l++
     else d++
@@ -981,11 +1069,7 @@ function PartidaShell(p: PartidaShellProps) {
         />
       </Body>
       {isOutcomeOpen && (
-        <OutcomeDrawer
-          outcome={p.outcome!}
-          ctx={p.outcomeContext}
-          onClose={p.onCloseOutcome}
-        />
+        <OutcomeDrawer outcome={p.outcome!} ctx={p.outcomeContext} onClose={p.onCloseOutcome} />
       )}
     </div>
   )
@@ -994,7 +1078,14 @@ function PartidaShell(p: PartidaShellProps) {
 function Loading() {
   return (
     <div className="d26-scope flex items-center justify-center" style={{ minHeight: '60vh' }}>
-      <span style={{ fontFamily: 'Space Mono', fontSize: 12, letterSpacing: '0.12em', color: 'var(--color-d-mut)' }}>
+      <span
+        style={{
+          fontFamily: 'Space Mono',
+          fontSize: 12,
+          letterSpacing: '0.12em',
+          color: 'var(--color-d-mut)',
+        }}
+      >
         A PARTIDA VAI COMEÇAR…
       </span>
     </div>
@@ -1027,7 +1118,16 @@ const AppBar = memo(function AppBar({ phaseLabel }: { phaseLabel: string }) {
         <DiceMark />
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
           <span style={{ fontFamily: 'Anton', fontSize: 23, letterSpacing: '0.02em' }}>DRAFT</span>
-          <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-lime)', fontWeight: 700 }}>26</span>
+          <span
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 11,
+              color: 'var(--color-d-lime)',
+              fontWeight: 700,
+            }}
+          >
+            26
+          </span>
         </div>
       </Link>
       <nav
@@ -1086,7 +1186,14 @@ function NavPill({
   }
   if (active) {
     return (
-      <span style={{ ...base, fontWeight: 700, background: 'var(--color-d-lime)', color: 'var(--color-d-bg)' }}>
+      <span
+        style={{
+          ...base,
+          fontWeight: 700,
+          background: 'var(--color-d-lime)',
+          color: 'var(--color-d-bg)',
+        }}
+      >
         {label}
       </span>
     )
@@ -1150,7 +1257,17 @@ function dotStyle(justify?: 'end' | 'center'): CSSProperties {
 // ---------- Scoreboard ----------
 
 function ScoreboardHero({
-  home, away, homeGoals, awayGoals, clockMinute, totalMinutes, playing, finished, shootoutActive, shootoutKicksRevealed, markers,
+  home,
+  away,
+  homeGoals,
+  awayGoals,
+  clockMinute,
+  totalMinutes,
+  playing,
+  finished,
+  shootoutActive,
+  shootoutKicksRevealed,
+  markers,
 }: {
   home: SideTeam
   away: SideTeam
@@ -1169,7 +1286,12 @@ function ScoreboardHero({
     : computeStatusLabel(clockMinute, totalMinutes, playing, finished)
   const pct = (Math.min(clockMinute, totalMinutes) / totalMinutes) * 100
   return (
-    <div style={{ background: 'linear-gradient(180deg, #101310, #0a0b09)', borderBottom: '1px solid var(--color-d-line)' }}>
+    <div
+      style={{
+        background: 'linear-gradient(180deg, #101310, #0a0b09)',
+        borderBottom: '1px solid var(--color-d-line)',
+      }}
+    >
       <div
         style={{
           maxWidth: 1080,
@@ -1183,9 +1305,24 @@ function ScoreboardHero({
       >
         <TeamSide team={home} reverse={false} />
         <div style={{ textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2.5vw, 14px)', justifyContent: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'clamp(8px, 2.5vw, 14px)',
+              justifyContent: 'center',
+            }}
+          >
             <ScoreNumber value={homeGoals} isUser={home.isUser} />
-            <span style={{ fontFamily: 'Anton', fontSize: 'clamp(22px, 6vw, 34px)', color: 'var(--color-d-mut)' }}>—</span>
+            <span
+              style={{
+                fontFamily: 'Anton',
+                fontSize: 'clamp(22px, 6vw, 34px)',
+                color: 'var(--color-d-mut)',
+              }}
+            >
+              —
+            </span>
             <ScoreNumber value={awayGoals} isUser={away.isUser} />
           </div>
           <div
@@ -1209,10 +1346,24 @@ function ScoreboardHero({
                 animation: playing ? 'd26-blink 1s infinite' : 'none',
               }}
             />
-            <span style={{ fontFamily: 'Space Mono', fontSize: 'clamp(12px, 2.4vw, 13px)', fontWeight: 700, letterSpacing: '0.06em' }}>
+            <span
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 'clamp(12px, 2.4vw, 13px)',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+              }}
+            >
               {finished ? `${totalMinutes}'` : `${clockMinute}'`}
             </span>
-            <span style={{ fontFamily: 'Space Mono', fontSize: 10, color: 'var(--color-d-mut)', letterSpacing: '0.08em' }}>
+            <span
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 10,
+                color: 'var(--color-d-mut)',
+                letterSpacing: '0.08em',
+              }}
+            >
               {statusLabel}
             </span>
           </div>
@@ -1221,7 +1372,14 @@ function ScoreboardHero({
       </div>
 
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 clamp(16px, 4vw, 28px) 18px' }}>
-        <div style={{ position: 'relative', height: 8, borderRadius: 6, background: 'var(--color-d-surface2)' }}>
+        <div
+          style={{
+            position: 'relative',
+            height: 8,
+            borderRadius: 6,
+            background: 'var(--color-d-surface2)',
+          }}
+        >
           <div
             style={{
               position: 'absolute',
@@ -1269,7 +1427,12 @@ function ScoreboardHero({
   )
 }
 
-function computeStatusLabel(minute: number, total: number, playing: boolean, finished: boolean): string {
+function computeStatusLabel(
+  minute: number,
+  total: number,
+  playing: boolean,
+  finished: boolean,
+): string {
   if (finished) return 'ENCERRADO'
   if (minute === 0) return 'APITO INICIAL'
   if (!playing) return 'PAUSADO'
@@ -1355,7 +1518,15 @@ function TeamBadge({ team }: { team: SideTeam }) {
   }
   if (team.isUser) {
     return (
-      <div style={{ ...sizeStyle, background: 'var(--color-d-lime)', fontSize: 'clamp(17px, 4vw, 22px)' }}>⚄</div>
+      <div
+        style={{
+          ...sizeStyle,
+          background: 'var(--color-d-lime)',
+          fontSize: 'clamp(17px, 4vw, 22px)',
+        }}
+      >
+        ⚄
+      </div>
     )
   }
   return (
@@ -1389,7 +1560,6 @@ function TeamBadge({ team }: { team: SideTeam }) {
     </div>
   )
 }
-
 
 // ---------- Body / Lances / Right Column ----------
 
@@ -1475,7 +1645,9 @@ const LancesFeed = memo(function LancesFeed({
             A PARTIDA VAI COMEÇAR…
           </div>
         ) : (
-          reversed.map((ev, i) => <LanceRow key={`${ev.minute}-${i}`} ev={ev} home={home} away={away} />)
+          reversed.map((ev, i) => (
+            <LanceRow key={`${ev.minute}-${i}`} ev={ev} home={home} away={away} />
+          ))
         )}
       </div>
     </div>
@@ -1519,14 +1691,30 @@ function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: Si
           flex: '0 0 auto',
         }}
       >
-        <span style={{ fontFamily: 'Anton', fontSize: ev.label ? 13 : 18, color: styling.minColor, whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>
+        <span
+          style={{
+            fontFamily: 'Anton',
+            fontSize: ev.label ? 13 : 18,
+            color: styling.minColor,
+            whiteSpace: 'nowrap',
+            letterSpacing: '0.04em',
+          }}
+        >
           {ev.label ?? `${ev.minute}'`}
         </span>
         <span style={{ fontSize: 14, lineHeight: 1 }}>{styling.emoji}</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         {styling.chip && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 5,
+              flexWrap: 'wrap',
+            }}
+          >
             <span
               style={{
                 fontFamily: 'Space Mono',
@@ -1688,7 +1876,9 @@ function RightColumn(props: {
   revealedEvents: MatchEvent[]
 }) {
   return (
-    <div style={{ flex: '2 1 250px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
+    <div
+      style={{ flex: '2 1 250px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}
+    >
       <SimulationPanel {...props} />
       {props.penalties && (
         <PenaltiesCard
@@ -1886,7 +2076,6 @@ const SimulationPanel = memo(function SimulationPanel(props: {
   )
 })
 
-
 // ---------- Sidebar "SEU XI EM CAMPO" ----------
 
 const LINE_ORDER: { key: 'GOL' | 'DEF' | 'MEI' | 'ATA'; label: string }[] = [
@@ -2004,7 +2193,9 @@ const LineupCard = memo(function LineupCard({
             <span style={{ fontSize: 11 }}>⚽</span>GOL
           </span>
           <span style={{ width: 9, height: 12, borderRadius: 2, background: '#f5d11e' }} />
-          <span style={{ width: 9, height: 12, borderRadius: 2, background: 'var(--color-d-red)' }} />
+          <span
+            style={{ width: 9, height: 12, borderRadius: 2, background: 'var(--color-d-red)' }}
+          />
         </div>
       </div>
       <div style={{ padding: '4px 8px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -2387,7 +2578,9 @@ function OutcomeDrawer({
             <TeamChosenCard draft={ctx.draft} />
             <CampaignStatsRow stats={ctx.stats} />
             {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
-            {cfg.champion && <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />}
+            {cfg.champion && (
+              <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />
+            )}
             {!cfg.champion && cfg.showShare && <CompactShare surface={outcome} />}
             <OutcomeActions cfg={cfg} />
           </div>
@@ -2480,7 +2673,14 @@ function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => vo
         >
           {cfg.title}
         </h2>
-        <div style={{ fontFamily: 'Space Mono', fontSize: 12, color: cfg.champion ? 'rgba(10,11,9,0.6)' : 'var(--color-d-mut)', marginTop: 8 }}>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 12,
+            color: cfg.champion ? 'rgba(10,11,9,0.6)' : 'var(--color-d-mut)',
+            marginTop: 8,
+          }}
+        >
           {cfg.sub}
         </div>
       </div>
@@ -2496,9 +2696,7 @@ function MatchResultCard({
   result: OutcomeContext['matchResult']
 }) {
   const { userGoals, oppGoals, oppLabel, penalties } = result
-  const userWon = penalties
-    ? penalties.userScored > penalties.oppScored
-    : userGoals > oppGoals
+  const userWon = penalties ? penalties.userScored > penalties.oppScored : userGoals > oppGoals
 
   return (
     <div
@@ -2616,9 +2814,20 @@ function PenaltyDots({
           </span>
         </span>
       </div>
-      <PenaltyRow label="SEU XI" kicks={userKicks} totalSlots={totalSlots} ours scoredColor="var(--color-d-lime)" />
+      <PenaltyRow
+        label="SEU XI"
+        kicks={userKicks}
+        totalSlots={totalSlots}
+        ours
+        scoredColor="var(--color-d-lime)"
+      />
       <div style={{ height: 6 }} />
-      <PenaltyRow label="OPP" kicks={oppKicks} totalSlots={totalSlots} scoredColor="var(--color-d-ink)" />
+      <PenaltyRow
+        label="OPP"
+        kicks={oppKicks}
+        totalSlots={totalSlots}
+        scoredColor="var(--color-d-ink)"
+      />
     </div>
   )
 }
@@ -2725,11 +2934,14 @@ function TeamChosenCard({ draft }: { draft: DraftState }) {
             marginTop: 2,
           }}
         >
-          {draft.formationName.toUpperCase()} · {draft.style.toUpperCase()} · {draft.pickedCountries.length} SELEÇÕES
+          {draft.formationName.toUpperCase()} · {draft.style.toUpperCase()} ·{' '}
+          {draft.pickedCountries.length} SELEÇÕES
         </div>
       </div>
       <div style={{ textAlign: 'right' }}>
-        <div style={{ fontFamily: 'Space Mono', fontSize: 9, color: 'var(--color-d-mut)' }}>OVR</div>
+        <div style={{ fontFamily: 'Space Mono', fontSize: 9, color: 'var(--color-d-mut)' }}>
+          OVR
+        </div>
         <div style={{ fontFamily: 'Anton', fontSize: 26, color: 'var(--color-d-lime)' }}>{ovr}</div>
       </div>
     </div>
@@ -2746,7 +2958,14 @@ function CampaignStatsRow({ stats }: { stats: CampaignStats }) {
   return (
     <>
       <SectionLabel>CAMPANHA NO TORNEIO</SectionLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 22 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 10,
+          marginBottom: 22,
+        }}
+      >
         <StatCell label="JOGOS" value={String(stats.jogos)} highlight />
         <StatCell label="V-E-D" value={stats.rec} />
         <StatCell label="GOLS PRÓ" value={String(stats.gols)} highlight />
@@ -2756,7 +2975,15 @@ function CampaignStatsRow({ stats }: { stats: CampaignStats }) {
   )
 }
 
-function StatCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function StatCell({
+  label,
+  value,
+  highlight,
+}: {
+  label: string
+  value: string
+  highlight?: boolean
+}) {
   return (
     <div
       style={{
@@ -2814,12 +3041,32 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
       <SectionLabel>ARTILHEIROS DA EQUIPE</SectionLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 8 }}>
         {scorers.map((s, i) => (
-          <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)' }}>
-            <div style={{ width: 24, flexShrink: 0, fontFamily: 'Anton', fontSize: 16, color: 'var(--color-d-mut)', textAlign: 'center' }}>
+          <div
+            key={s.name}
+            style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)' }}
+          >
+            <div
+              style={{
+                width: 24,
+                flexShrink: 0,
+                fontFamily: 'Anton',
+                fontSize: 16,
+                color: 'var(--color-d-mut)',
+                textAlign: 'center',
+              }}
+            >
               {i + 1}
             </div>
             <div style={{ flex: '1 1 70px', minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: 14,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {s.name}
               </div>
             </div>
@@ -2833,7 +3080,13 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
                 overflow: 'hidden',
               }}
             >
-              <div style={{ width: `${(s.goals / maxG) * 100}%`, height: '100%', background: 'var(--color-d-lime)' }} />
+              <div
+                style={{
+                  width: `${(s.goals / maxG) * 100}%`,
+                  height: '100%',
+                  background: 'var(--color-d-lime)',
+                }}
+              />
             </div>
             <div
               style={{
@@ -2854,7 +3107,13 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
   )
 }
 
-function ChampionShareBlock({ resultLine, topScorer }: { resultLine: string; topScorer?: ScorerRow }) {
+function ChampionShareBlock({
+  resultLine,
+  topScorer,
+}: {
+  resultLine: string
+  topScorer?: ScorerRow
+}) {
   return (
     <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 20 }}>
       <SectionLabel>COMPARTILHE A CONQUISTA</SectionLabel>
@@ -2870,7 +3129,14 @@ function ChampionShareBlock({ resultLine, topScorer }: { resultLine: string; top
           position: 'relative',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 14,
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div
               style={{
@@ -2888,7 +3154,17 @@ function ChampionShareBlock({ resultLine, topScorer }: { resultLine: string; top
               ⚄
             </div>
             <span style={{ fontFamily: 'Anton', fontSize: 16 }}>
-              DRAFT <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-lime)', fontWeight: 700 }}>26</span>
+              DRAFT{' '}
+              <span
+                style={{
+                  fontFamily: 'Space Mono',
+                  fontSize: 11,
+                  color: 'var(--color-d-lime)',
+                  fontWeight: 700,
+                }}
+              >
+                26
+              </span>
             </span>
           </div>
           <span style={{ fontSize: 24 }}>🏆</span>
@@ -2897,7 +3173,17 @@ function ChampionShareBlock({ resultLine, topScorer }: { resultLine: string; top
           SEU XI É<br />
           <span style={{ color: 'var(--color-d-lime)' }}>CAMPEÃO DO MUNDO</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 14, fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-mut)' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            marginTop: 14,
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-mut)',
+          }}
+        >
           <span>{resultLine}</span>
           {topScorer && (
             <>

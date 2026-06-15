@@ -1,7 +1,8 @@
-import { supabase, isSupabaseConfigured } from './supabase'
 import { averageOverall, type DraftState } from './draft'
-import type { GroupStage } from './groups'
+import { supabase, isSupabaseConfigured } from './supabase'
+
 import type { KnockoutBracket, KORound } from './bracket'
+import type { GroupStage } from './groups'
 
 const LOCAL_RUN_ID_KEY = 'd26:runId'
 
@@ -22,7 +23,9 @@ export function clearLocalRunId(): void {
 export async function ensureAnonUser(): Promise<string | null> {
   if (!isSupabaseConfigured) return null
   try {
-    const { data: { session } } = await supabase.auth.getSession()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
     if (session) return session.user.id
     const { data, error } = await supabase.auth.signInAnonymously()
     if (error) {
