@@ -28,7 +28,7 @@ export interface PartidaShellProps {
   shootoutActive?: boolean
   /** Quantas cobranças do shootout já estão visíveis (0 antes de começar). */
   shootoutKicksRevealed?: number
-  /** Marcadores plotados na timeline do scoreboard (gols + vermelhos). */
+  /** Marcadores plotados na timeline do scoreboard (gols). */
   goalAndRedEvents: MatchEvent[]
   /** Conteúdo do body: feed de lances, painel direito, drawer de resultado, etc. */
   children: ReactNode
@@ -439,7 +439,7 @@ function ScoreboardHero({
                 width: 3,
                 height: 14,
                 borderRadius: 2,
-                background: m.type === 'red' ? 'var(--color-d-red)' : 'var(--color-d-bg)',
+                background: 'var(--color-d-bg)',
                 boxShadow: '0 0 0 1.5px var(--color-d-bg)',
               }}
             />
@@ -568,33 +568,15 @@ function TeamBadge({ team }: { team: SideTeam }) {
   }
   return (
     <div
+      role="img"
+      aria-label={team.name}
       style={{
         ...sizeStyle,
         background: nationGradient(team.code),
         position: 'relative',
         overflow: 'hidden',
       }}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          padding: '6px 6px 4px',
-          background:
-            'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,1) 80%)',
-          color: '#fff',
-          fontFamily: 'Space Mono',
-          fontWeight: 700,
-          fontSize: 10,
-          letterSpacing: '0.04em',
-          textAlign: 'center',
-        }}
-      >
-        {team.code.slice(0, 3).toUpperCase()}
-      </span>
-    </div>
+    />
   )
 }
 

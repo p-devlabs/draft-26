@@ -48,10 +48,10 @@ function makeStrongDraft() {
 }
 
 /** Cria um worldCup já com as 3 rodadas simuladas em todos os 12 grupos. */
-// seed 1: user classifica e seed 7 (passada pra setupBracket) deixa o lado
+// seed 2: user classifica e seed 1 (passada pra setupBracket) deixa o lado
 // oposto da R32 com alguns winners. Trocar seed exige re-validar essas
 // pré-condições nos testes de setupBracket/userPath.
-function makeFinishedWorldCup(seed = 1): WorldCupGroups {
+function makeFinishedWorldCup(seed = 2): WorldCupGroups {
   const draft = makeStrongDraft()
   const rng = seededRng(seed)
   let worldCup = createWorldCup(draft, rng)
@@ -197,7 +197,7 @@ describe('ROUND_ORDER e ROUND_SIZE coerentes', () => {
 
 describe('setupBracket', () => {
   it('R32 do user existe sem vencedor, lado oposto já tem alguns winners', () => {
-    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(7))
+    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(1))
     const userR32 = nextUserMatch(bracket)
     expect(userR32).not.toBeNull()
     expect(userR32!.round).toBe('R32')
@@ -212,7 +212,7 @@ describe('setupBracket', () => {
 
 describe('userPath', () => {
   it('lista os jogos do user em ordem cronológica', () => {
-    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(7))
+    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(1))
     const path = userPath(bracket)
     expect(path.length).toBeGreaterThanOrEqual(1)
     expect(path[0].round).toBe('R32')

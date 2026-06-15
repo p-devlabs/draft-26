@@ -108,6 +108,7 @@ function GroupMatchRunner({
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
   const skippedRef = useRef(false)
+  const wasAlreadyPlayedRef = useRef(false)
 
   useEffect(() => {
     const persisted = loadWorldCup()
@@ -115,9 +116,8 @@ function GroupMatchRunner({
       navigate('/groups', { replace: true })
       return
     }
-    // Simula o jogo do user no grupo dele E simula a mesma rodada nos
-    // 11 outros grupos (CPU vs CPU) em lockstep. Idempotente — rodas já
-    // jogadas ficam intactas.
+    // playRound é idempotente — se o user já jogou essa rodada antes
+    // (ex: fechou a modal e voltou pra cá), o stage volta inalterado.
     const userGroupAfter = playRound(getUserGroup(persisted.worldCup), round, persisted.draft)
     const stitched = setUserGroup(persisted.worldCup, userGroupAfter)
     const worldCupAfter = playCpuRound(stitched, round)
@@ -128,15 +128,23 @@ function GroupMatchRunner({
     )
     if (userMatchOnEntry) {
       const userIsHome = userMatchOnEntry.homeCode === USER_TEAM_CODE
-      void track('match_started', {
-        kind: 'group',
-        round,
-        userIsHome,
-        oppCode: userIsHome ? userMatchOnEntry.awayCode : userMatchOnEntry.homeCode,
-        initialSpeed: loadMatchSpeed(),
-      })
+      // Já tinha resultado quando o user voltou — pula direto pro fim
+      // ao invés de obrigar a assistir o jogo de novo (e suprime o
+      // re-trigger de match_started/_completed na telemetria).
+      if (userMatchOnEntry.result) {
+        wasAlreadyPlayedRef.current = true
+        setVirtualMinute(90)
+      } else {
+        void track('match_started', {
+          kind: 'group',
+          round,
+          userIsHome,
+          oppCode: userIsHome ? userMatchOnEntry.awayCode : userMatchOnEntry.homeCode,
+          initialSpeed: loadMatchSpeed(),
+        })
+      }
     }
-  }, [navigate, round])
+  }, [navigate, round, setVirtualMinute])
 
   const userMatch = useMemo<GroupMatch | null>(() => {
     if (!data) return null
@@ -154,6 +162,7 @@ function GroupMatchRunner({
     saveWorldCup(data.draft, data.worldCup)
     setPlaying(false)
     setOutcome(resolveGroupOutcome(data.worldCup, round))
+    if (wasAlreadyPlayedRef.current) return
     const userMatch = data.stage.matches.find(
       (m) => m.round === round && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
     )
@@ -250,7 +259,7 @@ function GroupMatchRunner({
 
   const goalEvents = useMemo(() => {
     const finalEvents = finished ? events : revealed
-    return finalEvents.filter((e) => e.type === 'goal' || e.type === 'red')
+    return finalEvents.filter((e) => e.type === 'goal')
   }, [finished, events, revealed])
 
   const outcomeContext = useMemo(() => {
@@ -421,6 +430,7 @@ function KnockoutMatchRunner({
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
   const skippedRef = useRef(false)
+  const wasAlreadyPlayedRef = useRef(false)
 
   // goalMinute precisa ser computado antes do hook porque ele consome em
   // totalMinutes. Quando simResult vira não-null com ET, vira 120 e o
@@ -473,6 +483,29 @@ function KnockoutMatchRunner({
       name: away.name,
       flag: away.flag,
     })
+    const userIsHome = match.homeCode === br.userCode
+
+    // Se essa partida já foi jogada antes (user fechou a modal e voltou),
+    // reaproveita o resultado salvo no bracket ao invés de re-simular — caso
+    // contrário a narração e o vencedor mudariam a cada visita.
+    if (match.result && match.winnerCode && match.events) {
+      wasAlreadyPlayedRef.current = true
+      setSimResult({
+        events: match.events,
+        extraTime: match.extraTime,
+        penalties: match.penalties,
+        winner: match.winnerCode === home.code ? 'home' : 'away',
+      })
+      setBracket(br)
+      startedAtRef.current = Date.now()
+      const fullMinutes = match.extraTime ? 120 : 90
+      setVirtualMinute(fullMinutes)
+      if (match.penalties) {
+        setShootoutKicksRevealed(match.penalties.sequence.length)
+      }
+      return
+    }
+
     const sim = fullySimulate(home, away, Math.random, {
       difficulty: persisted.draft.difficulty,
       homeRoster,
@@ -504,7 +537,6 @@ function KnockoutMatchRunner({
     next = ensureRoundsSimulated(next)
     setBracket(next)
     startedAtRef.current = Date.now()
-    const userIsHome = match.homeCode === br.userCode
     void track('match_started', {
       kind: 'knockout',
       matchId,
@@ -513,7 +545,7 @@ function KnockoutMatchRunner({
       oppCode: userIsHome ? match.awayCode : match.homeCode,
       initialSpeed: loadMatchSpeed(),
     })
-  }, [matchId, navigate])
+  }, [matchId, navigate, setVirtualMinute])
 
   const regulationEnded = !!simResult && virtualMinute >= goalMinute
   const totalKicks = simResult?.penalties?.sequence.length ?? 0
@@ -540,6 +572,7 @@ function KnockoutMatchRunner({
     const match = findKnockoutMatch(bracket, matchId)
     if (!match) return
     setOutcome(resolveKnockoutOutcome(bracket, match))
+    if (wasAlreadyPlayedRef.current) return
     const userIsHome = match.homeCode === bracket.userCode
     const userWon = match.winnerCode === bracket.userCode
     const reg = match.result
@@ -669,7 +702,7 @@ function KnockoutMatchRunner({
   const goalEvents = useMemo(() => {
     if (!simResult) return [] as MatchEvent[]
     const source = finalShowing ? simResult.events : revealed
-    return source.filter((e) => e.type === 'goal' || e.type === 'red')
+    return source.filter((e) => e.type === 'goal')
   }, [finalShowing, simResult, revealed])
 
   const outcomeContext = useMemo(() => {
@@ -946,7 +979,7 @@ const LancesFeed = memo(function LancesFeed({
       >
         <div style={{ fontFamily: 'Anton', fontSize: 18 }}>LANCES</div>
         <div style={{ fontFamily: 'Space Mono', fontSize: 11, color: 'var(--color-d-mut)' }}>
-          GOLS E EXPULSÕES
+          GOLS
         </div>
       </div>
       <div
@@ -1103,26 +1136,15 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
         chip: { label: 'GOL', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
       }
     }
-    // 💔 gol adversário — tom apagado, sem destaque lima
+    // 🔴 gol adversário — tom apagado, sem destaque lima
     return {
       bg: 'rgba(255,59,59,0.04)',
       bd: 'rgba(255,59,59,0.18)',
       minColor: 'var(--color-d-red)',
-      emoji: '💔',
+      emoji: '🔴',
       textColor: 'var(--color-d-mut)',
       nameColor: 'var(--color-d-mut)',
       chip: { label: 'GOL', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
-    }
-  }
-  if (type === 'red') {
-    return {
-      bg: 'rgba(255,59,59,0.07)',
-      bd: 'rgba(255,59,59,0.3)',
-      minColor: 'var(--color-d-red)',
-      emoji: '🟥',
-      textColor: 'var(--color-d-ink)',
-      nameColor: 'var(--color-d-ink)',
-      chip: { label: 'EXPULSÃO', bg: 'var(--color-d-red)', fg: '#fff' },
     }
   }
   if (type === 'pen-scored') {
@@ -1171,15 +1193,15 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
       chip: { label: 'PERDEU', bg: 'rgba(212,255,61,0.22)', fg: 'var(--color-d-lime)' },
     }
   }
-  // yellow
+  // Fallback — qualquer tipo desconhecido cai numa linha neutra.
   return {
-    bg: 'rgba(255,138,59,0.06)',
-    bd: 'rgba(255,138,59,0.22)',
-    minColor: 'var(--color-d-warn)',
-    emoji: '🟨',
-    textColor: 'var(--color-d-ink)',
-    nameColor: 'var(--color-d-ink)',
-    chip: { label: 'AMARELO', bg: 'rgba(255,138,59,0.18)', fg: 'var(--color-d-warn)' },
+    bg: 'transparent',
+    bd: 'var(--color-d-line)',
+    minColor: 'var(--color-d-mut)',
+    emoji: '·',
+    textColor: 'var(--color-d-mut)',
+    nameColor: 'var(--color-d-mut)',
+    chip: null,
   }
 }
 
@@ -1440,8 +1462,6 @@ interface LineupRow {
   name: string
   posLabel: string
   goals: number
-  yellow: boolean
-  red: boolean
 }
 
 // memo: LineupCard só precisa re-renderizar quando entra um evento novo (i.e.,
@@ -1457,18 +1477,15 @@ const LineupCard = memo(function LineupCard({
   userTeamCode: string
   revealedEvents: MatchEvent[]
 }) {
-  // Por-jogador, deriva gols/amarelo/vermelho dos eventos já revelados,
-  // matching por nome — narrate.ts pesca os atletas direto do roster do
-  // user (rosterForKnockout / playRound), então os nomes batem 1:1.
+  // Por-jogador, deriva gols dos eventos já revelados, matching por nome —
+  // narrate.ts pesca os atletas direto do roster do user (rosterForKnockout /
+  // playRound), então os nomes batem 1:1.
   const lines = useMemo(() => {
     const userEvents = revealedEvents.filter((e) => e.teamCode === userTeamCode)
-    const byPlayer = new Map<string, { goals: number; yellow: boolean; red: boolean }>()
+    const goalsByPlayer = new Map<string, number>()
     for (const ev of userEvents) {
-      const cur = byPlayer.get(ev.player) ?? { goals: 0, yellow: false, red: false }
-      if (ev.type === 'goal') cur.goals += 1
-      if (ev.type === 'yellow') cur.yellow = true
-      if (ev.type === 'red') cur.red = true
-      byPlayer.set(ev.player, cur)
+      if (ev.type !== 'goal') continue
+      goalsByPlayer.set(ev.player, (goalsByPlayer.get(ev.player) ?? 0) + 1)
     }
 
     const grouped = new Map<'GOL' | 'DEF' | 'MEI' | 'ATA', LineupRow[]>()
@@ -1476,14 +1493,11 @@ const LineupCard = memo(function LineupCard({
       if (!slot.player) continue
       const key = lineKeyOf(slot)
       const player = slot.player.player
-      const evs = byPlayer.get(player.name)
       const row: LineupRow = {
         shirt: player.shirt,
         name: player.name,
         posLabel: SLOT_LABEL[slot.pos].toUpperCase(),
-        goals: evs?.goals ?? 0,
-        yellow: evs?.yellow ?? false,
-        red: evs?.red ?? false,
+        goals: goalsByPlayer.get(player.name) ?? 0,
       }
       if (!grouped.has(key)) grouped.set(key, [])
       grouped.get(key)!.push(row)
@@ -1529,10 +1543,6 @@ const LineupCard = memo(function LineupCard({
           >
             <span style={{ fontSize: 11 }}>⚽</span>GOL
           </span>
-          <span style={{ width: 9, height: 12, borderRadius: 2, background: '#f5d11e' }} />
-          <span
-            style={{ width: 9, height: 12, borderRadius: 2, background: 'var(--color-d-red)' }}
-          />
         </div>
       </div>
       <div style={{ padding: '4px 8px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -1563,21 +1573,8 @@ const LineupCard = memo(function LineupCard({
 })
 
 function LineupRowItem({ row }: { row: LineupRow }) {
-  const accent = row.red
-    ? 'var(--color-d-red)'
-    : row.goals > 0
-      ? 'var(--color-d-lime)'
-      : row.yellow
-        ? '#f5d11e'
-        : 'transparent'
-  const rowBg = row.red
-    ? 'rgba(255,59,59,0.06)'
-    : row.goals > 0
-      ? 'rgba(212,255,61,0.06)'
-      : row.yellow
-        ? 'rgba(245,209,30,0.05)'
-        : 'transparent'
-  const nameColor = row.red ? 'var(--color-d-mut)' : 'var(--color-d-ink)'
+  const accent = row.goals > 0 ? 'var(--color-d-lime)' : 'transparent'
+  const rowBg = row.goals > 0 ? 'rgba(212,255,61,0.06)' : 'transparent'
   return (
     <div
       style={{
@@ -1607,8 +1604,7 @@ function LineupRowItem({ row }: { row: LineupRow }) {
           style={{
             fontWeight: 700,
             fontSize: 13,
-            color: nameColor,
-            textDecoration: row.red ? 'line-through' : 'none',
+            color: 'var(--color-d-ink)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -1645,32 +1641,6 @@ function LineupRowItem({ row }: { row: LineupRow }) {
           >
             ⚽ {row.goals}
           </span>
-        )}
-        {row.yellow && (
-          <span
-            title="Amarelo"
-            style={{
-              width: 13,
-              height: 17,
-              borderRadius: 3,
-              background: '#f5d11e',
-              display: 'inline-block',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-            }}
-          />
-        )}
-        {row.red && (
-          <span
-            title="Vermelho"
-            style={{
-              width: 13,
-              height: 17,
-              borderRadius: 3,
-              background: 'var(--color-d-red)',
-              display: 'inline-block',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-            }}
-          />
         )}
       </div>
     </div>
