@@ -33,6 +33,9 @@ const Match = lazy(() =>
 const MataMata = lazy(() =>
   import('./routes/MataMata').then((m) => ({ default: m.MataMata })),
 )
+const PenaltiesDev = lazy(() =>
+  import('./routes/PenaltiesDev').then((m) => ({ default: m.PenaltiesDev })),
+)
 
 initAnalytics()
 trackSessionOnce()
@@ -75,6 +78,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/groups" element={<Copa />} />
               <Route path="/bracket" element={<MataMata />} />
               <Route path="/match" element={<Match />} />
+              <Route path="/dev/penalties" element={<PenaltiesDev />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

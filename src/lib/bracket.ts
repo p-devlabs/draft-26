@@ -12,6 +12,8 @@ import { simulateMatch, type MatchResult, type SimOptions, type Team } from './s
 import { narrateMatch, type MatchEvent } from './narrate'
 import { USER_TEAM_CODE, computeQualifiers, type Qualifier, type WorldCupGroups } from './groups'
 import { rosterForKnockout } from './rosters'
+import type { NarrationRoster } from './narrate'
+import type { Player } from '../data/squads'
 
 export type KORound = 'R32' | 'R16' | 'QF' | 'SF' | 'F'
 
@@ -51,11 +53,23 @@ export interface KnockoutTeam {
   isUser: boolean
 }
 
+/** Uma cobrança individual no shootout. */
+export type PenaltyKick = {
+  team: 'home' | 'away'
+  scored: boolean
+  /** Nome do batedor — opcional, populado quando rosters foram passados pra shootout. */
+  kicker?: string
+  /** Camisa do batedor (se conhecida). */
+  kickerShirt?: number | null
+  /** Posição original do jogador (GK/DEF/MID/FWD) — útil pra estatística. */
+  kickerBucket?: 'GK' | 'DEF' | 'MID' | 'FWD'
+}
+
 export type Penalties = {
   homeScored: number
   awayScored: number
-  /** sequência de tentativas: '⚽' = gol, '❌' = perdeu */
-  sequence: { team: 'home' | 'away'; scored: boolean }[]
+  /** Cobranças em ordem cronológica. Alternadas home/away por round; em sudden death continua alternando. */
+  sequence: PenaltyKick[]
 }
 
 export interface BracketMatch {
@@ -215,7 +229,12 @@ export function fullySimulate(
   home: Team,
   away: Team,
   rng: () => number = Math.random,
-  opts?: SimOptions,
+  opts?: SimOptions & {
+    /** Roster do mandante (pra nomear batedores no shootout). Opcional. */
+    homeRoster?: NarrationRoster
+    /** Roster do visitante. Opcional. */
+    awayRoster?: NarrationRoster
+  },
 ): {
   result: MatchResult
   extraTime?: MatchResult
@@ -238,7 +257,10 @@ export function fullySimulate(
     }
   }
   // Pênaltis
-  const pks = shootout(home, away, rng)
+  const pks = simulatePenalties(home, away, rng, {
+    homeRoster: opts?.homeRoster,
+    awayRoster: opts?.awayRoster,
+  })
   return {
     result,
     extraTime: et,
@@ -267,7 +289,43 @@ function samplePoisson(lambda: number, rng: () => number): number {
   return k - 1
 }
 
-function shootout(home: Team, away: Team, rng: () => number): Penalties {
+/**
+ * Ordem de batedores pra um time. Outfielders por overall desc (FWD/MID
+ * batem antes de DEF), goleiro como último recurso.
+ */
+function penaltyOrder(roster?: NarrationRoster): Player[] {
+  if (!roster) return []
+  const outfield = [
+    ...roster.attackers,
+    ...roster.midfielders,
+    ...roster.defenders,
+  ].sort((a, b) => b.overall - a.overall)
+  const gk = roster.goalkeeper ? [roster.goalkeeper] : []
+  return [...outfield, ...gk]
+}
+
+function bucketOf(roster: NarrationRoster | undefined, player: Player): PenaltyKick['kickerBucket'] {
+  if (!roster) return undefined
+  if (roster.goalkeeper?.name === player.name) return 'GK'
+  if (roster.attackers.some((p) => p.name === player.name)) return 'FWD'
+  if (roster.midfielders.some((p) => p.name === player.name)) return 'MID'
+  if (roster.defenders.some((p) => p.name === player.name)) return 'DEF'
+  return undefined
+}
+
+/**
+ * Simula a disputa por pênaltis. Quando rosters são passados em `opts`,
+ * popula `kicker` em cada cobrança usando a ordem de batedores do time
+ * (overall desc, outfielders antes do GK). Sem rosters, só retorna o
+ * placar e a sequência scored/missed — compatível com chamadas legadas
+ * (sim-harness, simulateNonUserRound, etc).
+ */
+export function simulatePenalties(
+  home: Team,
+  away: Team,
+  rng: () => number = Math.random,
+  opts?: { homeRoster?: NarrationRoster; awayRoster?: NarrationRoster },
+): Penalties {
   // Cada chute: probabilidade de gol = 0.5 + ajuste por overall (0.65 base pra elite)
   const homeProb = 0.55 + (home.averageOverall - 75) * 0.01
   const awayProb = 0.55 + (away.averageOverall - 75) * 0.01
@@ -275,29 +333,78 @@ function shootout(home: Team, away: Team, rng: () => number): Penalties {
   const hP = clamp(homeProb)
   const aP = clamp(awayProb)
 
-  const sequence: Penalties['sequence'] = []
+  const homeTakers = penaltyOrder(opts?.homeRoster)
+  const awayTakers = penaltyOrder(opts?.awayRoster)
+
+  const sequence: PenaltyKick[] = []
   let hs = 0
   let as_ = 0
+  let hIdx = 0
+  let aIdx = 0
 
-  // Cinco rodadas, depois alternado até alguém abrir vantagem
-  for (let i = 0; i < 5; i++) {
-    const hScored = rng() < hP
-    sequence.push({ team: 'home', scored: hScored })
-    if (hScored) hs++
-    const aScored = rng() < aP
-    sequence.push({ team: 'away', scored: aScored })
-    if (aScored) as_++
+  const buildKick = (team: 'home' | 'away'): PenaltyKick => {
+    const roster = team === 'home' ? opts?.homeRoster : opts?.awayRoster
+    const takers = team === 'home' ? homeTakers : awayTakers
+    const prob = team === 'home' ? hP : aP
+    const scored = rng() < prob
+    // Em sudden death (após esgotar a lista) volta pro topo da fila — o
+    // melhor batedor cobra de novo. Padrão FIFA exige que todos cobrem
+    // antes de qualquer um repetir, mas a chance de sudden death passar
+    // de 11 cobranças por lado é minúscula.
+    const kickerIdx = team === 'home' ? hIdx : aIdx
+    if (team === 'home') {
+      if (scored) hs++
+      hIdx++
+    } else {
+      if (scored) as_++
+      aIdx++
+    }
+    if (takers.length === 0) return { team, scored }
+    const taker = takers[kickerIdx % takers.length]
+    return {
+      team,
+      scored,
+      kicker: taker.name,
+      kickerShirt: taker.shirt ?? null,
+      kickerBucket: bucketOf(roster, taker),
+    }
   }
 
-  // Empate após 5: alternado até alguém ganhar a rodada
-  let safety = 20
-  while (hs === as_ && safety-- > 0) {
-    const hScored = rng() < hP
-    sequence.push({ team: 'home', scored: hScored })
-    if (hScored) hs++
-    const aScored = rng() < aP
-    sequence.push({ team: 'away', scored: aScored })
-    if (aScored) as_++
+  /**
+   * Regra FIFA: a disputa encerra assim que o time perdedor não conseguir
+   * mais empatar com as cobranças restantes — mesmo no meio de uma rodada.
+   * Ex.: 3-0 após 3 cobranças cada (rest. 2-2) já decide, ninguém bate a 4ª.
+   */
+  const isDecided = (): boolean => {
+    const hRem = Math.max(0, 5 - hIdx)
+    const aRem = Math.max(0, 5 - aIdx)
+    return hs > as_ + aRem || as_ > hs + hRem
+  }
+
+  // Regulamento: até 5 rodadas, terminando cedo quando decidido.
+  let decided = false
+  for (let round = 0; round < 5; round++) {
+    sequence.push(buildKick('home'))
+    if (isDecided()) {
+      decided = true
+      break
+    }
+    sequence.push(buildKick('away'))
+    if (isDecided()) {
+      decided = true
+      break
+    }
+  }
+
+  // Sudden death: cobra em pares completos (sem encerrar no meio do par)
+  // até alguém vencer uma rodada. Cap de 20 pares extras é seguro pra
+  // qualquer cenário plausível.
+  if (!decided) {
+    let safety = 20
+    while (hs === as_ && safety-- > 0) {
+      sequence.push(buildKick('home'))
+      sequence.push(buildKick('away'))
+    }
   }
 
   return { homeScored: hs, awayScored: as_, sequence }
