@@ -1,13 +1,22 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compatiblePlayers, SLOT_LABEL } from '../lib/positions'
 import {
   clearPendingRoll,
+  COUNTRY_COOLDOWN,
   rollUntilCompatible,
   useSkip,
   type DraftState,
 } from '../lib/draft'
 import { nationGradient } from '../lib/nation-colors'
-import { findSquad, type Player, type Squad } from '../data/squads'
+import { findSquad, squads, type Player, type Squad } from '../data/squads'
+
+/**
+ * Tempo total da animação do caça-níquel antes do carimbo. O `support.js`
+ * original do design usava 1.3s; mantemos próximo (~1.05s) pra não atrasar
+ * o flow de auto-roll que já existia.
+ */
+const SLOT_MACHINE_MS = 1050
+const TICK_MS = 85
 
 interface PickDrawerProps {
   open: boolean
@@ -67,7 +76,7 @@ export function PickDrawer({
         console.error(err)
         setPhase({ kind: 'roll' })
       }
-    }, 1050)
+    }, SLOT_MACHINE_MS)
     return () => window.clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, slotIndex])
@@ -96,7 +105,7 @@ export function PickDrawer({
         onStateChange(fromState)
         setPhase({ kind: 'roll' })
       }
-    }, 1050)
+    }, SLOT_MACHINE_MS)
   }
 
   const handlePick = (player: Player) => {
@@ -165,7 +174,7 @@ export function PickDrawer({
           {phase.kind === 'roll' && (
             <RollState slotLabel={slotLabel} recentStr={recentStr} onRoll={() => rollFrom(state)} />
           )}
-          {phase.kind === 'rolling' && <RollingState />}
+          {phase.kind === 'rolling' && <RollingState state={state} slotIndex={slotIndex} />}
           {phase.kind === 'result' && (
             <ResultState
               squad={phase.squad}
@@ -315,40 +324,156 @@ function RollState({
   )
 }
 
-function RollingState() {
+/**
+ * Caça-níquel: durante o `rolling`, a área do drawer cicla as seleções
+ * elegíveis (fora do cooldown e que têm jogador compatível com o slot).
+ * Cada tick (~85ms) troca o gradiente + código grande na faixa. O resultado
+ * final vem do `rollUntilCompatible` no parent; aqui é só teatro.
+ */
+function RollingState({ state, slotIndex }: { state: DraftState; slotIndex: number }) {
+  const slot = state.slots[slotIndex]
+  const pool = useMemo<Squad[]>(() => {
+    const cooldown = new Set(state.rolledCountries.slice(-COUNTRY_COOLDOWN))
+    const picked = new Set(state.pickedCountries)
+    const elig = squads.filter(
+      (sq) =>
+        !cooldown.has(sq.code) &&
+        !picked.has(sq.code) &&
+        compatiblePlayers(slot.pos, sq.players).length > 0,
+    )
+    // Fallback raríssimo: se cooldown + picked esvaziar o pool, ignora o
+    // cooldown só pra ter algo cíclico na tela.
+    if (elig.length > 0) return elig
+    return squads.filter(
+      (sq) => !picked.has(sq.code) && compatiblePlayers(slot.pos, sq.players).length > 0,
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slot.pos, slotIndex])
+
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * Math.max(1, pool.length)))
+  const idxRef = useRef(idx)
+  idxRef.current = idx
+
+  useEffect(() => {
+    if (pool.length <= 1) return
+    const id = window.setInterval(() => {
+      // Sorteia um vizinho diferente do atual pra evitar repetição cosmética.
+      const cur = idxRef.current
+      let next = Math.floor(Math.random() * pool.length)
+      if (next === cur) next = (cur + 1) % pool.length
+      setIdx(next)
+    }, TICK_MS)
+    return () => window.clearInterval(id)
+  }, [pool])
+
+  const cur = pool[idx % Math.max(1, pool.length)] as Squad | undefined
+
   return (
-    <div style={{ textAlign: 'center', padding: '34px 0 40px' }}>
+    <div style={{ padding: '14px 0 16px' }}>
       <div
         style={{
-          width: 84,
-          height: 84,
-          margin: '0 auto 22px',
-          borderRadius: 18,
-          background: 'var(--color-d-lime)',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 9,
-          padding: 21,
-          animation: 'd26-spin 1s linear infinite',
-          boxShadow: '0 0 32px -2px rgba(212,255,61,0.6)',
+          position: 'relative',
+          height: 130,
+          borderRadius: 16,
+          overflow: 'hidden',
+          border: '1px solid var(--color-d-line)',
+          marginBottom: 16,
+          boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.05)',
         }}
       >
-        {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: cur ? nationGradient(cur.code) : 'var(--color-d-surface2)',
+          }}
+        >
           <span
-            key={i}
-            style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--color-d-bg)' }}
-          />
-        ))}
+            style={{
+              fontFamily: 'Anton',
+              fontSize: 66,
+              lineHeight: 0.8,
+              color: '#fff',
+              textShadow: '0 3px 14px rgba(0,0,0,0.4)',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {cur?.code.toUpperCase() ?? '···'}
+          </span>
+        </div>
+        {/* Scrim com o nome do país */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 36,
+            background: 'linear-gradient(180deg, transparent, rgba(10,11,9,0.92))',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            paddingBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'Space Mono',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              color: '#fff',
+            }}
+          >
+            {cur?.country.toUpperCase() ?? 'SORTEANDO'}
+          </span>
+        </div>
+        {/* Sombras laterais reforçam a metáfora de slot-machine */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(90deg, rgba(10,11,9,0.45), transparent 18%, transparent 82%, rgba(10,11,9,0.45))',
+          }}
+        />
       </div>
-      <div
-        style={{
-          fontFamily: 'Anton',
-          fontSize: 24,
-          color: 'var(--color-d-lime)',
-          letterSpacing: '0.04em',
-        }}
-      >
-        SORTEANDO…
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 9,
+            background: 'var(--color-d-lime)',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 4,
+            padding: 8,
+            animation: 'd26-spin .65s linear infinite',
+            flex: '0 0 auto',
+          }}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <span
+              key={i}
+              style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-d-bg)' }}
+            />
+          ))}
+        </div>
+        <div
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 22,
+            color: 'var(--color-d-lime)',
+            letterSpacing: '0.08em',
+          }}
+        >
+          SORTEANDO…
+        </div>
       </div>
     </div>
   )
@@ -383,34 +508,91 @@ function ResultState({
   })
   return (
     <div style={{ animation: 'd26-fade-in .3s ease' }}>
+      {/* Carimbo: faixa cheia no gradiente da seleção sorteada, com o código
+          gigante carimbando (stampIn) e o nome subindo logo atrás (revealUp). */}
+      <div
+        style={{
+          position: 'relative',
+          borderRadius: 14,
+          overflow: 'hidden',
+          border: '1px solid rgba(255,255,255,0.16)',
+          margin: '6px 0 14px',
+          boxShadow: '0 14px 36px -20px rgba(0,0,0,0.7)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            padding: '15px 18px',
+            background: nationGradient(code),
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'Anton',
+              fontSize: 50,
+              lineHeight: 0.78,
+              color: '#fff',
+              textShadow: '0 2px 12px rgba(0,0,0,0.35)',
+              animation: 'd26-stamp-in .42s cubic-bezier(.2,.9,.3,1)',
+              flex: '0 0 auto',
+            }}
+          >
+            {code}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              animation: 'd26-reveal-up .4s ease .08s both',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 10,
+                letterSpacing: '0.18em',
+                color: '#fff',
+                opacity: 0.78,
+                textShadow: '0 1px 2px rgba(0,0,0,0.45)',
+              }}
+            >
+              SELEÇÃO SORTEADA
+            </div>
+            <div
+              style={{
+                fontFamily: 'Anton',
+                fontSize: 27,
+                lineHeight: 1,
+                color: '#fff',
+                textShadow: '0 1px 4px rgba(0,0,0,0.45)',
+              }}
+            >
+              {squad.country.toUpperCase()}
+            </div>
+          </div>
+        </div>
+      </div>
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 14,
-          background: 'var(--color-d-surface2)',
-          border: '1px solid var(--color-d-line)',
-          borderRadius: 12,
-          padding: '13px 16px',
-          margin: '6px 0 16px',
-          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          gap: 10,
+          marginBottom: 12,
         }}
       >
-        <SquadBadge code={code} />
-        <div style={{ flex: '1 1 140px', minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: 'Space Mono',
-              fontSize: 10,
-              color: 'var(--color-d-lime)',
-              letterSpacing: '0.12em',
-            }}
-          >
-            SELEÇÃO SORTEADA
-          </div>
-          <div style={{ fontFamily: 'Anton', fontSize: 24, lineHeight: 1 }}>
-            {squad.country.toUpperCase()}
-          </div>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 11,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.1em',
+          }}
+        >
+          ESCALE 1 PARA <b style={{ color: 'var(--color-d-ink)' }}>{activeLabel}</b>
         </div>
         {canSkip ? (
           <button
@@ -421,7 +603,7 @@ function ResultState({
               border: '1px solid var(--color-d-lime)',
               color: 'var(--color-d-lime)',
               borderRadius: 8,
-              padding: '9px 12px',
+              padding: '8px 12px',
               fontFamily: 'Space Mono',
               fontSize: 11,
               fontWeight: 700,
@@ -438,7 +620,7 @@ function ResultState({
               border: '1px solid var(--color-d-line)',
               color: 'var(--color-d-mut)',
               borderRadius: 8,
-              padding: '9px 12px',
+              padding: '8px 12px',
               fontFamily: 'Space Mono',
               fontSize: 11,
               fontWeight: 700,
@@ -465,17 +647,6 @@ function ResultState({
           jogador compatível)
         </div>
       )}
-      <div
-        style={{
-          fontFamily: 'Space Mono',
-          fontSize: 11,
-          color: 'var(--color-d-mut)',
-          letterSpacing: '0.1em',
-          marginBottom: 10,
-        }}
-      >
-        ESCALE 1 PARA {activeLabel}
-      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {sorted.map((p) => (
           <CandidateRow key={`${p.name}-${p.shirt}`} player={p} onPick={() => onPick(p)} />
@@ -497,41 +668,6 @@ function ResultState({
     </div>
   )
 }
-
-function SquadBadge({ code }: { code: string }) {
-  return (
-    <div
-      style={{
-        width: 52,
-        height: 36,
-        borderRadius: 6,
-        background: nationGradient(code),
-        position: 'relative',
-        border: '1px solid rgba(255,255,255,0.14)',
-        flex: '0 0 auto',
-      }}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: 'Space Mono',
-          fontSize: 10,
-          fontWeight: 700,
-          color: '#fff',
-          textShadow: '0 1px 2px rgba(0,0,0,0.6)',
-          letterSpacing: '0.04em',
-        }}
-      >
-        {code}
-      </span>
-    </div>
-  )
-}
-
 
 function CandidateRow({ player, onPick }: { player: Player; onPick: () => void }) {
   return (
