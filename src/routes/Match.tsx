@@ -9,14 +9,21 @@ import {
   type ScorerRow,
 } from '../components/match/OutcomeDrawer'
 import { Loading, PartidaShell, type SideTeam } from '../components/match/PartidaShell'
+import {
+  PENALTY_KICK_MS,
+  SPEED_LABEL,
+  SPEED_ORDER,
+  useSimPlayback,
+  type Speed,
+} from '../components/match/useSimPlayback'
 import { PenaltiesCard } from '../components/PenaltiesCard'
 import {
   applyResult,
+  ensureRoundsSimulated,
   findMatch as findKnockoutMatch,
   fullySimulate,
   ROUND_LABEL,
   ROUND_ORDER,
-  ensureRoundsSimulated,
   type BracketMatch,
   type KnockoutBracket,
   type KORound,
@@ -35,43 +42,19 @@ import {
   type GroupStage,
   type WorldCupGroups,
 } from '../lib/groups'
-import { narrateMatch } from '../lib/narrate'
+import { narrateMatch, type MatchEvent } from '../lib/narrate'
 import {
   loadBracket,
   loadMatchSpeed,
   loadWorldCup,
   saveBracket,
-  saveMatchSpeed,
   saveWorldCup,
 } from '../lib/persistence'
 import { SLOT_LABEL } from '../lib/positions'
 import { rosterForKnockout } from '../lib/rosters'
 import { track } from '../lib/track'
 
-import type { DraftState, DraftSlot } from '../lib/draft'
-import type { MatchEvent } from '../lib/narrate'
-
-type Speed = 'slow' | 'normal' | 'fast'
-
-const SPEED_DURATION: Record<Speed, number> = {
-  slow: 60,
-  normal: 30,
-  fast: 12,
-}
-const TICK_MS = 60
-const SPEED_LABEL: Record<Speed, string> = { slow: '1×', normal: '2×', fast: '4×' }
-const SPEED_ORDER: Speed[] = ['slow', 'normal', 'fast']
-
-/**
- * Intervalo entre cobranças do shootout, por velocidade. Cobranças saem
- * "uma a uma" — mais lento que minuto de jogo pra dar tempo de ler quem
- * bateu e o resultado.
- */
-const PENALTY_KICK_MS: Record<Speed, number> = {
-  slow: 1500,
-  normal: 850,
-  fast: 380,
-}
+import type { DraftSlot, DraftState } from '../lib/draft'
 
 type MatchKind = 'group' | 'knockout'
 
@@ -101,28 +84,30 @@ function GroupMatchRunner({
     stage: GroupStage
     draft: DraftState
   } | null>(null)
-  const [virtualMinute, setVirtualMinute] = useState(0)
-  const [playing, setPlaying] = useState(true)
-  const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
-  const setSpeed = useCallback(
-    (s: Speed) => {
-      if (s !== speed) {
-        void track('match_speed_changed', { kind: 'group', round, from: speed, to: s })
-      }
-      saveMatchSpeed(s)
-      _setSpeed(s)
+  const {
+    virtualMinute,
+    wholeMinute,
+    playing,
+    speed,
+    outcome,
+    virtualMinuteRef,
+    setVirtualMinute,
+    setPlaying,
+    setOutcome,
+    setSpeed,
+    onToggle,
+    onCloseOutcome,
+    onShowOutcome,
+  } = useSimPlayback({
+    enabled: data != null,
+    totalMinutes: 90,
+    onSpeedChange: (from, to) => {
+      void track('match_speed_changed', { kind: 'group', round, from, to })
     },
-    [round, speed],
-  )
-  const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
+  })
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
   const skippedRef = useRef(false)
-  // Espelha virtualMinute num ref pra onSkipToEnd ler o minuto atual sem
-  // recriar a callback a cada tick — se virtualMinute fosse dep do useCallback,
-  // o memo() do SimulationPanel quebraria a cada 60ms.
-  const virtualMinuteRef = useRef(0)
-  virtualMinuteRef.current = virtualMinute
 
   useEffect(() => {
     const persisted = loadWorldCup()
@@ -152,23 +137,6 @@ function GroupMatchRunner({
       })
     }
   }, [navigate, round])
-
-  useEffect(() => {
-    if (!data || !playing) return
-    const duration = SPEED_DURATION[speed]
-    const ratePerTick = (90 / (duration * 1000)) * TICK_MS
-    const id = window.setInterval(() => {
-      setVirtualMinute((m) => {
-        const next = m + ratePerTick
-        if (next >= 90) {
-          window.clearInterval(id)
-          return 90
-        }
-        return next
-      })
-    }, TICK_MS)
-    return () => window.clearInterval(id)
-  }, [data, playing, speed])
 
   const userMatch = useMemo<GroupMatch | null>(() => {
     if (!data) return null
@@ -206,16 +174,14 @@ function GroupMatchRunner({
     }
   }, [data, virtualMinute, round, speed])
 
-  // Handlers estáveis: passados pra <PartidaShell> e re-encaminhados pros
-  // children memoizados (SimulationPanel). Sem useCallback, cada tick criava
-  // funções novas e quebrava o memo() lá embaixo.
-  const onToggle = useCallback(() => setPlaying((p) => !p), [])
+  // onRestart/onSkipToEnd ainda vivem aqui porque tocam refs locais
+  // (persistedRef, skippedRef) — onToggle/onClose/onShow vêm do hook.
   const onRestart = useCallback(() => {
     setVirtualMinute(0)
     setPlaying(true)
     persistedRef.current = false
     setOutcome(null)
-  }, [])
+  }, [setOutcome, setPlaying, setVirtualMinute])
   const onSkipToEnd = useCallback(() => {
     if (!skippedRef.current) {
       skippedRef.current = true
@@ -226,11 +192,8 @@ function GroupMatchRunner({
       })
     }
     setVirtualMinute(90)
-  }, [round])
-  const onCloseOutcome = useCallback(() => setOutcome(null), [])
-  const onShowOutcome = useCallback((o: OutcomeKind) => setOutcome(o), [])
+  }, [round, setVirtualMinute, virtualMinuteRef])
 
-  const wholeMinute = Math.floor(virtualMinute)
   const finished = virtualMinute >= 90
 
   // Derivações por wholeMinute (não por virtualMinute): só mudam quando o
@@ -443,19 +406,6 @@ function KnockoutMatchRunner({
   const [bracket, setBracket] = useState<KnockoutBracket | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
   const [stage, setStage] = useState<GroupStage | null>(null)
-  const [virtualMinute, setVirtualMinute] = useState(0)
-  const [playing, setPlaying] = useState(true)
-  const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
-  const setSpeed = useCallback(
-    (s: Speed) => {
-      if (s !== speed) {
-        void track('match_speed_changed', { kind: 'knockout', matchId, from: speed, to: s })
-      }
-      saveMatchSpeed(s)
-      _setSpeed(s)
-    },
-    [matchId, speed],
-  )
   const [simResult, setSimResult] = useState<{
     events: MatchEvent[]
     extraTime?: { homeGoals: number; awayGoals: number }
@@ -468,13 +418,35 @@ function KnockoutMatchRunner({
    * acabou e existe shootout. 0 antes da decisão começar.
    */
   const [shootoutKicksRevealed, setShootoutKicksRevealed] = useState(0)
-  const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
   const skippedRef = useRef(false)
-  // Ver comentário em GroupMatchRunner: evita recriar onSkipToEnd a cada tick.
-  const virtualMinuteRef = useRef(0)
-  virtualMinuteRef.current = virtualMinute
+
+  // goalMinute precisa ser computado antes do hook porque ele consome em
+  // totalMinutes. Quando simResult vira não-null com ET, vira 120 e o
+  // tick re-inicia no novo ritmo.
+  const goalMinute = simResult?.extraTime ? 120 : 90
+  const {
+    virtualMinute,
+    wholeMinute,
+    playing,
+    speed,
+    outcome,
+    virtualMinuteRef,
+    setVirtualMinute,
+    setPlaying,
+    setOutcome,
+    setSpeed,
+    onToggle,
+    onCloseOutcome,
+    onShowOutcome,
+  } = useSimPlayback({
+    enabled: bracket != null && simResult != null,
+    totalMinutes: goalMinute,
+    onSpeedChange: (from, to) => {
+      void track('match_speed_changed', { kind: 'knockout', matchId, from, to })
+    },
+  })
 
   useEffect(() => {
     const persisted = loadWorldCup()
@@ -543,31 +515,12 @@ function KnockoutMatchRunner({
     })
   }, [matchId, navigate])
 
-  const goalMinute = simResult?.extraTime ? 120 : 90
   const regulationEnded = !!simResult && virtualMinute >= goalMinute
   const totalKicks = simResult?.penalties?.sequence.length ?? 0
   /** Decisão em andamento — cobranças sendo reveladas uma a uma. */
   const shootoutActive = regulationEnded && totalKicks > 0 && shootoutKicksRevealed < totalKicks
   /** "Finished" = tudo encerrado: tempo regulamentar + (se houver) todas as cobranças. */
   const finalShowing = regulationEnded && !shootoutActive
-
-  useEffect(() => {
-    if (!bracket || !simResult || !playing) return
-    if (regulationEnded) return
-    const duration = SPEED_DURATION[speed] * (goalMinute / 90)
-    const ratePerTick = (goalMinute / (duration * 1000)) * TICK_MS
-    const id = window.setInterval(() => {
-      setVirtualMinute((m) => {
-        const next = m + ratePerTick
-        if (next >= goalMinute) {
-          window.clearInterval(id)
-          return goalMinute
-        }
-        return next
-      })
-    }, TICK_MS)
-    return () => window.clearInterval(id)
-  }, [bracket, simResult, playing, speed, goalMinute, regulationEnded])
 
   // Timer do shootout: revela uma cobrança por vez no intervalo da velocidade.
   // Para automaticamente quando todas saíram (shootoutActive vira false).
@@ -614,15 +567,15 @@ function KnockoutMatchRunner({
     })
   }, [bracket, draft, finalShowing, matchId, speed])
 
-  // Handlers estáveis — passados pros children memoizados via <PartidaShell>.
-  const onToggle = useCallback(() => setPlaying((p) => !p), [])
+  // onRestart/onSkipToEnd tocam refs locais e o shootout — mantidos aqui.
+  // onToggle/onClose/onShow vêm do hook.
   const onRestart = useCallback(() => {
     setVirtualMinute(0)
     setShootoutKicksRevealed(0)
     setPlaying(true)
     persistedRef.current = false
     setOutcome(null)
-  }, [])
+  }, [setOutcome, setPlaying, setVirtualMinute])
   const onSkipToEnd = useCallback(() => {
     if (!skippedRef.current) {
       skippedRef.current = true
@@ -638,11 +591,8 @@ function KnockoutMatchRunner({
     // cobranças (se houver). Um clique só → resultado final visível.
     setVirtualMinute(goalMinute)
     if (totalKicks > 0) setShootoutKicksRevealed(totalKicks)
-  }, [bracket, matchId, goalMinute, totalKicks])
-  const onCloseOutcome = useCallback(() => setOutcome(null), [])
-  const onShowOutcome = useCallback((o: OutcomeKind) => setOutcome(o), [])
+  }, [bracket, matchId, goalMinute, totalKicks, setVirtualMinute, virtualMinuteRef])
 
-  const wholeMinute = Math.floor(virtualMinute)
   const inExtraTime = wholeMinute > 90
   const match = bracket ? findKnockoutMatch(bracket, matchId) : null
   const homeTeam = bracket && match?.homeCode ? bracket.teams[match.homeCode] : null
