@@ -50,19 +50,37 @@ export interface OutcomeContext {
 
 // ---------- Config interna ----------
 
+/**
+ * Ornamento do banner do drawer. `check` e `emoji` são mutuamente exclusivos
+ * por definição — modelados como DU pra eliminar o caso "ambos true ou ambos
+ * setados" que o boolean+nullable permitiria.
+ */
+type BannerDecoration =
+  | { kind: 'check' }
+  | { kind: 'emoji'; char: string }
+  | { kind: 'none' }
+
+/** CTA secundária — quando existe, label e destino vêm juntos. */
+type SecondaryCta = { label: string; to: string } | null
+
+/**
+ * Config do outcome drawer discriminada por `kind`. Cada kind narra um
+ * único momento da campanha (rodada de grupo encerrada, classificação,
+ * eliminação, campeão), e os campos refletem essas semânticas — a DU
+ * por kind permite ao consumer derivar variantes sem null-checks frágeis.
+ */
 interface OutcomeConfig {
+  kind: OutcomeKind
   kicker: string
   title: string
   titleColor: string
   sub: string
   accent: string
   bannerBg: string
-  showCheck: boolean
-  emoji: string | null
+  decoration: BannerDecoration
   ctaLabel: string
   ctaTo: string
-  cta2Label?: string
-  cta2To?: string
+  cta2: SecondaryCta
   primaryIsLime: boolean
   champion: boolean
   showShare: boolean
@@ -72,122 +90,121 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
   switch (kind) {
     case 'grupo':
       return {
+        kind,
         kicker: ctx.phase,
         title: 'VITÓRIA',
         titleColor: 'var(--color-d-ink)',
         sub: 'Mais três pontos. Falta jogo pra fechar o grupo.',
         accent: 'var(--color-d-lime)',
         bannerBg: 'linear-gradient(180deg, #12160d, #0a0b09)',
-        showCheck: true,
-        emoji: null,
+        decoration: { kind: 'check' },
         ctaLabel: 'VOLTAR PRO GRUPO →',
         ctaTo: '/groups',
-        cta2Label: 'VER CHAVEAMENTO',
-        cta2To: '/bracket',
+        cta2: { label: 'VER CHAVEAMENTO', to: '/bracket' },
         primaryIsLime: true,
         champion: false,
         showShare: true,
       }
     case 'grupo-resultado':
       return {
+        kind,
         kicker: ctx.phase,
         title: 'JOGO ENCERRADO',
         titleColor: 'var(--color-d-ink)',
         sub: 'Ainda falta jogo pra fechar o grupo.',
         accent: 'var(--color-d-mut)',
         bannerBg: 'linear-gradient(180deg, #141613, #0a0b09)',
-        showCheck: false,
-        emoji: null,
+        decoration: { kind: 'none' },
         ctaLabel: 'VOLTAR PRO GRUPO →',
         ctaTo: '/groups',
+        cta2: null,
         primaryIsLime: false,
         champion: false,
         showShare: false,
       }
     case 'classificado':
       return {
+        kind,
         kicker: 'FASE DE GRUPOS · ENCERRADA',
         title: 'CLASSIFICADO',
         titleColor: 'var(--color-d-ink)',
         sub: classificadoSubMessage(ctx),
         accent: 'var(--color-d-lime)',
         bannerBg: 'linear-gradient(180deg, #161d0b, #0a0b09)',
-        showCheck: true,
-        emoji: null,
+        decoration: { kind: 'check' },
         ctaLabel: 'IR PRO MATA-MATA →',
         ctaTo: '/bracket',
-        cta2Label: 'REVER O GRUPO',
-        cta2To: '/groups',
+        cta2: { label: 'REVER O GRUPO', to: '/groups' },
         primaryIsLime: true,
         champion: false,
         showShare: true,
       }
     case 'fora-grupos':
       return {
+        kind,
         kicker: 'COPA 2026 · FIM DE LINHA',
         title: 'ELIMINADO',
         titleColor: 'var(--color-d-ink)',
         sub: foraGruposSubMessage(ctx),
         accent: 'var(--color-d-red)',
         bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
-        showCheck: false,
-        emoji: null,
+        decoration: { kind: 'none' },
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft',
-        cta2Label: 'VER CHAVEAMENTO',
-        cta2To: '/bracket',
+        cta2: { label: 'VER CHAVEAMENTO', to: '/bracket' },
         primaryIsLime: false,
         champion: false,
         showShare: false,
       }
     case 'avancou':
       return {
+        kind,
         kicker: ctx.phase,
         title: ctx.extras.nextRoundLabel ? `NA ${ctx.extras.nextRoundLabel}!` : 'AVANÇOU',
         titleColor: 'var(--color-d-ink)',
         sub: 'Seu XI passou pra próxima fase.',
         accent: 'var(--color-d-lime)',
         bannerBg: 'linear-gradient(180deg, #161d0b, #0a0b09)',
-        showCheck: true,
-        emoji: null,
+        decoration: { kind: 'check' },
         ctaLabel: ctx.extras.nextRoundLabel
           ? `VER ${ctx.extras.nextRoundLabel} →`
           : 'VOLTAR PRO CHAVEAMENTO →',
         ctaTo: '/bracket',
+        cta2: null,
         primaryIsLime: true,
         champion: false,
         showShare: true,
       }
     case 'elim':
       return {
+        kind,
         kicker: ctx.phase,
         title: 'ELIMINADO',
         titleColor: 'var(--color-d-ink)',
         sub: 'Seu time caiu no mata-mata. Quase lá.',
         accent: 'var(--color-d-red)',
         bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
-        showCheck: false,
-        emoji: null,
+        decoration: { kind: 'none' },
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft',
-        cta2Label: 'VER CHAVEAMENTO',
-        cta2To: '/bracket',
+        cta2: { label: 'VER CHAVEAMENTO', to: '/bracket' },
         primaryIsLime: false,
         champion: false,
         showShare: false,
       }
     case 'champ':
       return {
+        kind,
         kicker: 'COPA 2026 · DECISÃO',
         title: 'CAMPEÃO',
         titleColor: 'var(--color-d-bg)',
         sub: 'Seu time levantou a taça.',
         accent: 'rgba(10,11,9,0.7)',
         bannerBg: 'radial-gradient(130% 100% at 50% 0%, #d4ff3d, #a9d11e)',
-        showCheck: false,
-        emoji: '🏆',
+        decoration: { kind: 'emoji', char: '🏆' },
         ctaLabel: 'JOGAR DE NOVO →',
         ctaTo: '/draft',
+        cta2: null,
         primaryIsLime: true,
         champion: true,
         showShare: false,
@@ -352,7 +369,7 @@ function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => vo
         ✕
       </button>
       <div style={{ textAlign: 'center' }}>
-        {cfg.showCheck && (
+        {cfg.decoration.kind === 'check' && (
           <div
             style={{
               width: 54,
@@ -372,8 +389,8 @@ function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => vo
             ✓
           </div>
         )}
-        {cfg.emoji && (
-          <div style={{ fontSize: 46, lineHeight: 1, marginBottom: 8 }}>{cfg.emoji}</div>
+        {cfg.decoration.kind === 'emoji' && (
+          <div style={{ fontSize: 46, lineHeight: 1, marginBottom: 8 }}>{cfg.decoration.char}</div>
         )}
         <div
           style={{
@@ -973,9 +990,9 @@ function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
       >
         {cfg.ctaLabel}
       </Link>
-      {cfg.cta2Label && cfg.cta2To && (
+      {cfg.cta2 && (
         <Link
-          to={cfg.cta2To}
+          to={cfg.cta2.to}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -993,7 +1010,7 @@ function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
             cursor: 'pointer',
           }}
         >
-          {cfg.cta2Label}
+          {cfg.cta2.label}
         </Link>
       )}
     </div>
