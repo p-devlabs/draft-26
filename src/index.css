@@ -143,6 +143,21 @@
     transform: translateY(0);
   }
 }
+
+/* Respeita prefers-reduced-motion — usuários com vestibular sensitivity
+   ou que pediram menos movimento veem as animações em zero. Pulse/blink
+   ficam em estado neutro (opacity 1, sem shadow) e transforms colapsam. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @media (max-width: 760px) {
   .d26-hero-grid {
     grid-template-columns: 1fr !important;
@@ -183,6 +198,14 @@
 .d26-scope ::-webkit-scrollbar-thumb {
   background: var(--color-d-line);
   border-radius: 8px;
+}
+
+/* PlusChip hover — `az-plus` é o chip "+" do Field.tsx. O scale colapsa
+   sob prefers-reduced-motion via a regra global mais abaixo; o background
+   continua mudando (não é motion). */
+.az-plus:hover {
+  transform: scale(1.1);
+  background: rgba(212, 255, 61, 0.16);
 }
 
 /* Foco visível pra navegação por teclado — não interfere com mouse focus.

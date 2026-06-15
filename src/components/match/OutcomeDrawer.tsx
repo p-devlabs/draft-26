@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { track } from '../../lib/track'
@@ -244,6 +244,15 @@ export function OutcomeDrawer({
   onClose: () => void
 }) {
   const cfg = outcomeConfig(outcome, ctx)
+  // ESC fecha o drawer — drawer só monta quando outcome != null, então
+  // o listener fica ativo só enquanto está visível.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
   return (
     <>
       <div
