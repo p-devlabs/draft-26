@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   ROUND_ORDER,
   ROUND_SIZE,
+  applyResult,
   createBracket,
+  ensureRoundsSimulated,
   fullySimulate,
   isHalfMatch,
   nextUserMatch,
+  rewindLastUserLoss,
   setupBracket,
   userHalfOf,
   userPath,
@@ -217,5 +220,54 @@ describe('userPath', () => {
     const path = userPath(bracket)
     expect(path.length).toBeGreaterThanOrEqual(1)
     expect(path[0].round).toBe('R32')
+  })
+})
+
+describe('rewindLastUserLoss', () => {
+  it('reseta a derrota e a cascata downstream, mantendo o adversário no jogo', () => {
+    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(7))
+    const userR32 = nextUserMatch(bracket)!
+    const oppCode = userR32.homeCode === USER_TEAM_CODE ? userR32.awayCode! : userR32.homeCode!
+    // Force loss: adversário vence 0–2.
+    const lost = applyResult(bracket, userR32.id, {
+      result: {
+        homeGoals: userR32.homeCode === USER_TEAM_CODE ? 0 : 2,
+        awayGoals: userR32.awayCode === USER_TEAM_CODE ? 0 : 2,
+      },
+      winnerCode: oppCode,
+    })
+    // Roda a cascata — o adversário avança e o lado do user é simulado até a final.
+    const finished = ensureRoundsSimulated(lost, seededRng(11))
+    expect(nextUserMatch(finished)).toBeNull()
+    // Algum dos jogos do adversário downstream foi decidido pra valer o teste.
+    const opponentDownstream = finished.matches.find(
+      (m) =>
+        ROUND_ORDER.indexOf(m.round) > ROUND_ORDER.indexOf('R32') &&
+        (m.homeCode === oppCode || m.awayCode === oppCode),
+    )
+    expect(opponentDownstream).toBeDefined()
+
+    const rewound = rewindLastUserLoss(finished)
+
+    // A derrota foi limpa.
+    const userMatchAfter = rewound.matches.find((m) => m.id === userR32.id)!
+    expect(userMatchAfter.winnerCode).toBeUndefined()
+    expect(userMatchAfter.result).toBeUndefined()
+    // Mesmo adversário continua no jogo (homeCode/awayCode preservados).
+    expect(userMatchAfter.homeCode).toBe(userR32.homeCode)
+    expect(userMatchAfter.awayCode).toBe(userR32.awayCode)
+    // Próximo jogo do user voltou a apontar pro userR32.
+    expect(nextUserMatch(rewound)?.id).toBe(userR32.id)
+    // Cascata: o jogo downstream do adversário foi resetado.
+    const cleanedDownstream = rewound.matches.find((m) => m.id === opponentDownstream!.id)!
+    expect(cleanedDownstream.winnerCode).toBeUndefined()
+    expect(cleanedDownstream.result).toBeUndefined()
+    expect(rewound.champion).toBeUndefined()
+  })
+
+  it('retorna o bracket inalterado se não há derrota pra desfazer', () => {
+    const bracket = setupBracket(makeFinishedWorldCup(), seededRng(7))
+    const same = rewindLastUserLoss(bracket)
+    expect(same).toBe(bracket)
   })
 })

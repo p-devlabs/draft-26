@@ -2,7 +2,9 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BracketView } from '../components/BracketView'
 import {
+  ensureRoundsSimulated,
   nextUserMatch,
+  rewindLastUserLoss,
   ROUND_LABEL,
   ROUND_ORDER,
   setupBracket,
@@ -14,9 +16,14 @@ import {
 import { clearBracket, loadBracket, loadWorldCup, saveBracket } from '../lib/persistence'
 import type { DraftState } from '../lib/draft'
 import { syncRun, type FinishedRound } from '../lib/runs'
+import { BannerSlot } from '../components/ads/BannerSlot'
+import { EliminatedDrawer } from '../components/ads/EliminatedDrawer'
+import { useAds } from '../components/ads/AdsProvider'
+import { track } from '../lib/track'
 
 export function MataMata() {
   const navigate = useNavigate()
+  const ads = useAds()
   const [bracket, setBracket] = useState<KnockoutBracket | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
   const [missingStage, setMissingStage] = useState(false)
@@ -57,6 +64,13 @@ export function MataMata() {
       if (lostMatch) finishedRound = lostMatch.round
     }
     void syncRun({ bracket, ...(finishedRound ? { finishedRound } : {}) })
+    if (finishedRound) {
+      void track('cup_ended', {
+        finishedRound,
+        champion: bracket.champion ?? null,
+        userWon: userChampion,
+      })
+    }
   }, [bracket])
 
   if (missingStage) {
@@ -129,6 +143,7 @@ export function MataMata() {
   const phaseLabel = computePhaseLabel(bracket, next, userOut, userChampion)
 
   const handleReset = () => {
+    void track('reset_clicked', { from: 'bracket' })
     clearBracket()
     const persisted = loadWorldCup()!
     const created = setupBracket(persisted.worldCup)
@@ -136,18 +151,90 @@ export function MataMata() {
     setBracket(created)
   }
 
+  // Rewarded "rejogar último jogo": rebobina a derrota, re-simula adversários
+  // pendentes do bracket, persiste e o user volta a ter um `nextUserMatch`.
+  const handleReplay = () => {
+    const rewound = rewindLastUserLoss(bracket)
+    const resimulated = ensureRoundsSimulated(rewound)
+    saveBracket(resimulated)
+    setBracket(resimulated)
+  }
+
+  // Transição entre rodadas do mata-mata: candidato a interstitial (com
+  // cooldown/frequência do AdsProvider). Para o pós-apito-final usamos um
+  // slot diferente (`transition-post-final`) — aqui o user clica "JOGAR".
+  const handlePlay = async () => {
+    if (!next) return
+    // Não chama interstitial na primeira partida (R32) — só nas viradas de
+    // rodada, pra evitar acumular ads logo na primeira tela do bracket.
+    const isRoundOpener =
+      bracket.matches
+        .filter((m) => m.round === next.round)
+        .every((m) => !m.winnerCode) && next.round !== 'R32'
+    if (isRoundOpener) {
+      await ads.showInterstitial('transition-ko-round')
+    }
+    navigate(`/match?kind=knockout&id=${next.id}`)
+  }
+
+  // Detalhe da derrota pra mostrar no drawer Eliminado.
+  const eliminatedDetail = (() => {
+    if (!userOut) return null
+    const lost = [...bracket.matches]
+      .reverse()
+      .find(
+        (m) =>
+          m.winnerCode &&
+          (m.homeCode === bracket.userCode || m.awayCode === bracket.userCode) &&
+          m.winnerCode !== bracket.userCode,
+      )
+    if (!lost) return null
+    const roundLabel = ROUND_LABEL[lost.round as KORound]
+    const hg = (lost.result?.homeGoals ?? 0) + (lost.extraTime?.homeGoals ?? 0)
+    const ag = (lost.result?.awayGoals ?? 0) + (lost.extraTime?.awayGoals ?? 0)
+    const userIsHome = lost.homeCode === bracket.userCode
+    const u = userIsHome ? hg : ag
+    const o = userIsHome ? ag : hg
+    const detail = lost.penalties
+      ? `perdeu nos pênaltis ${u}-${o}`
+      : lost.extraTime
+        ? `perdeu na prorrogação ${u}-${o}`
+        : `perdeu ${u}-${o}`
+    return { roundLabel, detail }
+  })()
+
   return (
-    <div className="d26-scope" style={{ overflowX: 'hidden' }}>
+    <div className="d26-scope" style={{ overflowX: 'hidden', paddingBottom: 90 }}>
       <AppBar phaseLabel={phaseLabel} onReset={handleReset} />
+      <div className="d26-desktop-only" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 clamp(16px, 4vw, 28px)' }}>
+        <BannerSlot slotId="bracket-leaderboard" kind="desktop-leaderboard" />
+      </div>
       <Masthead />
       <PathStrip bracket={bracket} />
-      <BracketView bracket={bracket} />
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', maxWidth: 1180, margin: '0 auto', padding: '0 clamp(16px, 4vw, 28px)' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <BracketView bracket={bracket} />
+        </div>
+        <div className="d26-desktop-only" style={{ paddingTop: 12 }}>
+          <BannerSlot slotId="bracket-rect" kind="desktop-rectangle" />
+        </div>
+      </div>
       <FooterNav
         next={next}
         userOut={userOut}
         userChampion={userChampion}
-        onPlay={() => next && navigate(`/match?kind=knockout&id=${next.id}`)}
+        onPlay={() => void handlePlay()}
       />
+      <div className="d26-mobile-only">
+        <BannerSlot slotId="bracket-footer" kind="mobile-footer" />
+      </div>
+      {eliminatedDetail && (
+        <EliminatedDrawer
+          roundLabel={eliminatedDetail.roundLabel}
+          detail={eliminatedDetail.detail}
+          onReplay={handleReplay}
+        />
+      )}
     </div>
   )
 }

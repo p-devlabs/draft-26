@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { features } from '../lib/features'
 import {
@@ -19,10 +19,14 @@ import { autoFillXI } from '../lib/autofill'
 import { createDraft, isComplete, type DraftState } from '../lib/draft'
 import { loadDraft, saveWorldCup, loadWorldCup, clearWorldCup, clearDraft } from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
+import { track } from '../lib/track'
 import { nationGradient } from '../lib/nation-colors'
+import { BannerSlot } from '../components/ads/BannerSlot'
+import { useAds } from '../components/ads/AdsProvider'
 
 export function Copa() {
   const navigate = useNavigate()
+  const ads = useAds()
   const [worldCup, setWorldCup] = useState<WorldCupGroups | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
 
@@ -59,9 +63,37 @@ export function Copa() {
   // Vista do grupo do user pra UI. Memoiza pra evitar re-renders desnecessários.
   const stage = useMemo(() => (worldCup ? getUserGroup(worldCup) : null), [worldCup])
 
+  const trackedRoundsRef = useRef<Set<1 | 2 | 3>>(new Set())
+
   useEffect(() => {
     if (!worldCup || !stage) return
     const finishedNow = nextRound(stage) == null
+
+    // Trackeia cada rodada do user assim que terminar (1, 2, 3) — só uma vez por rodada.
+    for (const r of [1, 2, 3] as const) {
+      if (trackedRoundsRef.current.has(r)) continue
+      const userMatch = stage.matches.find(
+        (m) => m.round === r && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
+      )
+      if (!userMatch?.result) continue
+      trackedRoundsRef.current.add(r)
+      const userIsHome = userMatch.homeCode === USER_TEAM_CODE
+      const ug = userIsHome ? userMatch.result.homeGoals : userMatch.result.awayGoals
+      const og = userIsHome ? userMatch.result.awayGoals : userMatch.result.homeGoals
+      const sorted = standings(stage)
+      const pos = sorted.findIndex((s) => s.team.isUser) + 1
+      const points = sorted.find((s) => s.team.isUser)?.points ?? 0
+      void track('group_round_completed', {
+        round: r,
+        userGoals: ug,
+        oppGoals: og,
+        userResult: ug > og ? 'W' : ug === og ? 'D' : 'L',
+        oppCode: userIsHome ? userMatch.awayCode : userMatch.homeCode,
+        posAfter: pos,
+        pointsAfter: points,
+      })
+    }
+
     if (!finishedNow) {
       void syncRun({ stage })
       return
@@ -73,6 +105,7 @@ export function Copa() {
       stage,
       ...(qualified ? {} : { finishedRound: 'group' as const }),
     })
+    void track('group_completed', { fate: fate.kind, qualified })
   }, [worldCup, stage])
 
   if (!stage || !draft) {
@@ -121,20 +154,32 @@ export function Copa() {
   }
 
   const handleReset = () => {
+    void track('reset_clicked', { from: 'groups' })
     clearWorldCup()
     clearDraft()
     clearLocalRunId()
+    ads.resetRun()
     navigate('/draft', { replace: true })
+  }
+
+  // Transição fim-de-grupos → mata-mata: candidato a interstitial. O await
+  // garante que o user fecha o ad antes de a rota mudar (handoff §C).
+  const handleAdvance = async () => {
+    await ads.showInterstitial('transition-groups-to-ko')
+    navigate('/bracket')
   }
 
   return (
     <div className="d26-scope" style={{ position: 'relative', overflowX: 'hidden' }}>
       <AppBar phaseLabel={phaseLabel} onReset={handleReset} />
+      <div className="d26-desktop-only" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 clamp(16px, 4vw, 28px)' }}>
+        <BannerSlot slotId="grupos-leaderboard" kind="desktop-leaderboard" />
+      </div>
       <div
         style={{
           maxWidth: 1180,
           margin: '0 auto',
-          padding: 'clamp(20px, 3.5vw, 30px) clamp(16px, 4vw, 28px) 60px',
+          padding: 'clamp(20px, 3.5vw, 30px) clamp(16px, 4vw, 28px) 90px',
         }}
       >
         <Masthead
@@ -153,9 +198,19 @@ export function Copa() {
             onPlay={handlePlay}
           />
         )}
-        <StandingsSection standings={sortedStandings} round={round} finished={finished} />
-        <RoundsGrid stage={stage} currentRound={round} />
-        <FooterNav finished={finished} userPos={userPos} />
+        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <StandingsSection standings={sortedStandings} round={round} finished={finished} />
+            <RoundsGrid stage={stage} currentRound={round} />
+            <FooterNav finished={finished} userPos={userPos} onAdvance={handleAdvance} />
+          </div>
+          <div className="d26-desktop-only">
+            <BannerSlot slotId="grupos-rect" kind="desktop-rectangle" />
+          </div>
+        </div>
+      </div>
+      <div className="d26-mobile-only">
+        <BannerSlot slotId="grupos-footer" kind="mobile-footer" />
       </div>
     </div>
   )
@@ -1221,7 +1276,15 @@ function ScoreCell({
 // Footer nav
 // ============================================================
 
-function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }) {
+function FooterNav({
+  finished,
+  userPos,
+  onAdvance,
+}: {
+  finished: boolean
+  userPos: number
+  onAdvance: () => void | Promise<void>
+}) {
   const qualified = finished && userPos > 0 && userPos <= 2
   const ctaLabel = qualified ? 'IR PRO MATA-MATA →' : 'VER MATA-MATA →'
   const ctaStyle: CSSProperties = qualified
@@ -1265,8 +1328,11 @@ function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }
       >
         {note}
       </span>
-      <Link
-        to="/bracket"
+      <button
+        type="button"
+        onClick={() => {
+          void onAdvance()
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -1278,11 +1344,12 @@ function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }
           fontWeight: 700,
           letterSpacing: '0.06em',
           textDecoration: 'none',
+          cursor: 'pointer',
           ...ctaStyle,
         }}
       >
         {ctaLabel}
-      </Link>
+      </button>
     </div>
   )
 }
