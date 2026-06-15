@@ -7,9 +7,12 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Demais respostas (HTML, favicon, _redirects fallback) — mantém revalidação rápida.
+# Headers aplicados a TODO request. No Cloudflare Pages as regras do _headers
+# são aditivas — se colocássemos Cache-Control aqui também, o /assets/* receberia
+# os dois (joined com vírgula) e o browser cairia na diretiva mais restritiva,
+# anulando o `immutable` acima. CF Pages já manda `cache-control: public,
+# max-age=0, must-revalidate` por default no HTML, então deixamos esse cair.
 /*
-  Cache-Control: public, max-age=0, must-revalidate
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
