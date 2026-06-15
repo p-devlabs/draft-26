@@ -427,15 +427,23 @@ function KnockoutMatchRunner({
    * acabou e existe shootout. 0 antes da decisão começar.
    */
   const [shootoutKicksRevealed, setShootoutKicksRevealed] = useState(0)
+  /**
+   * Fase atualmente exposta na UI. Avança em sequência conforme o relógio
+   * cruza 90'/120' — o usuário só descobre que há prorrogação quando o
+   * tempo regulamentar acaba empatado, e só descobre pênaltis quando a ET
+   * também acabar empatada. Sem isso, a timeline já nasceria com 120'
+   * spoilando o desfecho da partida.
+   */
+  type RevealedPhase = 'regulation' | 'extra-time' | 'penalties' | 'done'
+  const [revealedPhase, setRevealedPhase] = useState<RevealedPhase>('regulation')
   const persistedRef = useRef(false)
   const startedAtRef = useRef<number | null>(null)
   const skippedRef = useRef(false)
   const wasAlreadyPlayedRef = useRef(false)
 
-  // goalMinute precisa ser computado antes do hook porque ele consome em
-  // totalMinutes. Quando simResult vira não-null com ET, vira 120 e o
-  // tick re-inicia no novo ritmo.
-  const goalMinute = simResult?.extraTime ? 120 : 90
+  // totalMinutes do tick segue a fase exposta — 90 enquanto estamos só no
+  // regulamentar, 120 a partir do momento em que entramos em ET.
+  const goalMinute = revealedPhase === 'regulation' ? 90 : 120
   const {
     virtualMinute,
     wholeMinute,
@@ -503,6 +511,9 @@ function KnockoutMatchRunner({
       if (match.penalties) {
         setShootoutKicksRevealed(match.penalties.sequence.length)
       }
+      // Sem mistério no replay: já se sabe o desfecho, pula direto pro
+      // estado final.
+      setRevealedPhase('done')
       return
     }
 
@@ -547,12 +558,37 @@ function KnockoutMatchRunner({
     })
   }, [matchId, navigate, setVirtualMinute])
 
-  const regulationEnded = !!simResult && virtualMinute >= goalMinute
   const totalKicks = simResult?.penalties?.sequence.length ?? 0
+
+  // Avança a fase exposta conforme o relógio cruza os limites de cada etapa.
+  // Cada transição amplia o que a UI sabe: chegou em 90' → revela ET (se
+  // houver) ou pênaltis (se direto); chegou em 120' → revela pênaltis (se
+  // houver) ou encerra; todas as cobranças → encerra.
+  useEffect(() => {
+    if (!simResult) return
+    if (revealedPhase === 'regulation' && virtualMinute >= 90) {
+      if (simResult.extraTime) setRevealedPhase('extra-time')
+      else if (simResult.penalties) setRevealedPhase('penalties')
+      else setRevealedPhase('done')
+      return
+    }
+    if (revealedPhase === 'extra-time' && virtualMinute >= 120) {
+      if (simResult.penalties) setRevealedPhase('penalties')
+      else setRevealedPhase('done')
+    }
+  }, [revealedPhase, virtualMinute, simResult])
+
+  useEffect(() => {
+    if (revealedPhase !== 'penalties') return
+    if (totalKicks > 0 && shootoutKicksRevealed >= totalKicks) {
+      setRevealedPhase('done')
+    }
+  }, [revealedPhase, shootoutKicksRevealed, totalKicks])
+
   /** Decisão em andamento — cobranças sendo reveladas uma a uma. */
-  const shootoutActive = regulationEnded && totalKicks > 0 && shootoutKicksRevealed < totalKicks
+  const shootoutActive = revealedPhase === 'penalties' && shootoutKicksRevealed < totalKicks
   /** "Finished" = tudo encerrado: tempo regulamentar + (se houver) todas as cobranças. */
-  const finalShowing = regulationEnded && !shootoutActive
+  const finalShowing = revealedPhase === 'done'
 
   // Timer do shootout: revela uma cobrança por vez no intervalo da velocidade.
   // Para automaticamente quando todas saíram (shootoutActive vira false).
@@ -605,6 +641,7 @@ function KnockoutMatchRunner({
   const onRestart = useCallback(() => {
     setVirtualMinute(0)
     setShootoutKicksRevealed(0)
+    setRevealedPhase('regulation')
     setPlaying(true)
     persistedRef.current = false
     setOutcome(null)
@@ -622,9 +659,11 @@ function KnockoutMatchRunner({
     }
     // Pula direto pro fim do tempo regulamentar/ET E revela todas as
     // cobranças (se houver). Um clique só → resultado final visível.
-    setVirtualMinute(goalMinute)
+    const finalMinute = simResult?.extraTime ? 120 : 90
+    setVirtualMinute(finalMinute)
     if (totalKicks > 0) setShootoutKicksRevealed(totalKicks)
-  }, [bracket, matchId, goalMinute, totalKicks, setVirtualMinute, virtualMinuteRef])
+    setRevealedPhase('done')
+  }, [bracket, matchId, simResult, totalKicks, setVirtualMinute, virtualMinuteRef])
 
   const inExtraTime = wholeMinute > 90
   const match = bracket ? findKnockoutMatch(bracket, matchId) : null
@@ -762,7 +801,11 @@ function KnockoutMatchRunner({
         onSkipToEnd={onSkipToEnd}
         onShowOutcome={onShowOutcome}
         outcome={outcome}
-        penalties={regulationEnded ? simResult.penalties : undefined}
+        penalties={
+          revealedPhase === 'penalties' || revealedPhase === 'done'
+            ? simResult.penalties
+            : undefined
+        }
         penaltyHomeCode={match.homeCode!}
         penaltyAwayCode={match.awayCode!}
         home={home}
