@@ -24,7 +24,9 @@ pnpm data:rebuild      # full data pipeline (network-bound, ~minutes)
 ```
 
 Individual pipeline steps (run in order if rebuilding manually):
-`pnpm scrape:squads` → `pnpm enrich:squads` → `pnpm download:fifa` → `pnpm enrich:fifa` → `pnpm download:transfermarkt` → `pnpm enrich:transfermarkt` → `pnpm enrich:alt-positions`.
+`pnpm scrape:squads` → `pnpm enrich:squads` → `pnpm download:fifa` → `pnpm enrich:fifa` → `pnpm download:transfermarkt` → `pnpm enrich:transfermarkt` → `pnpm enrich:alt-positions` → `pnpm recalibrate:heuristic` → `pnpm download:fbref` → `pnpm enrich:fbref` → `pnpm calibrate:fbref`.
+
+`pnpm download:fbref` é só um check — o CSV vem do Kaggle (precisa cadastro grátis) e a primeira run do step imprime as instruções. Já o `pnpm calibrate:fbref` faz uma regressão linear bucket-a-bucket (GK/DEF/MID/FWD) com OLS treinado nos jogadores FIFA-matched que também aparecem no Top 5, e aplica o modelo nos players sem FIFA pra upgradear o overall (ratingSource vira `fbref-fit`).
 
 CI roda `lint + test + build` em PR e push pra main (`.github/workflows/ci.yml`). When asked to verify, run `pnpm lint && pnpm test` and exercise the UI in the dev server.
 
@@ -71,9 +73,18 @@ Note: README.md / HANDOFF.md still reference the old Portuguese paths (`/selecoe
 
 The bundle inlines `data/squads-enriched.json` (~570 KB) via `src/data/squads.ts`. That JSON is committed and is the runtime source of squad/player data. Player records carry a granular `primaryPosition` (CB, LW, ST…) plus a coarse `position` bucket (GK/DEF/MID/FWD) — slot compatibility uses `primaryPosition`; narration uses the bucket.
 
-Two-source rating system: ~71% of players match EA FC 26 (`ratingSource: 'fifa'`); the rest fall back to a heuristic by club tier + caps + age (`ratingSource: 'heuristic'`, marked with ✦ in UI). Match disambiguation scores candidates by `(positional bucket, club, age)` — this fixed the bug where GK Alisson Becker was being matched to a RW namesake at Shakhtar. Don't simplify the matcher back to name-only.
+Multi-source rating system: `ratingSource` reflects ordem de prioridade:
+- `'fifa'` (~73%) — EA FC 26 exact/initials match. Mais confiável.
+- `'fifa-fuzzy'` (<1%) — EA FC 26 via Levenshtein. Cauda.
+- `'fbref-fit'` (~2%) — sem FIFA mas com stats FBref 2025-26 do Top 5; overall vem da regressão treinada em `calibrate-from-fbref.ts`. Para jogadores tipo Rayan (BRA, Bournemouth) ou Jeremy Arévalo (ECU, Stuttgart) — players reais em ligas top que o EA FC errou ou ignorou.
+- `'tm'` (~8%) — sem FIFA, sem FBref; rating heurístico calibrado por valor TM em buckets.
+- `'club-tier'` (~17%) — fallback final, só club + caps + age. Players domésticos em Iran/Jordan/Uzbekistan/SA principalmente.
 
-Raw CSVs (`eafc26-players.csv`, `transfermarkt-players.csv`) are gitignored — `pnpm data:rebuild` re-downloads them.
+Match disambiguation em todas as fontes pontua candidatos por `(positional bucket, club, age)` — fix do bug onde GK Alisson Becker virava o RW namesake do Shakhtar. Não simplificar pra name-only.
+
+FBref stats brutos ficam em `player.fbref` (per-90 normalizadas) pra cada player que matchou, mesmo os FIFA-matched. Útil pra debug e pra revalidar.
+
+Raw CSVs (`eafc26-players.csv`, `transfermarkt-players.csv`, `fbref-players.csv`) are gitignored — `pnpm data:rebuild` re-downloads / re-checks them. FBref vem manualmente do Kaggle (cadastro grátis), só essa fonte. Outras são scrape automatizado.
 
 ### Styling
 

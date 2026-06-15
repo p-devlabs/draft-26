@@ -23,9 +23,12 @@
     "enrich:transfermarkt": "tsx scripts/enrich-with-transfermarkt.ts",
     "enrich:alt-positions": "tsx scripts/enrich-alt-positions.ts",
     "recalibrate:heuristic": "tsx scripts/recalibrate-heuristic.ts",
+    "download:fbref": "tsx scripts/download-fbref.ts",
+    "enrich:fbref": "tsx scripts/enrich-with-fbref.ts",
+    "calibrate:fbref": "tsx scripts/calibrate-from-fbref.ts",
     "download:matches": "tsx scripts/download-matches.ts",
     "calibrate:sim": "tsx scripts/calibrate-sim.ts",
-    "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa && pnpm download:transfermarkt && pnpm enrich:transfermarkt && pnpm enrich:alt-positions && pnpm recalibrate:heuristic && pnpm download:matches && pnpm calibrate:sim"
+    "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa && pnpm download:transfermarkt && pnpm enrich:transfermarkt && pnpm enrich:alt-positions && pnpm recalibrate:heuristic && pnpm download:fbref && pnpm enrich:fbref && pnpm calibrate:fbref && pnpm download:matches && pnpm calibrate:sim"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",

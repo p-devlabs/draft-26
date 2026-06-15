@@ -23,3 +23,6 @@ data/transfermarkt-players.csv
 
 # dataset de jogos internacionais (2 MB, baixado por script — não comitar)
 data/international-matches.csv
+
+# dataset FBref Top 5 ligas (500 KB, baixado manual do Kaggle — ver scripts/download-fbref.ts)
+data/fbref-players.csv
