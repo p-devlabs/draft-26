@@ -48,7 +48,8 @@ export const NATION_GRADIENTS: Record<string, string> = {
 
   // === Ásia (AFC) ===
   JPN: 'radial-gradient(circle at 50% 50%, #bc002d 22%, #fff 22%)',
-  KOR: 'radial-gradient(circle at 50% 50%, #cd2e3a 18%, #fff 18%)',
+  // Taegukgi aproximado: branco com semi-círculo vermelho (topo) + azul (base) no centro.
+  KOR: 'radial-gradient(circle at 50% 50%, transparent 22%, #fff 22%), linear-gradient(180deg, #cd2e3a 50%, #003478 50%)',
   IRN: 'linear-gradient(180deg, #239f40 33%, #fff 33%, #fff 66%, #da0000 66%)',
   IRQ: 'linear-gradient(180deg, #ce1126 33%, #fff 33%, #fff 66%, #000 66%)',
   KSA: '#006c35',
@@ -62,7 +63,8 @@ export const NATION_GRADIENTS: Record<string, string> = {
   MEX: 'linear-gradient(90deg, #006847 33%, #fff 33%, #fff 66%, #ce1126 66%)',
   CAN: 'linear-gradient(90deg, #d52b1e 25%, #fff 25%, #fff 75%, #d52b1e 75%)',
   HAI: 'linear-gradient(180deg, #00209f 50%, #d21034 50%)',
-  PAN: 'linear-gradient(135deg, #fff 50%, #d21034 50%)',
+  // Bandeira do Panamá: quartelada (br/vm em cima, az/br embaixo).
+  PAN: 'linear-gradient(to right, #fff 50%, #d21034 50%) 0 0 / 100% 50% no-repeat, linear-gradient(to right, #005aa7 50%, #fff 50%) 0 100% / 100% 50% no-repeat',
   CUW: 'linear-gradient(180deg, #002b7f calc(60% - 2px), #f9e814 calc(60% - 2px), #f9e814 calc(60% + 2px), #002b7f calc(60% + 2px))',
 
   // === Oceania (OFC) ===

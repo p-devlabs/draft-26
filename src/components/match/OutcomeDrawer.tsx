@@ -311,17 +311,19 @@ export function OutcomeDrawer({
             pointerEvents: 'auto',
           }}
         >
-          <OutcomeBanner cfg={cfg} onClose={onClose} />
-          <div style={{ padding: '22px clamp(18px, 5vw, 28px) 30px' }}>
-            <MatchResultCard phase={ctx.phase} result={ctx.matchResult} />
-            <TeamChosenCard draft={ctx.draft} />
-            <CampaignStatsRow stats={ctx.stats} />
-            {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
-            {cfg.champion && (
-              <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />
-            )}
-            {!cfg.champion && cfg.showShare && <CompactShare surface={outcome} />}
+          <OutcomeBanner cfg={cfg} />
+          <div style={{ padding: '18px clamp(18px, 5vw, 28px) 30px' }}>
             <OutcomeActions cfg={cfg} />
+            <div style={{ marginTop: 22 }}>
+              <MatchResultCard phase={ctx.phase} result={ctx.matchResult} />
+              <TeamChosenCard draft={ctx.draft} />
+              <CampaignStatsRow stats={ctx.stats} />
+              {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
+              {cfg.champion && (
+                <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />
+              )}
+              {!cfg.champion && cfg.showShare && <CompactShare surface={outcome} />}
+            </div>
           </div>
         </div>
       </div>
@@ -331,11 +333,11 @@ export function OutcomeDrawer({
 
 // ---------- Subcomponentes ----------
 
-function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => void }) {
+function OutcomeBanner({ cfg }: { cfg: OutcomeConfig }) {
   return (
     <div
       style={{
-        padding: '24px clamp(18px, 5vw, 28px) 20px',
+        padding: '18px clamp(18px, 5vw, 28px) 16px',
         borderBottom: '1px solid var(--color-d-line)',
         background: cfg.bannerBg,
         position: 'relative',
@@ -347,28 +349,9 @@ function OutcomeBanner({ cfg, onClose }: { cfg: OutcomeConfig; onClose: () => vo
           height: 5,
           borderRadius: 5,
           background: 'rgba(255,255,255,0.25)',
-          margin: '0 auto 18px',
+          margin: '0 auto 14px',
         }}
       />
-      <button
-        onClick={onClose}
-        aria-label="Fechar"
-        style={{
-          position: 'absolute',
-          top: 20,
-          right: 20,
-          background: 'rgba(0,0,0,0.3)',
-          border: '1px solid var(--color-d-line)',
-          color: 'var(--color-d-ink)',
-          borderRadius: 8,
-          width: 30,
-          height: 30,
-          fontSize: 14,
-          cursor: 'pointer',
-        }}
-      >
-        ✕
-      </button>
       <div style={{ textAlign: 'center' }}>
         {cfg.decoration.kind === 'check' && (
           <div
@@ -1063,7 +1046,7 @@ function ShareGrid({ surface }: { surface: string }) {
 
 function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <Link
         to={cfg.ctaTo}
         style={{
