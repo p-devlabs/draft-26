@@ -1,19 +1,36 @@
-import { StrictMode } from 'react'
+import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './index.css'
 import { Home } from './routes/Home'
-import { Selecoes } from './routes/Selecoes'
-import { SelecaoDetalhe } from './routes/SelecaoDetalhe'
-import { Draft } from './routes/Draft'
-import { Copa } from './routes/Copa'
-import { Match } from './routes/Match'
-import { MataMata } from './routes/MataMata'
 import { features } from './lib/features'
 import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
 import { initAnalytics } from './lib/analytics'
 import { trackSessionOnce, PageViewTracker } from './lib/track'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+
+// Rotas pesadas viram lazy chunks. Home fica eager porque é a landing —
+// a primeira renderização não pode pagar o custo de um round-trip extra.
+// Todas as rotas exportam named (export function X), por isso o wrapper
+// `.then(m => ({ default: m.X }))` pra alimentar o React.lazy.
+const Selecoes = lazy(() =>
+  import('./routes/Selecoes').then((m) => ({ default: m.Selecoes })),
+)
+const SelecaoDetalhe = lazy(() =>
+  import('./routes/SelecaoDetalhe').then((m) => ({ default: m.SelecaoDetalhe })),
+)
+const Draft = lazy(() =>
+  import('./routes/Draft').then((m) => ({ default: m.Draft })),
+)
+const Copa = lazy(() =>
+  import('./routes/Copa').then((m) => ({ default: m.Copa })),
+)
+const Match = lazy(() =>
+  import('./routes/Match').then((m) => ({ default: m.Match })),
+)
+const MataMata = lazy(() =>
+  import('./routes/MataMata').then((m) => ({ default: m.MataMata })),
+)
 
 initAnalytics()
 trackSessionOnce()
@@ -27,20 +44,26 @@ if (features.dev) {
   }
 }
 
+// Fallback minimalista: só reserva a viewport pra evitar layout shift
+// enquanto o chunk da rota carrega. Sem texto/spinner pra não piscar.
+const RouteFallback = <div aria-busy="true" style={{ minHeight: '100dvh' }} />
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppErrorBoundary>
       <BrowserRouter>
         <PageViewTracker />
-        <Routes>
-          <Route index element={<Home />} />
-          <Route path="/teams" element={<Selecoes />} />
-          <Route path="/teams/:code" element={<SelecaoDetalhe />} />
-          <Route path="/draft" element={<Draft />} />
-          <Route path="/groups" element={<Copa />} />
-          <Route path="/bracket" element={<MataMata />} />
-          <Route path="/match" element={<Match />} />
-        </Routes>
+        <Suspense fallback={RouteFallback}>
+          <Routes>
+            <Route index element={<Home />} />
+            <Route path="/teams" element={<Selecoes />} />
+            <Route path="/teams/:code" element={<SelecaoDetalhe />} />
+            <Route path="/draft" element={<Draft />} />
+            <Route path="/groups" element={<Copa />} />
+            <Route path="/bracket" element={<MataMata />} />
+            <Route path="/match" element={<Match />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AppErrorBoundary>
   </StrictMode>,
