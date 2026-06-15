@@ -127,7 +127,7 @@ export function Copa() {
 
   const round = nextRound(stage)
   const finished = round == null
-  const sortedStandings = standings(stage)
+  const sortedStandings = useMemo(() => standings(stage), [stage])
   const userPos = sortedStandings.findIndex((s) => s.team.isUser) + 1
   const userStanding = sortedStandings.find((s) => s.team.isUser) ?? null
   const playedRoundsCount = roundsPlayed(stage)

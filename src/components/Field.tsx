@@ -268,14 +268,6 @@ function PlusChip({ onClick, posLabel }: { onClick: () => void; posLabel: string
           margin: '0 auto',
           transition: 'transform .15s, background .15s',
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1)'
-          e.currentTarget.style.background = 'rgba(212,255,61,0.16)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = ''
-          e.currentTarget.style.background = 'rgba(212,255,61,0.07)'
-        }}
       >
         +
       </button>
