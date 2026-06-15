@@ -69,13 +69,15 @@ export function Copa() {
   // rules-of-hooks. Vazio enquanto stage não carrega.
   const sortedStandings = useMemo(() => (stage ? standings(stage) : []), [stage])
 
+  // Refs guardam apenas "já disparei esse side-effect?" pra cada evento
+  // one-shot — nunca leitura, só write-once. Não causam re-render.
   const trackedRoundsRef = useRef<Set<1 | 2 | 3>>(new Set())
+  const groupCompletedTrackedRef = useRef(false)
 
+  // (1) group_round_completed — dispara assim que cada rodada do user
+  // recebe resultado. Idempotente via Set ref.
   useEffect(() => {
-    if (!worldCup || !stage) return
-    const finishedNow = nextRound(stage) == null
-
-    // Trackeia cada rodada do user assim que terminar (1, 2, 3) — só uma vez por rodada.
+    if (!stage) return
     for (const r of [1, 2, 3] as const) {
       if (trackedRoundsRef.current.has(r)) continue
       const userMatch = stage.matches.find(
@@ -99,20 +101,37 @@ export function Copa() {
         pointsAfter: points,
       })
     }
+  }, [stage])
 
+  // (2) Supabase mirror do stage. Roda em qualquer mudança, marca
+  // finishedRound só se a fase encerrou e o user NÃO se classificou.
+  useEffect(() => {
+    if (!stage || !worldCup) return
+    const finishedNow = nextRound(stage) == null
     if (!finishedNow) {
       void syncRun({ stage })
       return
     }
-    // Classificação real Copa 2026: 1º, 2º ou 3º entre os 8 melhores.
     const fate = userFate(worldCup)
     const qualified = fate.kind.startsWith('qualified')
     void syncRun({
       stage,
       ...(qualified ? {} : { finishedRound: 'group' as const }),
     })
-    void track('group_completed', { fate: fate.kind, qualified })
-  }, [worldCup, stage])
+  }, [stage, worldCup])
+
+  // (3) group_completed — dispara UMA vez quando a fase encerra.
+  useEffect(() => {
+    if (!stage || !worldCup) return
+    if (groupCompletedTrackedRef.current) return
+    if (nextRound(stage) != null) return
+    groupCompletedTrackedRef.current = true
+    const fate = userFate(worldCup)
+    void track('group_completed', {
+      fate: fate.kind,
+      qualified: fate.kind.startsWith('qualified'),
+    })
+  }, [stage, worldCup])
 
   if (!stage || !draft) {
     return (
