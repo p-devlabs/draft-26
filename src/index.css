@@ -84,6 +84,15 @@
   from { opacity: 0; transform: scale(.82); }
   to { opacity: 1; transform: scale(1); }
 }
+@keyframes d26-stamp-in {
+  0%   { opacity: 0; transform: scale(1.45) rotate(-7deg); }
+  55%  { opacity: 1; transform: scale(.92) rotate(2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes d26-reveal-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 @media (max-width: 760px) {
   .d26-hero-grid { grid-template-columns: 1fr !important; gap: 34px !important; }
   .d26-hero-art { order: -1; align-items: flex-start !important; }

@@ -37,8 +37,9 @@ import {
   saveWorldCup,
 } from '../lib/persistence'
 import { nationGradient } from '../lib/nation-colors'
+import { SLOT_LABEL } from '../lib/positions'
 import type { MatchEvent } from '../lib/narrate'
-import type { DraftState } from '../lib/draft'
+import type { DraftState, DraftSlot } from '../lib/draft'
 
 type Speed = 'slow' | 'normal' | 'fast'
 
@@ -190,6 +191,8 @@ function GroupMatchRunner({
       outcomeContext={buildGroupOutcomeContext(data.worldCup, data.draft, round, homeTeam, awayTeam, homeGoals, awayGoals)}
       onCloseOutcome={() => setOutcome(null)}
       onShowOutcome={(o) => setOutcome(o)}
+      draft={data.draft}
+      userTeamCode={USER_TEAM_CODE}
     />
   )
 }
@@ -446,6 +449,8 @@ function KnockoutMatchRunner({
       outcomeContext={buildKnockoutOutcomeContext(bracket, stage, draft, match, homeGoals, awayGoals, simResult.penalties)}
       onCloseOutcome={() => setOutcome(null)}
       onShowOutcome={(o) => setOutcome(o)}
+      draft={draft}
+      userTeamCode={bracket.userCode}
     />
   )
 }
@@ -642,6 +647,10 @@ interface PartidaShellProps {
   penalties?: Penalties
   penaltyHomeCode?: string
   penaltyAwayCode?: string
+  /** XI montado pelo usuário — base do painel "SEU XI EM CAMPO". */
+  draft: DraftState
+  /** Código do time do user na partida (USER_TEAM_CODE em grupos, bracket.userCode em mata-mata). */
+  userTeamCode: string
 }
 
 function PartidaShell(p: PartidaShellProps) {
@@ -678,6 +687,9 @@ function PartidaShell(p: PartidaShellProps) {
           away={p.away}
           penaltyHomeCode={p.penaltyHomeCode}
           penaltyAwayCode={p.penaltyAwayCode}
+          draft={p.draft}
+          userTeamCode={p.userTeamCode}
+          revealedEvents={p.events}
         />
       </Body>
       {isOutcomeOpen && (
@@ -1315,6 +1327,9 @@ function RightColumn(props: {
   away: SideTeam
   penaltyHomeCode?: string
   penaltyAwayCode?: string
+  draft: DraftState
+  userTeamCode: string
+  revealedEvents: MatchEvent[]
 }) {
   return (
     <div style={{ flex: '2 1 250px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -1328,6 +1343,11 @@ function RightColumn(props: {
           away={props.away}
         />
       )}
+      <LineupCard
+        draft={props.draft}
+        userTeamCode={props.userTeamCode}
+        revealedEvents={props.revealedEvents}
+      />
     </div>
   )
 }
@@ -1537,6 +1557,262 @@ function PenaltiesCard({
       <PenRow label={home.isUser ? 'SEU XI' : homeCode.toUpperCase()} kicks={homeKicks} />
       <div style={{ height: 8 }} />
       <PenRow label={away.isUser ? 'SEU XI' : awayCode.toUpperCase()} kicks={awayKicks} />
+    </div>
+  )
+}
+
+// ---------- Sidebar "SEU XI EM CAMPO" ----------
+
+const LINE_ORDER: { key: 'GOL' | 'DEF' | 'MEI' | 'ATA'; label: string }[] = [
+  { key: 'GOL', label: 'GOLEIRO' },
+  { key: 'DEF', label: 'DEFESA' },
+  { key: 'MEI', label: 'MEIO-CAMPO' },
+  { key: 'ATA', label: 'ATAQUE' },
+]
+
+function lineKeyOf(slot: DraftSlot): 'GOL' | 'DEF' | 'MEI' | 'ATA' {
+  const bucket = slot.player?.player.position
+  if (bucket === 'GK') return 'GOL'
+  if (bucket === 'DEF') return 'DEF'
+  if (bucket === 'MID') return 'MEI'
+  if (bucket === 'FWD') return 'ATA'
+  // Fallback pelo SlotPosition se o slot não tiver player (caso degenerado).
+  if (slot.pos === 'GK') return 'GOL'
+  if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(slot.pos)) return 'DEF'
+  if (['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(slot.pos)) return 'MEI'
+  return 'ATA'
+}
+
+interface LineupRow {
+  shirt: number | null
+  name: string
+  posLabel: string
+  goals: number
+  yellow: boolean
+  red: boolean
+}
+
+function LineupCard({
+  draft,
+  userTeamCode,
+  revealedEvents,
+}: {
+  draft: DraftState
+  userTeamCode: string
+  revealedEvents: MatchEvent[]
+}) {
+  // Por-jogador, deriva gols/amarelo/vermelho dos eventos já revelados,
+  // matching por nome — narrate.ts pesca os atletas direto do roster do
+  // user (rosterForKnockout / playRound), então os nomes batem 1:1.
+  const userEvents = revealedEvents.filter((e) => e.teamCode === userTeamCode)
+  const byPlayer = new Map<string, { goals: number; yellow: boolean; red: boolean }>()
+  for (const ev of userEvents) {
+    const cur = byPlayer.get(ev.player) ?? { goals: 0, yellow: false, red: false }
+    if (ev.type === 'goal') cur.goals += 1
+    if (ev.type === 'yellow') cur.yellow = true
+    if (ev.type === 'red') cur.red = true
+    byPlayer.set(ev.player, cur)
+  }
+
+  const grouped = new Map<'GOL' | 'DEF' | 'MEI' | 'ATA', LineupRow[]>()
+  for (const slot of draft.slots) {
+    if (!slot.player) continue
+    const key = lineKeyOf(slot)
+    const player = slot.player.player
+    const evs = byPlayer.get(player.name)
+    const row: LineupRow = {
+      shirt: player.shirt,
+      name: player.name,
+      posLabel: SLOT_LABEL[slot.pos].toUpperCase(),
+      goals: evs?.goals ?? 0,
+      yellow: evs?.yellow ?? false,
+      red: evs?.red ?? false,
+    }
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(row)
+  }
+
+  const lines = LINE_ORDER.filter((l) => grouped.has(l.key)).map((l) => ({
+    label: l.label,
+    players: grouped.get(l.key)!,
+  }))
+
+  if (lines.length === 0) return null
+
+  return (
+    <div
+      style={{
+        background: 'var(--color-d-surface)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 14,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 16px',
+          borderBottom: '1px solid var(--color-d-line)',
+        }}
+      >
+        <div style={{ fontFamily: 'Anton', fontSize: 16 }}>SEU XI EM CAMPO</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontFamily: 'Space Mono',
+              fontSize: 9,
+              color: 'var(--color-d-mut)',
+            }}
+          >
+            <span style={{ fontSize: 11 }}>⚽</span>GOL
+          </span>
+          <span style={{ width: 9, height: 12, borderRadius: 2, background: '#f5d11e' }} />
+          <span style={{ width: 9, height: 12, borderRadius: 2, background: 'var(--color-d-red)' }} />
+        </div>
+      </div>
+      <div style={{ padding: '4px 8px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {lines.map((ln) => (
+          <div key={ln.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 6px 3px' }}>
+              <span
+                style={{
+                  fontFamily: 'Space Mono',
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: '0.16em',
+                  color: 'var(--color-d-mut)',
+                }}
+              >
+                {ln.label}
+              </span>
+              <span style={{ flex: 1, height: 1, background: 'var(--color-d-line)' }} />
+            </div>
+            {ln.players.map((p, i) => (
+              <LineupRowItem key={`${p.name}-${i}`} row={p} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LineupRowItem({ row }: { row: LineupRow }) {
+  const accent = row.red
+    ? 'var(--color-d-red)'
+    : row.goals > 0
+      ? 'var(--color-d-lime)'
+      : row.yellow
+        ? '#f5d11e'
+        : 'transparent'
+  const rowBg = row.red
+    ? 'rgba(255,59,59,0.06)'
+    : row.goals > 0
+      ? 'rgba(212,255,61,0.06)'
+      : row.yellow
+        ? 'rgba(245,209,30,0.05)'
+        : 'transparent'
+  const nameColor = row.red ? 'var(--color-d-mut)' : 'var(--color-d-ink)'
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: 8,
+        borderRadius: 9,
+        background: rowBg,
+        boxShadow: `inset 3px 0 0 ${accent}`,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'Anton',
+          fontSize: 15,
+          color: 'var(--color-d-mut)',
+          width: 22,
+          textAlign: 'center',
+          flex: '0 0 auto',
+        }}
+      >
+        {row.shirt ?? '·'}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: 13,
+            color: nameColor,
+            textDecoration: row.red ? 'line-through' : 'none',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {row.name}
+        </div>
+        <div
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 8,
+            color: 'var(--color-d-mut)',
+            letterSpacing: '0.08em',
+          }}
+        >
+          {row.posLabel}
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto' }}>
+        {row.goals > 0 && (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 3,
+              background: 'var(--color-d-lime)',
+              color: 'var(--color-d-bg)',
+              borderRadius: 6,
+              padding: '3px 7px',
+              fontFamily: 'Space Mono',
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+          >
+            ⚽ {row.goals}
+          </span>
+        )}
+        {row.yellow && (
+          <span
+            title="Amarelo"
+            style={{
+              width: 13,
+              height: 17,
+              borderRadius: 3,
+              background: '#f5d11e',
+              display: 'inline-block',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+            }}
+          />
+        )}
+        {row.red && (
+          <span
+            title="Vermelho"
+            style={{
+              width: 13,
+              height: 17,
+              borderRadius: 3,
+              background: 'var(--color-d-red)',
+              display: 'inline-block',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+            }}
+          />
+        )}
+      </div>
     </div>
   )
 }
