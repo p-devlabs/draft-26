@@ -12,3 +12,6 @@ scratch/
 tmp/
 supabase/.temp/
 handoff-claude-design/
+# Marketing assets standalone — não compilam, só servem como kit social.
+*.html
+!index.html
