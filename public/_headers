@@ -1,0 +1,23 @@
+# Cloudflare Pages headers
+# Doc: https://developers.cloudflare.com/pages/configuration/headers/
+
+# Assets versionados (hash no nome) — cache imutável por 1 ano.
+# Vite emite arquivos como /assets/index-<hash>.js, /assets/sentry-<hash>.js, etc.;
+# qualquer mudança altera o hash, então não há risco de servir versão velha.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Headers aplicados a TODO request. No Cloudflare Pages as regras do _headers
+# são aditivas — se colocássemos Cache-Control aqui também, o /assets/* receberia
+# os dois (joined com vírgula) e o browser cairia na diretiva mais restritiva,
+# anulando o `immutable` acima. CF Pages já manda `cache-control: public,
+# max-age=0, must-revalidate` por default no HTML, então deixamos esse cair.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  # CSP em modo Report-Only enquanto validamos endpoints reais (Sentry, Supabase, CF beacon).
+  # Quando estável, trocar pelo header `Content-Security-Policy` enforced.
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://cloudflareinsights.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'

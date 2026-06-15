@@ -141,7 +141,7 @@ async function main() {
   }
 
   const squads: SquadEnriched[] = JSON.parse(
-    await readFile(resolve(root, 'data/squads-enriched.json'), 'utf8'),
+    await readFile(resolve(root, 'public/data/squads-enriched.json'), 'utf8'),
   )
 
   const stats = { matched: 0, fuzzy: 0, missed: 0 }
@@ -225,7 +225,7 @@ async function main() {
   }
 
   await writeFile(
-    resolve(root, 'data/squads-enriched.json'),
+    resolve(root, 'public/data/squads-enriched.json'),
     JSON.stringify(squads, null, 2),
   )
 
