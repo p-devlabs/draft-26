@@ -359,8 +359,7 @@ user's next pending match. If the user has already been eliminated, it
 continues straight through to the final so the bracket UI can show the
 champion. Each user match plays normally; `ensureRoundsSimulated` is
 called again afterwards so the next round of non-user matches catches
-up. `simulateOtherHalfToFinal` is exported as a helper but is currently
-unused by the gameplay loop.
+up.
 
 ### User helpers
 

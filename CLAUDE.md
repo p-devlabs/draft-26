@@ -139,10 +139,9 @@ Vite 6 + React 19 + TS + Tailwind v4. Routing via React Router 7
   and stops as soon as it finds the user's next pending match. If the
   user has been eliminated, it keeps going through to the final.
   `ensureRoundsSimulated` is called again after every user match to
-  catch the next round up. `simulateOtherHalfToFinal` is also exported
-  but is not part of the live gameplay loop today. Knockout matches go
-  the full route: ET (~0.7 expected goals) → penalties (5 + sudden
-  death, per-shot probability clamped to 0.3-0.9 by overall).
+  catch the next round up. Knockout matches go the full route: ET (~0.7
+  expected goals) → penalties (5 + sudden death, per-shot probability
+  clamped to 0.3-0.9 by overall).
 - **`narrate.ts`** — per-minute event stream (goals / cards) weighted by
   player position; consumed by `routes/Match` for the live playback.
 - **`persistence.ts`** — `localStorage` keys: `d26:draft`, `d26:worldcup`,
