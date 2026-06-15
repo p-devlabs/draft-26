@@ -46,7 +46,9 @@ export function MataMata() {
     let finishedRound: FinishedRound | undefined
     if (userChampion) {
       finishedRound = 'CHAMPION'
-    } else if (!stillIn && !bracket.champion) {
+    } else if (!stillIn) {
+      // User não tem próximo jogo e não é campeão → foi eliminado em algum
+      // round (inclusive a Final, em que o adversário fica como bracket.champion).
       const lostMatch = [...bracket.matches]
         .reverse()
         .find(
