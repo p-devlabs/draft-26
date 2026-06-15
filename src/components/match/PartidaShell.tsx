@@ -1,4 +1,4 @@
-import { memo, type CSSProperties, type ReactNode } from 'react'
+import { memo, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { nationGradient } from '../../lib/nation-colors'
@@ -53,7 +53,59 @@ export function PartidaShell(p: PartidaShellProps) {
         shootoutKicksRevealed={p.shootoutKicksRevealed ?? 0}
         markers={p.goalAndRedEvents}
       />
+      <ScoreAnnouncer home={p.home} away={p.away} homeGoals={p.homeGoals} awayGoals={p.awayGoals} />
       <Body>{p.children}</Body>
+    </div>
+  )
+}
+
+// Anuncia gols pra screen readers via live region. Compara o placar atual com
+// o anterior em useEffect — só dispara quando algum lado realmente marcou,
+// evitando ruído a cada re-render do shell.
+function ScoreAnnouncer({
+  home,
+  away,
+  homeGoals,
+  awayGoals,
+}: {
+  home: SideTeam
+  away: SideTeam
+  homeGoals: number
+  awayGoals: number
+}) {
+  const prev = useRef({ home: homeGoals, away: awayGoals })
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    const last = prev.current
+    const homeScored = homeGoals > last.home
+    const awayScored = awayGoals > last.away
+    if (homeScored || awayScored) {
+      const scorer = homeScored ? home : away
+      const label = scorer.isUser ? 'Seu XI' : scorer.name
+      setMessage(`${label} marcou. Placar ${homeGoals} a ${awayGoals}.`)
+    }
+    prev.current = { home: homeGoals, away: awayGoals }
+  }, [homeGoals, awayGoals, home, away])
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      style={{
+        position: 'absolute',
+        width: 1,
+        height: 1,
+        padding: 0,
+        margin: -1,
+        overflow: 'hidden',
+        clip: 'rect(0, 0, 0, 0)',
+        whiteSpace: 'nowrap',
+        border: 0,
+      }}
+    >
+      {message}
     </div>
   )
 }

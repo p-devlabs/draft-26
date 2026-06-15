@@ -24,8 +24,18 @@ export function BracketView({ bracket }: BracketViewProps) {
   useEffect(() => {
     const update = () => setIsNarrow(window.innerWidth < NARROW_BREAKPOINT)
     update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
+    // Debounce — resize/rotação de mobile pode disparar dezenas de eventos
+    // por segundo; o swap entre BracketDesktop/Mobile re-renderiza tudo.
+    let timeout: number | undefined
+    const onResize = () => {
+      if (timeout) window.clearTimeout(timeout)
+      timeout = window.setTimeout(update, 100)
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      if (timeout) window.clearTimeout(timeout)
+    }
   }, [])
 
   if (isNarrow) return <BracketMobile bracket={bracket} />

@@ -65,6 +65,9 @@ export function Copa() {
 
   // Vista do grupo do user pra UI. Memoiza pra evitar re-renders desnecessários.
   const stage = useMemo(() => (worldCup ? getUserGroup(worldCup) : null), [worldCup])
+  // Standings ordenado — declarado aqui (acima do early return) pra satisfazer
+  // rules-of-hooks. Vazio enquanto stage não carrega.
+  const sortedStandings = useMemo(() => (stage ? standings(stage) : []), [stage])
 
   const trackedRoundsRef = useRef<Set<1 | 2 | 3>>(new Set())
 
@@ -133,7 +136,6 @@ export function Copa() {
 
   const round = nextRound(stage)
   const finished = round == null
-  const sortedStandings = standings(stage)
   const userPos = sortedStandings.findIndex((s) => s.team.isUser) + 1
   const userStanding = sortedStandings.find((s) => s.team.isUser) ?? null
   const playedRoundsCount = roundsPlayed(stage)

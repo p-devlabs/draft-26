@@ -89,6 +89,16 @@ export function PickDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, slotIndex])
 
+  // ESC fecha o drawer (mesmo comportamento do tap no backdrop).
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [open, onClose])
+
   if (!open || slotIndex == null) return null
 
   const slot = state.slots[slotIndex]
