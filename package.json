@@ -31,6 +31,7 @@
     "data:rebuild": "pnpm scrape:squads && pnpm enrich:squads && pnpm download:fifa && pnpm enrich:fifa && pnpm download:transfermarkt && pnpm enrich:transfermarkt && pnpm enrich:alt-positions && pnpm recalibrate:heuristic && pnpm download:fbref && pnpm enrich:fbref && pnpm calibrate:fbref && pnpm download:matches && pnpm calibrate:sim"
   },
   "dependencies": {
+    "@sentry/react": "^10.57.0",
     "@supabase/supabase-js": "^2.108.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
