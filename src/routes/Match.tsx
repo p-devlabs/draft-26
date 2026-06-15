@@ -2388,7 +2388,7 @@ function OutcomeDrawer({
             <CampaignStatsRow stats={ctx.stats} />
             {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
             {cfg.champion && <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />}
-            {!cfg.champion && cfg.showShare && <CompactShare />}
+            {!cfg.champion && cfg.showShare && <CompactShare surface={outcome} />}
             <OutcomeActions cfg={cfg} />
           </div>
         </div>
@@ -2912,48 +2912,108 @@ function ChampionShareBlock({ resultLine, topScorer }: { resultLine: string; top
           )}
         </div>
       </div>
-      <ShareGrid />
-      <button
-        style={{
-          width: '100%',
-          marginTop: 12,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 9,
-          background: 'var(--color-d-lime)',
-          color: 'var(--color-d-bg)',
-          border: 'none',
-          borderRadius: 11,
-          padding: 15,
-          fontFamily: 'Anton',
-          fontSize: 18,
-          letterSpacing: '0.02em',
-          cursor: 'pointer',
-        }}
-      >
-        ⬇ BAIXAR CARD DE CAMPEÃO
-      </button>
+      <ShareGrid surface="champion" />
     </div>
   )
 }
 
-function CompactShare() {
+function CompactShare({ surface }: { surface: string }) {
   return (
     <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 18 }}>
       <SectionLabel>COMPARTILHAR</SectionLabel>
-      <ShareGrid />
+      <ShareGrid surface={surface} />
     </div>
   )
 }
 
-function ShareGrid() {
-  const items = ['𝕏', 'WHATS', 'STORIES', 'COPIAR']
+type ShareMethod = 'x' | 'whats' | 'stories' | 'copy'
+
+// URL canônica de prod — o que viraliza vai pra cá independente de onde o user
+// disparou (dev/preview/prod). UTMs fecham o loop de atribuição em session_init.
+const SHARE_URL_BASE = 'https://draft-26.pages.dev'
+
+function buildShareUrl(method: ShareMethod, surface: string): string {
+  const url = new URL(SHARE_URL_BASE)
+  url.searchParams.set('utm_source', 'share')
+  url.searchParams.set('utm_medium', method)
+  url.searchParams.set('utm_campaign', 'user-share')
+  url.searchParams.set('utm_content', surface)
+  return url.toString()
+}
+
+function buildShareText(surface: string): string {
+  switch (surface) {
+    case 'champion':
+      return '🏆 Meu XI é CAMPEÃO no Draft 26! Simulador da Copa 2026.'
+    case 'classificado':
+      return 'Classificado no Draft 26 ⚄ Simulador da Copa 2026.'
+    case 'avancou':
+      return 'Mais uma fase no Draft 26 ⚄ Simulador da Copa 2026.'
+    case 'grupo':
+      return 'Vitória no grupo no Draft 26 ⚄ Simulador da Copa 2026.'
+    default:
+      return 'Jogando o Draft 26 ⚄ Simulador da Copa 2026.'
+  }
+}
+
+async function fireShare(method: ShareMethod, surface: string): Promise<void> {
+  void track('share_clicked', { method, surface })
+  const url = buildShareUrl(method, surface)
+  const text = buildShareText(surface)
+
+  if (method === 'x') {
+    const intent = new URL('https://twitter.com/intent/tweet')
+    intent.searchParams.set('text', text)
+    intent.searchParams.set('url', url)
+    window.open(intent.toString(), '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (method === 'whats') {
+    const intent = new URL('https://wa.me/')
+    intent.searchParams.set('text', `${text} ${url}`)
+    window.open(intent.toString(), '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (method === 'stories') {
+    // Sem URL direta de IG Stories no web — Web Share API abre o sheet nativo
+    // (e o IG aparece nele); em desktop sem suporte, cai pro clipboard.
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ text, url })
+      } catch {
+        // cancelou ou bloqueou — silencioso
+      }
+      return
+    }
+    await navigator.clipboard.writeText(url)
+    return
+  }
+  await navigator.clipboard.writeText(url)
+}
+
+function ShareGrid({ surface }: { surface: string }) {
+  const [copied, setCopied] = useState(false)
+  const items: { label: string; method: ShareMethod }[] = [
+    { label: '𝕏', method: 'x' },
+    { label: 'WHATS', method: 'whats' },
+    { label: 'STORIES', method: 'stories' },
+    { label: copied ? 'COPIADO ✓' : 'COPIAR', method: 'copy' },
+  ]
+
+  const handleClick = async (method: ShareMethod) => {
+    await fireShare(method, surface)
+    if (method === 'copy') {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9 }}>
-      {items.map((label) => (
+      {items.map(({ label, method }) => (
         <button
-          key={label}
+          key={method}
+          onClick={() => void handleClick(method)}
           style={{
             background: 'var(--color-d-surface2)',
             border: '1px solid var(--color-d-line)',

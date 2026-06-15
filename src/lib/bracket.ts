@@ -444,40 +444,6 @@ export function simulateNonUserRound(
 }
 
 /**
- * Simula TODO o lado oposto do bracket de uma vez (R32 → SF), produzindo
- * o finalista que vai esperar o XI na decisão.
- *
- * Chamado uma vez quando a chave é criada — o usuário entra no mata-mata
- * já sabendo quem espera na final se chegar lá.
- */
-export function simulateOtherHalfToFinal(
-  bracket: KnockoutBracket,
-  userHalf: Half,
-  rng: () => number = Math.random,
-): KnockoutBracket {
-  let next = bracket
-  for (const round of ['R32', 'R16', 'QF', 'SF'] as KORound[]) {
-    const matches = next.matches.filter((m) => m.round === round)
-    for (const m of matches) {
-      if (m.winnerCode) continue
-      if (isHalfMatch(m, userHalf)) continue
-      if (!m.homeCode || !m.awayCode) continue
-      const home = next.teams[m.homeCode]
-      const away = next.teams[m.awayCode]
-      const sim = fullySimulate(home, away, rng)
-      const winnerCode = sim.winner === 'home' ? m.homeCode : m.awayCode
-      next = applyResult(next, m.id, {
-        result: sim.result,
-        extraTime: sim.extraTime,
-        penalties: sim.penalties,
-        winnerCode,
-      })
-    }
-  }
-  return next
-}
-
-/**
  * Setup completo: cria o bracket + simula só o que cabe na rodada atual do
  * usuário (R32 inicialmente). O resto avança round a round via
  * `ensureRoundsSimulated` conforme o user joga.
