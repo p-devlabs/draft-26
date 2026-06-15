@@ -12,7 +12,7 @@ import { MataMata } from './routes/MataMata'
 import { features } from './lib/features'
 import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
 import { initAnalytics } from './lib/analytics'
-import { trackSessionOnce } from './lib/track'
+import { trackSessionOnce, PageViewTracker } from './lib/track'
 
 initAnalytics()
 trackSessionOnce()
@@ -29,6 +29,7 @@ if (features.dev) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+      <PageViewTracker />
       <Routes>
         <Route index element={<Home />} />
         <Route path="/teams" element={<Selecoes />} />

@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from './supabase'
 import { ensureAnonUser } from './runs'
 import { collectSessionContext } from './session'
@@ -51,4 +53,24 @@ export function trackSessionOnce(): void {
   if (sessionStorage.getItem(SESSION_INIT_KEY)) return
   sessionStorage.setItem(SESSION_INIT_KEY, '1')
   void track('session_init', collectSessionContext() as unknown as Record<string, unknown>)
+}
+
+/**
+ * Componente invisível que dispara `view_page` a cada mudança de rota.
+ * Monta UMA vez dentro do <BrowserRouter> (no main.tsx). React Router 7 cobre
+ * tanto `<Link>` quanto `navigate()` programático via mudança de location.
+ *
+ * Complementa o CF Web Analytics: CF dá pageviews agregados por URL; aqui
+ * cruzamos com user_id/session_id pra funnel ("quem viu /teams converteu pra
+ * /draft?").
+ */
+export function PageViewTracker(): null {
+  const location = useLocation()
+  useEffect(() => {
+    void track('view_page', {
+      path: location.pathname,
+      search: location.search || null,
+    })
+  }, [location.pathname, location.search])
+  return null
 }

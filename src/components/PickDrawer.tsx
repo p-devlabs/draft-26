@@ -9,6 +9,7 @@ import {
 } from '../lib/draft'
 import { nationGradient } from '../lib/nation-colors'
 import { findSquad, squads, type Player, type Squad } from '../data/squads'
+import { track } from '../lib/track'
 
 /**
  * Tempo total da animação do caça-níquel antes do carimbo. O `support.js`
@@ -72,6 +73,12 @@ export function PickDrawer({
           candidates: result.candidates,
           skipped: result.skipped.length,
         })
+        void track('country_rolled', {
+          countryCode: result.squad.code,
+          slotPos: slot.pos,
+          skippedBefore: result.skipped.length,
+          source: 'auto',
+        })
       } catch (err) {
         console.error(err)
         setPhase({ kind: 'roll' })
@@ -100,6 +107,12 @@ export function PickDrawer({
           candidates: result.candidates,
           skipped: result.skipped.length,
         })
+        void track('country_rolled', {
+          countryCode: result.squad.code,
+          slotPos: slot.pos,
+          skippedBefore: result.skipped.length,
+          source: 'manual',
+        })
       } catch (err) {
         console.error(err)
         onStateChange(fromState)
@@ -110,6 +123,13 @@ export function PickDrawer({
 
   const handlePick = (player: Player) => {
     if (phase.kind !== 'result') return
+    void track('player_picked', {
+      playerName: player.name,
+      countryCode: phase.squad.code,
+      slotPos: slot.pos,
+      overall: player.overall,
+      candidatesCount: phase.candidates.length,
+    })
     onPick(player, phase.squad)
   }
 
