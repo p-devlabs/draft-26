@@ -1,13 +1,9 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { features } from '../lib/features'
-import { track } from '../lib/track'
 
 export function Home() {
   const [privacyOpen, setPrivacyOpen] = useState(false)
-  useEffect(() => {
-    void track('view_home')
-  }, [])
   return (
     <div className="d26-scope">
       <TopBar />
