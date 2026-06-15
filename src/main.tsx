@@ -11,6 +11,11 @@ import { Match } from './routes/Match'
 import { MataMata } from './routes/MataMata'
 import { features } from './lib/features'
 import { runDistortionBatch, simulateFullCup } from './lib/sim-harness'
+import { initAnalytics } from './lib/analytics'
+import { trackSessionOnce } from './lib/track'
+
+initAnalytics()
+trackSessionOnce()
 
 // Em dev mode, expõe o harness de simulação pro Playwright (e debugging
 // manual no console). Em prod fica desligado, custo zero.

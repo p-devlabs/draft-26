@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SetupDrawer } from '../components/SetupDrawer'
 import { PickDrawer } from '../components/PickDrawer'
@@ -14,25 +14,61 @@ import { autoFillXI } from '../lib/autofill'
 import { features } from '../lib/features'
 import { saveDraft, clearWorldCup } from '../lib/persistence'
 import type { Difficulty, Style } from '../lib/formations'
+import { track } from '../lib/track'
 
 export function Draft() {
   const navigate = useNavigate()
   const [draft, setDraft] = useState<DraftState | null>(null)
   const [pickingSlot, setPickingSlot] = useState<number | null>(null)
+  const autoFillUsedRef = useRef(false)
+
+  useEffect(() => {
+    void track('draft_started')
+  }, [])
 
   const handleStart = (formationName: string, style: Style, difficulty: Difficulty) => {
     setDraft(createDraft(formationName, style, difficulty))
+    void track('draft_setup', { formation: formationName, style, difficulty })
   }
 
   const handleReset = () => {
+    void track('reset_clicked', { from: 'draft', hadDraft: !!draft })
     setDraft(null)
     setPickingSlot(null)
+    autoFillUsedRef.current = false
+  }
+
+  const handleAutoFill = () => {
+    if (!draft) return
+    autoFillUsedRef.current = true
+    setDraft(autoFillXI(draft))
+    void track('autofill_clicked', { filledBefore: draft.slots.filter((s) => s.player).length })
   }
 
   const handleSimulate = () => {
     if (!draft || !isComplete(draft)) return
     saveDraft(draft)
     clearWorldCup()
+    const topPicks = [...draft.slots]
+      .filter((s) => s.player)
+      .sort((a, b) => (b.player!.player.overall ?? 0) - (a.player!.player.overall ?? 0))
+      .slice(0, 3)
+      .map((s) => ({
+        name: s.player!.player.name,
+        country: s.player!.countryCode,
+        overall: s.player!.player.overall,
+      }))
+    void track('draft_completed', {
+      formation: draft.formationName,
+      style: draft.style,
+      difficulty: draft.difficulty,
+      avgOverall: Math.round(averageOverall(draft)),
+      rollsUsed: draft.rolledCountries.length,
+      skipsUsed: draft.skipsTotal - draft.skipsRemaining,
+      skipsTotal: draft.skipsTotal,
+      autoFillUsed: autoFillUsedRef.current,
+      topPicks,
+    })
     navigate('/groups')
   }
 
@@ -71,7 +107,7 @@ export function Draft() {
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
             <button
               type="button"
-              onClick={() => setDraft(autoFillXI(draft))}
+              onClick={handleAutoFill}
               style={{
                 fontFamily: 'Space Mono',
                 fontSize: 11,

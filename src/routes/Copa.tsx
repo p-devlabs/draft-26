@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { features } from '../lib/features'
 import {
@@ -19,6 +19,7 @@ import { autoFillXI } from '../lib/autofill'
 import { createDraft, isComplete, type DraftState } from '../lib/draft'
 import { loadDraft, saveWorldCup, loadWorldCup, clearWorldCup, clearDraft } from '../lib/persistence'
 import { createRun, syncRun, clearLocalRunId } from '../lib/runs'
+import { track } from '../lib/track'
 import { nationGradient } from '../lib/nation-colors'
 
 export function Copa() {
@@ -59,9 +60,37 @@ export function Copa() {
   // Vista do grupo do user pra UI. Memoiza pra evitar re-renders desnecessários.
   const stage = useMemo(() => (worldCup ? getUserGroup(worldCup) : null), [worldCup])
 
+  const trackedRoundsRef = useRef<Set<1 | 2 | 3>>(new Set())
+
   useEffect(() => {
     if (!worldCup || !stage) return
     const finishedNow = nextRound(stage) == null
+
+    // Trackeia cada rodada do user assim que terminar (1, 2, 3) — só uma vez por rodada.
+    for (const r of [1, 2, 3] as const) {
+      if (trackedRoundsRef.current.has(r)) continue
+      const userMatch = stage.matches.find(
+        (m) => m.round === r && (m.homeCode === USER_TEAM_CODE || m.awayCode === USER_TEAM_CODE),
+      )
+      if (!userMatch?.result) continue
+      trackedRoundsRef.current.add(r)
+      const userIsHome = userMatch.homeCode === USER_TEAM_CODE
+      const ug = userIsHome ? userMatch.result.homeGoals : userMatch.result.awayGoals
+      const og = userIsHome ? userMatch.result.awayGoals : userMatch.result.homeGoals
+      const sorted = standings(stage)
+      const pos = sorted.findIndex((s) => s.team.isUser) + 1
+      const points = sorted.find((s) => s.team.isUser)?.points ?? 0
+      void track('group_round_completed', {
+        round: r,
+        userGoals: ug,
+        oppGoals: og,
+        userResult: ug > og ? 'W' : ug === og ? 'D' : 'L',
+        oppCode: userIsHome ? userMatch.awayCode : userMatch.homeCode,
+        posAfter: pos,
+        pointsAfter: points,
+      })
+    }
+
     if (!finishedNow) {
       void syncRun({ stage })
       return
@@ -73,6 +102,7 @@ export function Copa() {
       stage,
       ...(qualified ? {} : { finishedRound: 'group' as const }),
     })
+    void track('group_completed', { fate: fate.kind, qualified })
   }, [worldCup, stage])
 
   if (!stage || !draft) {
@@ -121,6 +151,7 @@ export function Copa() {
   }
 
   const handleReset = () => {
+    void track('reset_clicked', { from: 'groups' })
     clearWorldCup()
     clearDraft()
     clearLocalRunId()
