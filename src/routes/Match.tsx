@@ -1482,24 +1482,16 @@ const SimulationPanel = memo(function SimulationPanel(props: {
 
 // ---------- Sidebar "SEU XI EM CAMPO" ----------
 
-const LINE_ORDER: { key: 'GOL' | 'DEF' | 'MEI' | 'ATA'; label: string }[] = [
-  { key: 'GOL', label: 'GOLEIRO' },
-  { key: 'DEF', label: 'DEFESA' },
-  { key: 'MEI', label: 'MEIO-CAMPO' },
-  { key: 'ATA', label: 'ATAQUE' },
-]
+/** Ordem de pintura no card — GK em cima, depois DEF/MID/FWD, sem cabeçalhos. */
+const POSITION_BUCKET_ORDER: Record<string, number> = { GK: 0, DEF: 1, MID: 2, FWD: 3 }
 
-function lineKeyOf(slot: DraftSlot): 'GOL' | 'DEF' | 'MEI' | 'ATA' {
-  const bucket = slot.player?.player.position
-  if (bucket === 'GK') return 'GOL'
-  if (bucket === 'DEF') return 'DEF'
-  if (bucket === 'MID') return 'MEI'
-  if (bucket === 'FWD') return 'ATA'
-  // Fallback pelo SlotPosition se o slot não tiver player (caso degenerado).
-  if (slot.pos === 'GK') return 'GOL'
+function bucketOf(slot: DraftSlot): string {
+  const b = slot.player?.player.position
+  if (b) return b
+  if (slot.pos === 'GK') return 'GK'
   if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(slot.pos)) return 'DEF'
-  if (['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(slot.pos)) return 'MEI'
-  return 'ATA'
+  if (['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(slot.pos)) return 'MID'
+  return 'FWD'
 }
 
 interface LineupRow {
@@ -1525,7 +1517,7 @@ const LineupCard = memo(function LineupCard({
   // Por-jogador, deriva gols dos eventos já revelados, matching por nome —
   // narrate.ts pesca os atletas direto do roster do user (rosterForKnockout /
   // playRound), então os nomes batem 1:1.
-  const lines = useMemo(() => {
+  const rows = useMemo(() => {
     const userEvents = revealedEvents.filter((e) => e.teamCode === userTeamCode)
     const goalsByPlayer = new Map<string, number>()
     for (const ev of userEvents) {
@@ -1533,28 +1525,23 @@ const LineupCard = memo(function LineupCard({
       goalsByPlayer.set(ev.player, (goalsByPlayer.get(ev.player) ?? 0) + 1)
     }
 
-    const grouped = new Map<'GOL' | 'DEF' | 'MEI' | 'ATA', LineupRow[]>()
-    for (const slot of draft.slots) {
-      if (!slot.player) continue
-      const key = lineKeyOf(slot)
-      const player = slot.player.player
-      const row: LineupRow = {
-        shirt: player.shirt,
-        name: player.name,
-        posLabel: SLOT_LABEL[slot.pos].toUpperCase(),
-        goals: goalsByPlayer.get(player.name) ?? 0,
-      }
-      if (!grouped.has(key)) grouped.set(key, [])
-      grouped.get(key)!.push(row)
-    }
-
-    return LINE_ORDER.filter((l) => grouped.has(l.key)).map((l) => ({
-      label: l.label,
-      players: grouped.get(l.key)!,
-    }))
+    const decorated = draft.slots
+      .filter((s) => s.player)
+      .map((slot) => ({
+        bucketRank: POSITION_BUCKET_ORDER[bucketOf(slot)] ?? 9,
+        row: {
+          shirt: slot.player!.player.shirt,
+          name: slot.player!.player.name,
+          posLabel: SLOT_LABEL[slot.pos].toUpperCase(),
+          goals: goalsByPlayer.get(slot.player!.player.name) ?? 0,
+        } satisfies LineupRow,
+      }))
+    // Ordem natural do XI: GK → DEF → MID → FWD, sem cabeçalhos de linha.
+    decorated.sort((a, b) => a.bucketRank - b.bucketRank)
+    return decorated.map((d) => d.row)
   }, [draft, userTeamCode, revealedEvents])
 
-  if (lines.length === 0) return null
+  if (rows.length === 0) return null
 
   return (
     <div
@@ -1590,27 +1577,9 @@ const LineupCard = memo(function LineupCard({
           </span>
         </div>
       </div>
-      <div style={{ padding: '4px 8px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {lines.map((ln) => (
-          <div key={ln.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 6px 3px' }}>
-              <span
-                style={{
-                  fontFamily: 'Space Mono',
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: '0.16em',
-                  color: 'var(--color-d-mut)',
-                }}
-              >
-                {ln.label}
-              </span>
-              <span style={{ flex: 1, height: 1, background: 'var(--color-d-line)' }} />
-            </div>
-            {ln.players.map((p, i) => (
-              <LineupRowItem key={`${p.name}-${i}`} row={p} />
-            ))}
-          </div>
+      <div style={{ padding: '8px 8px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {rows.map((p, i) => (
+          <LineupRowItem key={`${p.name}-${i}`} row={p} />
         ))}
       </div>
     </div>
