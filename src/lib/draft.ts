@@ -235,3 +235,54 @@ export function totalValueEur(state: DraftState): number {
     return s + (p.value_eur ?? p.value_eur_tm ?? 0)
   }, 0)
 }
+
+// ============================================================
+// /draft startup intent
+// ============================================================
+
+/**
+ * Decisão que a rota `/draft` toma no mount: limpar tudo (TENTAR DE NOVO),
+ * carregar XI em review (VER TIME), ou abrir o setup drawer (default sem
+ * campanha em andamento).
+ *
+ * Modelado como DU pra eliminar a combinação inválida "draft setado mas
+ * sem flag de review" — cada variante carrega exatamente os dados que o
+ * caller precisa.
+ */
+export type DraftStartupAction =
+  /** Limpa draft + worldCup + runId. Setup drawer abre vazio. */
+  | { kind: 'clear' }
+  /** Carrega XI salvo. `reviewMode` true quando campanha está em andamento. */
+  | { kind: 'load'; draft: DraftState; reviewMode: boolean }
+  /** Nada salvo (ou intent ambíguo) — setup drawer abre vazio. */
+  | { kind: 'setup' }
+
+/**
+ * Resolve o que `/draft` deve fazer no mount, sem tocar em DOM nem em
+ * localStorage. Caller injeta os leitores (`loadDraft`/`loadWorldCup`)
+ * e usa o retorno pra decidir entre clear/load/setup.
+ *
+ * Bug histórico (PR #53): antes, o auto-load entrava em modo review
+ * sempre que havia worldCup salvo, engolindo a intenção do user que
+ * clicava "TENTAR DE NOVO". Agora `?fresh=1` força clear e `?view=1`
+ * força load — o default sem param só entra em review quando há
+ * campanha em andamento (proteção pra breadcrumb).
+ */
+export function resolveDraftStartup(
+  params: URLSearchParams,
+  loaders: {
+    loadDraft: () => DraftState | null
+    hasWorldCup: () => boolean
+  },
+): DraftStartupAction {
+  const intent = params.get('fresh') === '1' ? 'fresh' : params.get('view') === '1' ? 'view' : null
+  if (intent === 'fresh') return { kind: 'clear' }
+  const hasCampaign = loaders.hasWorldCup()
+  if (hasCampaign || intent === 'view') {
+    const saved = loaders.loadDraft()
+    if (saved && isComplete(saved)) {
+      return { kind: 'load', draft: saved, reviewMode: hasCampaign }
+    }
+  }
+  return { kind: 'setup' }
+}

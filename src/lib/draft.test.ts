@@ -10,9 +10,11 @@ import {
   eligibleCountries,
   isComplete,
   pickPlayer,
+  resolveDraftStartup,
   rollUntilCompatible,
   setPendingRoll,
   useSkip,
+  type DraftState,
 } from './draft'
 import { seededRng } from './simulate'
 
@@ -177,5 +179,112 @@ describe('isComplete e averageOverall', () => {
     const gk = brazil.players.find((p) => p.primaryPosition === 'GK')!
     state = pickPlayer(state, 0, gk, brazil)
     expect(averageOverall(state)).toBe(Math.round(gk.overall * 10) / 10)
+  })
+})
+
+// ============================================================
+// resolveDraftStartup — regressão do "TENTAR DE NOVO renderiza time
+// antigo" (PR #53). O auto-load não pode engolir intent explícito.
+// ============================================================
+
+describe('resolveDraftStartup', () => {
+  // Helper: monta um draft completo via autofill BR pra simular um XI salvo.
+  function completeBrazilDraft(): DraftState {
+    let draft = createDraft('4-3-3', 'equilibrado', 'easy')
+    const brazil = squads.find((s) => s.code === 'BRA')!
+    const used = new Set<string>()
+    for (let i = 0; i < draft.slots.length; i++) {
+      const slot = draft.slots[i]
+      const player = brazil.players.find(
+        (p) =>
+          !used.has(p.name) &&
+          (p.primaryPosition === slot.pos || (p.altPositions ?? []).includes(slot.pos)),
+      )
+      if (!player) continue
+      used.add(player.name)
+      draft = pickPlayer(draft, i, player, brazil)
+    }
+    return draft
+  }
+
+  it('?fresh=1 sempre clear, mesmo com draft e campanha salvos', () => {
+    const action = resolveDraftStartup(new URLSearchParams('fresh=1'), {
+      loadDraft: () => completeBrazilDraft(),
+      hasWorldCup: () => true,
+    })
+    expect(action.kind).toBe('clear')
+  })
+
+  it('?fresh=1 ignora qualquer outro param (sem ambiguidade)', () => {
+    const action = resolveDraftStartup(new URLSearchParams('fresh=1&view=1'), {
+      loadDraft: () => completeBrazilDraft(),
+      hasWorldCup: () => true,
+    })
+    expect(action.kind).toBe('clear')
+  })
+
+  it('?view=1 carrega draft salvo em review quando há campanha', () => {
+    const saved = completeBrazilDraft()
+    const action = resolveDraftStartup(new URLSearchParams('view=1'), {
+      loadDraft: () => saved,
+      hasWorldCup: () => true,
+    })
+    expect(action.kind).toBe('load')
+    if (action.kind !== 'load') throw new Error('unreachable')
+    expect(action.draft).toBe(saved)
+    expect(action.reviewMode).toBe(true)
+  })
+
+  it('?view=1 carrega draft sem review quando NÃO há campanha', () => {
+    const saved = completeBrazilDraft()
+    const action = resolveDraftStartup(new URLSearchParams('view=1'), {
+      loadDraft: () => saved,
+      hasWorldCup: () => false,
+    })
+    expect(action.kind).toBe('load')
+    if (action.kind !== 'load') throw new Error('unreachable')
+    expect(action.reviewMode).toBe(false)
+  })
+
+  it('sem param + campanha em andamento → review (proteção pra breadcrumb)', () => {
+    const saved = completeBrazilDraft()
+    const action = resolveDraftStartup(new URLSearchParams(), {
+      loadDraft: () => saved,
+      hasWorldCup: () => true,
+    })
+    expect(action.kind).toBe('load')
+    if (action.kind !== 'load') throw new Error('unreachable')
+    expect(action.reviewMode).toBe(true)
+  })
+
+  it('sem param + sem campanha → setup (não vaza XI antigo entre runs)', () => {
+    // Regressão crítica: PR #50 ligava review aqui também, o que fazia
+    // TENTAR DE NOVO renderizar o time antigo. Agora só carrega se houver
+    // campanha em andamento OU intent=view explícito.
+    const saved = completeBrazilDraft()
+    const action = resolveDraftStartup(new URLSearchParams(), {
+      loadDraft: () => saved,
+      hasWorldCup: () => false,
+    })
+    expect(action.kind).toBe('setup')
+  })
+
+  it('?view=1 mas sem draft salvo → setup (não trava em load vazio)', () => {
+    const action = resolveDraftStartup(new URLSearchParams('view=1'), {
+      loadDraft: () => null,
+      hasWorldCup: () => true,
+    })
+    expect(action.kind).toBe('setup')
+  })
+
+  it('draft salvo incompleto não entra em review (XI parcial pula setup)', () => {
+    // isComplete=false → trata como se não houvesse XI salvo. Evita render
+    // de "review" com slots vazios.
+    const incomplete = createDraft('4-3-3', 'equilibrado', 'easy')
+    const action = resolveDraftStartup(new URLSearchParams('view=1'), {
+      loadDraft: () => incomplete,
+      hasWorldCup: () => true,
+    })
+    expect(action.kind).toBe('setup')
   })
 })

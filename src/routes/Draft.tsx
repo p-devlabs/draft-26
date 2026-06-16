@@ -5,7 +5,14 @@ import { Field } from '../components/Field'
 import { PickDrawer } from '../components/PickDrawer'
 import { SetupDrawer } from '../components/SetupDrawer'
 import { autoFillXI } from '../lib/autofill'
-import { averageOverall, createDraft, isComplete, pickPlayer, type DraftState } from '../lib/draft'
+import {
+  averageOverall,
+  createDraft,
+  isComplete,
+  pickPlayer,
+  resolveDraftStartup,
+  type DraftState,
+} from '../lib/draft'
 import { features } from '../lib/features'
 import { clearDraft, clearWorldCup, loadDraft, loadWorldCup, saveDraft } from '../lib/persistence'
 import { clearLocalRunId } from '../lib/runs'
@@ -26,28 +33,23 @@ export function Draft() {
 
   useEffect(() => {
     void track('draft_started')
-    // Query params explícitos vencem qualquer auto-detect:
-    //   ?fresh=1 → "TENTAR DE NOVO" / "JOGAR DE NOVO" — limpa tudo e abre setup.
-    //   ?view=1  → "VER TIME" — carrega o XI em modo review.
-    // Sem param: se há campanha em andamento, entra em review pra não
-    // destruir progresso (user pode ter chegado aqui via breadcrumb); caso
-    // contrário abre setup pra montar XI novo.
-    const intent =
-      params.get('fresh') === '1' ? 'fresh' : params.get('view') === '1' ? 'view' : null
-    if (intent === 'fresh') {
+    // Resolve intent (?fresh=1 / ?view=1 / default) numa função pura — facilita
+    // testar a regressão do "TENTAR DE NOVO renderiza time antigo" (PR #53).
+    const action = resolveDraftStartup(params, {
+      loadDraft,
+      hasWorldCup: () => loadWorldCup() != null,
+    })
+    if (action.kind === 'clear') {
       clearWorldCup()
       clearDraft()
       clearLocalRunId()
       return
     }
-    const hasCampaign = loadWorldCup() != null
-    if (hasCampaign || intent === 'view') {
-      const saved = loadDraft()
-      if (saved && isComplete(saved)) {
-        setDraft(saved)
-        setReviewMode(hasCampaign)
-      }
+    if (action.kind === 'load') {
+      setDraft(action.draft)
+      setReviewMode(action.reviewMode)
     }
+    // kind === 'setup' → deixa o state inicial (setup drawer abre).
   }, [params])
 
   const handleStart = (formationName: string, style: Style, difficulty: Difficulty) => {
