@@ -193,25 +193,20 @@ export function narrateMatch(input: NarrationInput, rng: () => number = Math.ran
   }
 
   // ---------- Marcadores de fase ----------
-  // Inseridos como minutos "âncora" — o feed renderiza diferente eventos do
-  // tipo 'phase'. Ordem cronológica preservada pelo sort final.
+  // Enxutos: só pontos de inflexão (inicio, intervalo, fim regulamentar,
+  // intervalo da ET, fim da ET, fim de jogo). "Início do 2º tempo" sai
+  // implícito pelo INTERVALO; idem pra "início da prorrogação" (FIM REG)
+  // e "início da disputa de pênaltis" (FIM DA PRORROGAÇÃO + card de pks).
   const hasEt = !!input.extraTime
-  const hasPks = !!input.hasPenalties
   events.push(phaseEvent(0, 'kickoff'))
   events.push(phaseEvent(45, 'halftime'))
-  events.push(phaseEvent(45, 'second-half'))
-  events.push(phaseEvent(90, 'full-time'))
   if (hasEt) {
-    events.push(phaseEvent(90, 'extra-start'))
+    // FIM REG só aparece quando seguido de ET — sem ET, FIM DE JOGO no 90'
+    // já cumpre o papel sem duplicar info.
+    events.push(phaseEvent(90, 'full-time'))
     events.push(phaseEvent(105, 'extra-halftime'))
-    events.push(phaseEvent(105, 'extra-second-half'))
     events.push(phaseEvent(120, 'extra-full-time'))
   }
-  if (hasPks) {
-    events.push(phaseEvent(hasEt ? 120 : 90, 'pen-start'))
-  }
-  // "FIM DE JOGO" no minuto final — coloca depois dos pênaltis no feed
-  // mesmo com âncora == 120, pra sair como último item.
   events.push(phaseEvent(hasEt ? 120 : 90, 'final-whistle'))
 
   // Ordena por minuto; mantém ordem inserida pra empates (kickoff < halftime

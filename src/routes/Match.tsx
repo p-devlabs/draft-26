@@ -24,11 +24,13 @@ import {
   fullySimulate,
   ROUND_LABEL,
   ROUND_ORDER,
+  simulatePenalties,
   type BracketMatch,
   type KnockoutBracket,
   type KORound,
   type Penalties,
 } from '../lib/bracket'
+import { features } from '../lib/features'
 import {
   findTeam,
   playCpuRound,
@@ -65,13 +67,19 @@ export function Match() {
 
   if (kind === 'knockout') {
     const pParam = params.get('p')
+    // Default = 'hero' (card de pênaltis vira subheader do placar). Os
+    // outros dois posicionamentos ficam disponíveis via override explícito.
     const penaltyPlacement: 'aside' | 'top' | 'hero' =
-      pParam === 'top' ? 'top' : pParam === 'hero' ? 'hero' : 'aside'
+      pParam === 'top' ? 'top' : pParam === 'aside' ? 'aside' : 'hero'
+    const forceParam = params.get('dev_force')
+    const devForce: 'et' | 'pks' | null =
+      features.dev && (forceParam === 'et' || forceParam === 'pks') ? forceParam : null
     return (
       <KnockoutMatchRunner
         navigate={navigate}
         matchId={params.get('id') ?? ''}
         penaltyPlacement={penaltyPlacement}
+        devForce={devForce}
       />
     )
   }
@@ -421,11 +429,14 @@ function KnockoutMatchRunner({
   navigate,
   matchId,
   penaltyPlacement,
+  devForce,
 }: {
   navigate: ReturnType<typeof useNavigate>
   matchId: string
   /** Local de render do card de pênaltis: aside (default), main (acima dos lances) ou hero (subheader do scoreboard). Toggle por ?p=top|hero. */
   penaltyPlacement: 'aside' | 'top' | 'hero'
+  /** Dev-only: força o desfecho do tempo regulamentar pra cair em ET ou ET+pks. */
+  devForce: 'et' | 'pks' | null
 }) {
   const [bracket, setBracket] = useState<KnockoutBracket | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
@@ -537,6 +548,21 @@ function KnockoutMatchRunner({
       homeRoster,
       awayRoster,
     })
+    // Dev override: força ET (et) ou ET + pênaltis (pks) pra testar UI sem
+    // depender do RNG. Sobrescreve só campos relevantes; manter o `winner`
+    // determinístico (home como referência) facilita debug.
+    if (devForce === 'et' || devForce === 'pks') {
+      sim.result = { homeGoals: 1, awayGoals: 1 }
+      if (devForce === 'pks') {
+        sim.extraTime = { homeGoals: 0, awayGoals: 0 }
+        sim.penalties = simulatePenalties(home, away, Math.random, { homeRoster, awayRoster })
+        sim.winner = sim.penalties.homeScored >= sim.penalties.awayScored ? 'home' : 'away'
+      } else {
+        sim.extraTime = { homeGoals: 1, awayGoals: 0 }
+        sim.penalties = undefined
+        sim.winner = 'home'
+      }
+    }
     const events = narrateMatch({
       home: homeRoster,
       away: awayRoster,
@@ -573,7 +599,7 @@ function KnockoutMatchRunner({
       oppCode: userIsHome ? match.awayCode : match.homeCode,
       initialSpeed: loadMatchSpeed(),
     })
-  }, [matchId, navigate, setVirtualMinute])
+  }, [matchId, navigate, setVirtualMinute, devForce])
 
   const totalKicks = simResult?.penalties?.sequence.length ?? 0
 
@@ -1252,15 +1278,16 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
         chip: { label: 'GOL', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
       }
     }
-    // 🔴 gol adversário — tom apagado, sem destaque lima
+    // Gol do adversário — tom neutro/cinza pra não tomar atenção visual
+    // (a celebração lima fica reservada pros nossos).
     return {
-      bg: 'rgba(255,59,59,0.04)',
-      bd: 'rgba(255,59,59,0.18)',
-      minColor: 'var(--color-d-red)',
-      emoji: '🔴',
+      bg: 'rgba(255,255,255,0.03)',
+      bd: 'var(--color-d-line)',
+      minColor: 'var(--color-d-mut)',
+      emoji: '⚽',
       textColor: 'var(--color-d-mut)',
-      nameColor: 'var(--color-d-mut)',
-      chip: { label: 'GOL', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+      nameColor: 'var(--color-d-ink)',
+      chip: { label: 'GOL DELES', bg: 'rgba(255,255,255,0.06)', fg: 'var(--color-d-mut)' },
     }
   }
   if (type === 'pen-scored') {
@@ -1276,15 +1303,16 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
         chip: { label: 'GOL DE PÊNALTI', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
       }
     }
-    // Pênalti do adversário convertido — vermelho apagado, chip explícito.
+    // Pênalti do adversário convertido — tom neutro/cinza pra não competir
+    // com a celebração lima nem com a frustração vermelha dos meus erros.
     return {
-      bg: 'rgba(255,59,59,0.04)',
-      bd: 'rgba(255,59,59,0.18)',
-      minColor: 'var(--color-d-red)',
-      emoji: '🔴',
+      bg: 'rgba(255,255,255,0.03)',
+      bd: 'var(--color-d-line)',
+      minColor: 'var(--color-d-mut)',
+      emoji: '⚽',
       textColor: 'var(--color-d-mut)',
-      nameColor: 'var(--color-d-mut)',
-      chip: { label: 'PÊNALTI DELES', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+      nameColor: 'var(--color-d-ink)',
+      chip: { label: 'PÊNALTI DELES', bg: 'rgba(255,255,255,0.06)', fg: 'var(--color-d-mut)' },
     }
   }
   if (type === 'pen-missed') {
@@ -1300,15 +1328,15 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
         chip: { label: 'PERDI', bg: 'var(--color-d-red)', fg: '#fff' },
       }
     }
-    // Adversário perdeu — alívio lima, chip "DEFENDIDA" (a glove image fits).
+    // Adversário perdeu — âmbar quente (alívio), chip "DEFENDIDA".
     return {
-      bg: 'rgba(212,255,61,0.06)',
-      bd: 'rgba(212,255,61,0.24)',
-      minColor: 'var(--color-d-lime)',
+      bg: 'rgba(255,138,59,0.07)',
+      bd: 'rgba(255,138,59,0.3)',
+      minColor: 'var(--color-d-warn)',
       emoji: '🧤',
       textColor: 'var(--color-d-ink)',
       nameColor: 'var(--color-d-ink)',
-      chip: { label: 'DEFENDIDA', bg: 'rgba(212,255,61,0.22)', fg: 'var(--color-d-lime)' },
+      chip: { label: 'DEFENDIDA', bg: 'rgba(255,138,59,0.22)', fg: 'var(--color-d-warn)' },
     }
   }
   // Fallback — qualquer tipo desconhecido cai numa linha neutra.
