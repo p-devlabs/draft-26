@@ -48,17 +48,23 @@ export interface SimPlayback {
   wholeMinute: number
   playing: boolean
   speed: Speed
+  /** Qual desfecho aconteceu (persiste mesmo depois que a modal fecha). */
   outcome: OutcomeKind | null
+  /** Se a modal de desfecho está visível agora. */
+  outcomeOpen: boolean
   /** Ref pro minuto atual — pra ler dentro de callbacks sem virar dep. */
   virtualMinuteRef: MutableRefObject<number>
   setVirtualMinute: (m: number | ((prev: number) => number)) => void
   setPlaying: (p: boolean | ((prev: boolean) => boolean)) => void
+  /** Setter "completo": muda outcome E atualiza outcomeOpen pra refletir. */
   setOutcome: (o: OutcomeKind | null) => void
   /** Wrapper de setSpeed: persiste no localStorage + dispara onSpeedChange. */
   setSpeed: (s: Speed) => void
   /** Handlers estáveis prontos pra passar pro RightColumn. */
   onToggle: () => void
+  /** Fecha a modal mas mantém `outcome` populado pra reabertura. */
   onCloseOutcome: () => void
+  /** Reabre/abre a modal com o desfecho atual ou um novo. */
   onShowOutcome: (o: OutcomeKind) => void
 }
 
@@ -80,7 +86,12 @@ export function useSimPlayback({
   const [virtualMinute, setVirtualMinute] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [speed, _setSpeed] = useState<Speed>(() => loadMatchSpeed())
+  // outcome guarda QUAL desfecho aconteceu; outcomeOpen guarda se a modal
+  // está visível agora. Separados pra que VER DESFECHO consiga reabrir a
+  // modal mesmo depois que o user fechou via ESC/backdrop (antes o
+  // close zerava outcome, o que deixava o botão habilitado-mas-no-op).
   const [outcome, setOutcome] = useState<OutcomeKind | null>(null)
+  const [outcomeOpen, setOutcomeOpen] = useState(false)
 
   const virtualMinuteRef = useRef(0)
   virtualMinuteRef.current = virtualMinute
@@ -119,8 +130,18 @@ export function useSimPlayback({
   }, [enabled, playing, speed, totalMinutes])
 
   const onToggle = useCallback(() => setPlaying((p) => !p), [])
-  const onCloseOutcome = useCallback(() => setOutcome(null), [])
-  const onShowOutcome = useCallback((o: OutcomeKind) => setOutcome(o), [])
+  // Fechar deixa `outcome` populado pra VER DESFECHO conseguir reabrir.
+  const onCloseOutcome = useCallback(() => setOutcomeOpen(false), [])
+  const onShowOutcome = useCallback((o: OutcomeKind) => {
+    setOutcome(o)
+    setOutcomeOpen(true)
+  }, [])
+  // setOutcome (do hook) também precisa marcar aberta pra os triggers
+  // automáticos do fim da partida reaparecerem corretamente.
+  const setOutcomeAndOpen = useCallback((o: OutcomeKind | null) => {
+    setOutcome(o)
+    setOutcomeOpen(o != null)
+  }, [])
 
   const wholeMinute = Math.floor(virtualMinute)
 
@@ -130,10 +151,11 @@ export function useSimPlayback({
     playing,
     speed,
     outcome,
+    outcomeOpen,
     virtualMinuteRef,
     setVirtualMinute,
     setPlaying,
-    setOutcome,
+    setOutcome: setOutcomeAndOpen,
     setSpeed,
     onToggle,
     onCloseOutcome,
