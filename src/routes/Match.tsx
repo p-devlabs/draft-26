@@ -108,6 +108,7 @@ function GroupMatchRunner({
     playing,
     speed,
     outcome,
+    outcomeOpen,
     virtualMinuteRef,
     setVirtualMinute,
     setPlaying,
@@ -328,7 +329,9 @@ function GroupMatchRunner({
         userTeamCode={USER_TEAM_CODE}
         revealedEvents={revealed}
       />
-      {outcome && <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />}
+      {outcome && outcomeOpen && (
+        <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />
+      )}
     </PartidaShell>
   )
 }
@@ -476,6 +479,7 @@ function KnockoutMatchRunner({
     playing,
     speed,
     outcome,
+    outcomeOpen,
     virtualMinuteRef,
     setVirtualMinute,
     setPlaying,
@@ -887,7 +891,9 @@ function KnockoutMatchRunner({
         userTeamCode={bracket.userCode}
         revealedEvents={revealed}
       />
-      {outcome && <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />}
+      {outcome && outcomeOpen && (
+        <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />
+      )}
     </PartidaShell>
   )
 }
