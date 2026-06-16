@@ -11,6 +11,7 @@ reports
 playwright-report
 test-results
 .playwright
+.cache
 
 # claude code runtime state
 .claude/
