@@ -7,7 +7,7 @@ import { SetupDrawer } from '../components/SetupDrawer'
 import { autoFillXI } from '../lib/autofill'
 import { averageOverall, createDraft, isComplete, pickPlayer, type DraftState } from '../lib/draft'
 import { features } from '../lib/features'
-import { saveDraft, clearWorldCup } from '../lib/persistence'
+import { loadDraft, loadWorldCup, saveDraft, clearWorldCup } from '../lib/persistence'
 import { track } from '../lib/track'
 
 import type { Difficulty, Style } from '../lib/formations'
@@ -16,10 +16,19 @@ export function Draft() {
   const navigate = useNavigate()
   const [draft, setDraft] = useState<DraftState | null>(null)
   const [pickingSlot, setPickingSlot] = useState<number | null>(null)
+  // Modo "review": chegou aqui via CTA "VER TIME" de uma modal de outcome
+  // depois que a campanha já começou. Não deixa simular de novo (isso
+  // limparia o worldcup em andamento) — só permite voltar pra campanha.
+  const [reviewMode, setReviewMode] = useState(false)
   const autoFillUsedRef = useRef(false)
 
   useEffect(() => {
     void track('draft_started')
+    const saved = loadDraft()
+    if (saved && isComplete(saved)) {
+      setDraft(saved)
+      setReviewMode(loadWorldCup() != null)
+    }
   }, [])
 
   const handleStart = (formationName: string, style: Style, difficulty: Difficulty) => {
@@ -31,6 +40,7 @@ export function Draft() {
     void track('reset_clicked', { from: 'draft', hadDraft: !!draft })
     setDraft(null)
     setPickingSlot(null)
+    setReviewMode(false)
     autoFillUsedRef.current = false
   }
 
@@ -90,7 +100,11 @@ export function Draft() {
         style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 28px 120px' }}
       >
         {buildPhase ? (
-          <Field slots={slotsForRender} buildPhase onSlotClick={(i) => setPickingSlot(i)} />
+          <Field
+            slots={slotsForRender}
+            buildPhase
+            onSlotClick={reviewMode ? () => {} : (i) => setPickingSlot(i)}
+          />
         ) : (
           // Placeholder field rendered while setup sheet is open
           <Field slots={emptyPreviewSlots()} buildPhase={false} onSlotClick={() => {}} />
@@ -120,7 +134,15 @@ export function Draft() {
 
       <SetupDrawer open={!buildPhase} onStart={handleStart} />
 
-      {buildPhase && <SimBar complete={complete} filled={filled} onSimulate={handleSimulate} />}
+      {buildPhase && (
+        <SimBar
+          complete={complete}
+          filled={filled}
+          reviewMode={reviewMode}
+          onSimulate={handleSimulate}
+          onReturnToCampaign={() => navigate('/groups')}
+        />
+      )}
 
       {buildPhase && draft && (
         <PickDrawer
@@ -457,16 +479,22 @@ function Chip({
 function SimBar({
   complete,
   filled,
+  reviewMode,
   onSimulate,
+  onReturnToCampaign,
 }: {
   complete: boolean
   filled: number
+  reviewMode: boolean
   onSimulate: () => void
+  onReturnToCampaign: () => void
 }) {
   const remaining = 11 - filled
-  const statusLine = complete
-    ? 'XI COMPLETO — PRONTO PRA COPA'
-    : `FALTAM ${remaining} ${remaining === 1 ? 'POSIÇÃO' : 'POSIÇÕES'}`
+  const statusLine = reviewMode
+    ? 'CAMPANHA EM ANDAMENTO — XI BLOQUEADO'
+    : complete
+      ? 'XI COMPLETO — PRONTO PRA COPA'
+      : `FALTAM ${remaining} ${remaining === 1 ? 'POSIÇÃO' : 'POSIÇÕES'}`
   return (
     <div
       className="az-simbar"
@@ -504,7 +532,31 @@ function SimBar({
         >
           {statusLine}
         </div>
-        {complete ? (
+        {reviewMode ? (
+          <button
+            type="button"
+            onClick={onReturnToCampaign}
+            className="az-simbtn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              background: 'var(--color-d-lime)',
+              color: 'var(--color-d-bg)',
+              border: 'none',
+              borderRadius: 11,
+              padding: '15px 26px',
+              fontFamily: 'Anton',
+              fontSize: 19,
+              letterSpacing: '0.02em',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flex: '0 0 auto',
+            }}
+          >
+            VOLTAR PRA CAMPANHA <span style={{ fontSize: 16 }}>→</span>
+          </button>
+        ) : complete ? (
           <button
             type="button"
             onClick={onSimulate}

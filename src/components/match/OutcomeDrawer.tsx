@@ -59,8 +59,11 @@ export interface OutcomeContext {
  */
 type BannerDecoration = { kind: 'check' } | { kind: 'emoji'; char: string } | { kind: 'none' }
 
-/** CTA secundária — quando existe, label e destino vêm juntos. */
-type SecondaryCta = { label: string; to: string } | null
+/** CTA secundária — label + destino. */
+interface SecondaryCta {
+  label: string
+  to: string
+}
 
 /**
  * Config do outcome drawer discriminada por `kind`. Cada kind narra um
@@ -79,7 +82,8 @@ interface OutcomeConfig {
   decoration: BannerDecoration
   ctaLabel: string
   ctaTo: string
-  cta2: SecondaryCta
+  /** CTAs secundários — renderizados em grid embaixo do primário. */
+  secondaries: SecondaryCta[]
   primaryIsLime: boolean
   champion: boolean
   showShare: boolean
@@ -99,7 +103,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         decoration: { kind: 'check' },
         ctaLabel: 'VOLTAR PRO GRUPO →',
         ctaTo: '/groups',
-        cta2: { label: 'VER CHAVEAMENTO', to: '/bracket' },
+        secondaries: [{ label: 'VER CHAVEAMENTO', to: '/bracket' }],
         primaryIsLime: true,
         champion: false,
         showShare: true,
@@ -116,7 +120,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         decoration: { kind: 'none' },
         ctaLabel: 'VOLTAR PRO GRUPO →',
         ctaTo: '/groups',
-        cta2: null,
+        secondaries: [],
         primaryIsLime: false,
         champion: false,
         showShare: false,
@@ -133,7 +137,10 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         decoration: { kind: 'check' },
         ctaLabel: 'IR PRO MATA-MATA →',
         ctaTo: '/bracket',
-        cta2: { label: 'REVER O GRUPO', to: '/groups' },
+        secondaries: [
+          { label: 'VER TIME', to: '/draft' },
+          { label: 'VER GRUPO', to: '/groups' },
+        ],
         primaryIsLime: true,
         champion: false,
         showShare: true,
@@ -150,7 +157,10 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         decoration: { kind: 'none' },
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft',
-        cta2: { label: 'VER CHAVEAMENTO', to: '/bracket' },
+        secondaries: [
+          { label: 'VER TIME', to: '/draft' },
+          { label: 'VER GRUPO', to: '/groups' },
+        ],
         primaryIsLime: false,
         champion: false,
         showShare: false,
@@ -169,7 +179,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
           ? `VER ${ctx.extras.nextRoundLabel} →`
           : 'VOLTAR PRO CHAVEAMENTO →',
         ctaTo: '/bracket',
-        cta2: null,
+        secondaries: [{ label: 'VER TIME', to: '/draft' }],
         primaryIsLime: true,
         champion: false,
         showShare: true,
@@ -186,7 +196,10 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         decoration: { kind: 'none' },
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft',
-        cta2: { label: 'VER CHAVEAMENTO', to: '/bracket' },
+        secondaries: [
+          { label: 'VER TIME', to: '/draft' },
+          { label: 'VER CAMPANHA', to: '/bracket' },
+        ],
         primaryIsLime: false,
         champion: false,
         showShare: false,
@@ -203,7 +216,10 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         decoration: { kind: 'emoji', char: '🏆' },
         ctaLabel: 'JOGAR DE NOVO →',
         ctaTo: '/draft',
-        cta2: null,
+        secondaries: [
+          { label: 'VER TIME CAMPEÃO', to: '/draft' },
+          { label: 'VER CAMPANHA', to: '/bracket' },
+        ],
         primaryIsLime: true,
         champion: true,
         showShare: false,
@@ -1045,6 +1061,8 @@ function ShareGrid({ surface }: { surface: string }) {
 }
 
 function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
+  // 2+ secundárias entram em grid 2-col pra caber direitinho no mobile.
+  const secondariesUseGrid = cfg.secondaries.length >= 2
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <Link
@@ -1067,28 +1085,41 @@ function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
       >
         {cfg.ctaLabel}
       </Link>
-      {cfg.cta2 && (
-        <Link
-          to={cfg.cta2.to}
+      {cfg.secondaries.length > 0 && (
+        <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            background: 'transparent',
-            color: 'var(--color-d-mut)',
-            border: '1px solid var(--color-d-line)',
-            borderRadius: 11,
-            padding: 12,
-            fontFamily: 'Space Mono',
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            cursor: 'pointer',
+            display: secondariesUseGrid ? 'grid' : 'flex',
+            gridTemplateColumns: secondariesUseGrid ? '1fr 1fr' : undefined,
+            flexDirection: secondariesUseGrid ? undefined : 'column',
+            gap: 10,
           }}
         >
-          {cfg.cta2.label}
-        </Link>
+          {cfg.secondaries.map((s) => (
+            <Link
+              key={`${s.label}-${s.to}`}
+              to={s.to}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: 'transparent',
+                color: 'var(--color-d-mut)',
+                border: '1px solid var(--color-d-line)',
+                borderRadius: 11,
+                padding: 12,
+                fontFamily: 'Space Mono',
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              {s.label}
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   )
