@@ -63,8 +63,18 @@ export function Match() {
   const navigate = useNavigate()
   const kind: MatchKind = params.get('kind') === 'knockout' ? 'knockout' : 'group'
 
-  if (kind === 'knockout')
-    return <KnockoutMatchRunner navigate={navigate} matchId={params.get('id') ?? ''} />
+  if (kind === 'knockout') {
+    const pParam = params.get('p')
+    const penaltyPlacement: 'aside' | 'top' | 'hero' =
+      pParam === 'top' ? 'top' : pParam === 'hero' ? 'hero' : 'aside'
+    return (
+      <KnockoutMatchRunner
+        navigate={navigate}
+        matchId={params.get('id') ?? ''}
+        penaltyPlacement={penaltyPlacement}
+      />
+    )
+  }
   return <GroupMatchRunner navigate={navigate} round={Number(params.get('round')) as 1 | 2 | 3} />
 }
 
@@ -410,9 +420,12 @@ function computeGroupScorers(stage: GroupStage): ScorerRow[] {
 function KnockoutMatchRunner({
   navigate,
   matchId,
+  penaltyPlacement,
 }: {
   navigate: ReturnType<typeof useNavigate>
   matchId: string
+  /** Local de render do card de pênaltis: aside (default), main (acima dos lances) ou hero (subheader do scoreboard). Toggle por ?p=top|hero. */
+  penaltyPlacement: 'aside' | 'top' | 'hero'
 }) {
   const [bracket, setBracket] = useState<KnockoutBracket | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
@@ -528,6 +541,8 @@ function KnockoutMatchRunner({
       home: homeRoster,
       away: awayRoster,
       result: sim.result,
+      extraTime: sim.extraTime,
+      hasPenalties: !!sim.penalties,
     })
     setSimResult({
       events,
@@ -667,17 +682,20 @@ function KnockoutMatchRunner({
     setRevealedPhase('done')
   }, [bracket, matchId, simResult, totalKicks, setVirtualMinute, virtualMinuteRef])
 
-  const inExtraTime = wholeMinute > 90
   const match = bracket ? findKnockoutMatch(bracket, matchId) : null
   const homeTeam = bracket && match?.homeCode ? bracket.teams[match.homeCode] : null
   const awayTeam = bracket && match?.awayCode ? bracket.teams[match.awayCode] : null
 
   // Derivações dependem de wholeMinute (não virtualMinute) — só recalcula no
-  // cruzamento de minuto inteiro.
+  // cruzamento de minuto inteiro. Reveals events até o minuto atual,
+  // incluindo eventos de prorrogação (91-120') e marcadores de fase, mas
+  // sem ultrapassar o limite revelado pela fase (regulation vê só ≤90,
+  // ET vê ≤120, penalties/done vê tudo).
+  const phaseCap = revealedPhase === 'regulation' ? 90 : 120
   const revealedRegular = useMemo(() => {
     if (!simResult) return [] as MatchEvent[]
-    return simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, 90))
-  }, [simResult, wholeMinute])
+    return simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, phaseCap))
+  }, [simResult, wholeMinute, phaseCap])
 
   // Cobranças do shootout convertidas em MatchEvents pro feed LANCES, uma
   // a uma conforme shootoutKicksRevealed cresce. Memo separada pra não
@@ -697,23 +715,19 @@ function KnockoutMatchRunner({
     [revealedRegular, penaltyEvents],
   )
 
+  // Score deriva direto dos eventos revelados — gols de ET agora estão
+  // narrados com minutos em [91, 120], então aparecem aqui conforme o
+  // relógio cruza cada minuto. (Antes era reg + chunk de ET somado de uma
+  // vez, o que dava salto no placar e LANCES vazio.)
   const homeGoals = useMemo(() => {
     if (!homeTeam) return 0
-    const reg = revealedRegular.filter(
-      (e) => e.type === 'goal' && e.teamCode === homeTeam.code,
-    ).length
-    const extra = inExtraTime ? (simResult?.extraTime?.homeGoals ?? 0) : 0
-    return reg + extra
-  }, [revealedRegular, homeTeam, inExtraTime, simResult])
+    return revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
+  }, [revealedRegular, homeTeam])
 
   const awayGoals = useMemo(() => {
     if (!awayTeam) return 0
-    const reg = revealedRegular.filter(
-      (e) => e.type === 'goal' && e.teamCode === awayTeam.code,
-    ).length
-    const extra = inExtraTime ? (simResult?.extraTime?.awayGoals ?? 0) : 0
-    return reg + extra
-  }, [revealedRegular, awayTeam, inExtraTime, simResult])
+    return revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
+  }, [revealedRegular, awayTeam])
 
   const home = useMemo<SideTeam | null>(
     () =>
@@ -774,6 +788,24 @@ function KnockoutMatchRunner({
     return <Loading />
 
   const phaseLabel = `${ROUND_LABEL[match.round].toUpperCase()} · COPA 2026`
+  // Pênaltis: visível assim que entramos na fase 'penalties' / 'done'.
+  const penaltiesVisible =
+    (revealedPhase === 'penalties' || revealedPhase === 'done') && !!simResult.penalties
+  const penaltiesCard = penaltiesVisible ? (
+    <PenaltiesCard
+      penalties={simResult.penalties!}
+      kicksRevealed={shootoutActive ? shootoutKicksRevealed : simResult.penalties!.sequence.length}
+      home={{
+        label: home.isUser ? 'SEU XI' : match.homeCode!.toUpperCase(),
+        isUser: home.isUser,
+      }}
+      away={{
+        label: away.isUser ? 'SEU XI' : match.awayCode!.toUpperCase(),
+        isUser: away.isUser,
+      }}
+      active={shootoutActive}
+    />
+  ) : null
 
   return (
     <PartidaShell
@@ -789,8 +821,20 @@ function KnockoutMatchRunner({
       shootoutActive={shootoutActive}
       shootoutKicksRevealed={shootoutKicksRevealed}
       goalAndRedEvents={goalEvents}
+      belowScoreboard={penaltyPlacement === 'hero' ? penaltiesCard : undefined}
     >
-      <LancesFeed events={revealed} home={home} away={away} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          flex: '5 1 360px',
+          minWidth: 0,
+        }}
+      >
+        {penaltyPlacement === 'top' && penaltiesCard}
+        <LancesFeed events={revealed} home={home} away={away} />
+      </div>
       <RightColumn
         playing={playing}
         finished={finalShowing}
@@ -803,10 +847,11 @@ function KnockoutMatchRunner({
         onSkipToEnd={onSkipToEnd}
         onShowOutcome={onShowOutcome}
         outcome={outcome}
+        // Card de pênaltis fica no aside só no modo default; nos outros
+        // modos vai pro topo do main column (`top`) ou subheader do
+        // scoreboard (`hero`).
         penalties={
-          revealedPhase === 'penalties' || revealedPhase === 'done'
-            ? simResult.penalties
-            : undefined
+          penaltyPlacement === 'aside' && penaltiesVisible ? simResult.penalties : undefined
         }
         penaltyHomeCode={match.homeCode!}
         penaltyAwayCode={match.awayCode!}
@@ -1062,6 +1107,32 @@ const LancesFeed = memo(function LancesFeed({
 })
 
 function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: SideTeam }) {
+  // Marcador de fase: render minimalista — só uma linha com o texto entre
+  // duas réguas, sem chip nem narração nem ícone. Quebra o feed em
+  // capítulos cronológicos.
+  if (ev.type === 'phase') {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '6px 12px',
+          color: 'var(--color-d-mut)',
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+        }}
+      >
+        <span style={{ flex: 1, height: 1, background: 'var(--color-d-line)' }} />
+        <span>{ev.text}</span>
+        <span style={{ flex: 1, height: 1, background: 'var(--color-d-line)' }} />
+      </div>
+    )
+  }
+
   const eventIsUser =
     (home.isUser && ev.teamCode === home.code) || (away.isUser && ev.teamCode === away.code)
   const teamTag =
@@ -1194,6 +1265,7 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
   }
   if (type === 'pen-scored') {
     if (byUser) {
+      // Nosso pênalti convertido — celebração lima, chip explícito.
       return {
         bg: 'rgba(212,255,61,0.07)',
         bd: 'rgba(212,255,61,0.3)',
@@ -1201,33 +1273,34 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
         emoji: '⚽',
         textColor: 'var(--color-d-ink)',
         nameColor: 'var(--color-d-ink)',
-        chip: { label: 'PÊNALTI', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
+        chip: { label: 'GOL DE PÊNALTI', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
       }
     }
+    // Pênalti do adversário convertido — vermelho apagado, chip explícito.
     return {
       bg: 'rgba(255,59,59,0.04)',
       bd: 'rgba(255,59,59,0.18)',
       minColor: 'var(--color-d-red)',
-      emoji: '⚽',
+      emoji: '🔴',
       textColor: 'var(--color-d-mut)',
       nameColor: 'var(--color-d-mut)',
-      chip: { label: 'PÊNALTI', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+      chip: { label: 'PÊNALTI DELES', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
     }
   }
   if (type === 'pen-missed') {
     if (byUser) {
-      // Nossa cobrança perdida — vermelho apagado (frustrante)
+      // Nossa cobrança perdida — vermelho destacado, chip "PERDI".
       return {
         bg: 'rgba(255,59,59,0.08)',
         bd: 'rgba(255,59,59,0.3)',
         minColor: 'var(--color-d-red)',
-        emoji: '🧤',
+        emoji: '❌',
         textColor: 'var(--color-d-ink)',
         nameColor: 'var(--color-d-ink)',
-        chip: { label: 'PERDEU', bg: 'var(--color-d-red)', fg: '#fff' },
+        chip: { label: 'PERDI', bg: 'var(--color-d-red)', fg: '#fff' },
       }
     }
-    // Adversário perdeu — alívio lima
+    // Adversário perdeu — alívio lima, chip "DEFENDIDA" (a glove image fits).
     return {
       bg: 'rgba(212,255,61,0.06)',
       bd: 'rgba(212,255,61,0.24)',
@@ -1235,7 +1308,7 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
       emoji: '🧤',
       textColor: 'var(--color-d-ink)',
       nameColor: 'var(--color-d-ink)',
-      chip: { label: 'PERDEU', bg: 'rgba(212,255,61,0.22)', fg: 'var(--color-d-lime)' },
+      chip: { label: 'DEFENDIDA', bg: 'rgba(212,255,61,0.22)', fg: 'var(--color-d-lime)' },
     }
   }
   // Fallback — qualquer tipo desconhecido cai numa linha neutra.
