@@ -24,11 +24,13 @@ import {
   fullySimulate,
   ROUND_LABEL,
   ROUND_ORDER,
+  simulatePenalties,
   type BracketMatch,
   type KnockoutBracket,
   type KORound,
   type Penalties,
 } from '../lib/bracket'
+import { features } from '../lib/features'
 import {
   findTeam,
   playCpuRound,
@@ -63,8 +65,24 @@ export function Match() {
   const navigate = useNavigate()
   const kind: MatchKind = params.get('kind') === 'knockout' ? 'knockout' : 'group'
 
-  if (kind === 'knockout')
-    return <KnockoutMatchRunner navigate={navigate} matchId={params.get('id') ?? ''} />
+  if (kind === 'knockout') {
+    const pParam = params.get('p')
+    // Default = 'hero' (card de pênaltis vira subheader do placar). Os
+    // outros dois posicionamentos ficam disponíveis via override explícito.
+    const penaltyPlacement: 'aside' | 'top' | 'hero' =
+      pParam === 'top' ? 'top' : pParam === 'aside' ? 'aside' : 'hero'
+    const forceParam = params.get('dev_force')
+    const devForce: 'et' | 'pks' | null =
+      features.dev && (forceParam === 'et' || forceParam === 'pks') ? forceParam : null
+    return (
+      <KnockoutMatchRunner
+        navigate={navigate}
+        matchId={params.get('id') ?? ''}
+        penaltyPlacement={penaltyPlacement}
+        devForce={devForce}
+      />
+    )
+  }
   return <GroupMatchRunner navigate={navigate} round={Number(params.get('round')) as 1 | 2 | 3} />
 }
 
@@ -90,6 +108,7 @@ function GroupMatchRunner({
     playing,
     speed,
     outcome,
+    outcomeOpen,
     virtualMinuteRef,
     setVirtualMinute,
     setPlaying,
@@ -310,7 +329,9 @@ function GroupMatchRunner({
         userTeamCode={USER_TEAM_CODE}
         revealedEvents={revealed}
       />
-      {outcome && <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />}
+      {outcome && outcomeOpen && (
+        <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />
+      )}
     </PartidaShell>
   )
 }
@@ -410,9 +431,15 @@ function computeGroupScorers(stage: GroupStage): ScorerRow[] {
 function KnockoutMatchRunner({
   navigate,
   matchId,
+  penaltyPlacement,
+  devForce,
 }: {
   navigate: ReturnType<typeof useNavigate>
   matchId: string
+  /** Local de render do card de pênaltis: aside (default), main (acima dos lances) ou hero (subheader do scoreboard). Toggle por ?p=top|hero. */
+  penaltyPlacement: 'aside' | 'top' | 'hero'
+  /** Dev-only: força o desfecho do tempo regulamentar pra cair em ET ou ET+pks. */
+  devForce: 'et' | 'pks' | null
 }) {
   const [bracket, setBracket] = useState<KnockoutBracket | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
@@ -452,6 +479,7 @@ function KnockoutMatchRunner({
     playing,
     speed,
     outcome,
+    outcomeOpen,
     virtualMinuteRef,
     setVirtualMinute,
     setPlaying,
@@ -524,10 +552,27 @@ function KnockoutMatchRunner({
       homeRoster,
       awayRoster,
     })
+    // Dev override: força ET (et) ou ET + pênaltis (pks) pra testar UI sem
+    // depender do RNG. Sobrescreve só campos relevantes; manter o `winner`
+    // determinístico (home como referência) facilita debug.
+    if (devForce === 'et' || devForce === 'pks') {
+      sim.result = { homeGoals: 1, awayGoals: 1 }
+      if (devForce === 'pks') {
+        sim.extraTime = { homeGoals: 0, awayGoals: 0 }
+        sim.penalties = simulatePenalties(home, away, Math.random, { homeRoster, awayRoster })
+        sim.winner = sim.penalties.homeScored >= sim.penalties.awayScored ? 'home' : 'away'
+      } else {
+        sim.extraTime = { homeGoals: 1, awayGoals: 0 }
+        sim.penalties = undefined
+        sim.winner = 'home'
+      }
+    }
     const events = narrateMatch({
       home: homeRoster,
       away: awayRoster,
       result: sim.result,
+      extraTime: sim.extraTime,
+      hasPenalties: !!sim.penalties,
     })
     setSimResult({
       events,
@@ -558,7 +603,7 @@ function KnockoutMatchRunner({
       oppCode: userIsHome ? match.awayCode : match.homeCode,
       initialSpeed: loadMatchSpeed(),
     })
-  }, [matchId, navigate, setVirtualMinute])
+  }, [matchId, navigate, setVirtualMinute, devForce])
 
   const totalKicks = simResult?.penalties?.sequence.length ?? 0
 
@@ -667,17 +712,20 @@ function KnockoutMatchRunner({
     setRevealedPhase('done')
   }, [bracket, matchId, simResult, totalKicks, setVirtualMinute, virtualMinuteRef])
 
-  const inExtraTime = wholeMinute > 90
   const match = bracket ? findKnockoutMatch(bracket, matchId) : null
   const homeTeam = bracket && match?.homeCode ? bracket.teams[match.homeCode] : null
   const awayTeam = bracket && match?.awayCode ? bracket.teams[match.awayCode] : null
 
   // Derivações dependem de wholeMinute (não virtualMinute) — só recalcula no
-  // cruzamento de minuto inteiro.
+  // cruzamento de minuto inteiro. Reveals events até o minuto atual,
+  // incluindo eventos de prorrogação (91-120') e marcadores de fase, mas
+  // sem ultrapassar o limite revelado pela fase (regulation vê só ≤90,
+  // ET vê ≤120, penalties/done vê tudo).
+  const phaseCap = revealedPhase === 'regulation' ? 90 : 120
   const revealedRegular = useMemo(() => {
     if (!simResult) return [] as MatchEvent[]
-    return simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, 90))
-  }, [simResult, wholeMinute])
+    return simResult.events.filter((e) => e.minute <= Math.min(wholeMinute, phaseCap))
+  }, [simResult, wholeMinute, phaseCap])
 
   // Cobranças do shootout convertidas em MatchEvents pro feed LANCES, uma
   // a uma conforme shootoutKicksRevealed cresce. Memo separada pra não
@@ -697,23 +745,19 @@ function KnockoutMatchRunner({
     [revealedRegular, penaltyEvents],
   )
 
+  // Score deriva direto dos eventos revelados — gols de ET agora estão
+  // narrados com minutos em [91, 120], então aparecem aqui conforme o
+  // relógio cruza cada minuto. (Antes era reg + chunk de ET somado de uma
+  // vez, o que dava salto no placar e LANCES vazio.)
   const homeGoals = useMemo(() => {
     if (!homeTeam) return 0
-    const reg = revealedRegular.filter(
-      (e) => e.type === 'goal' && e.teamCode === homeTeam.code,
-    ).length
-    const extra = inExtraTime ? (simResult?.extraTime?.homeGoals ?? 0) : 0
-    return reg + extra
-  }, [revealedRegular, homeTeam, inExtraTime, simResult])
+    return revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === homeTeam.code).length
+  }, [revealedRegular, homeTeam])
 
   const awayGoals = useMemo(() => {
     if (!awayTeam) return 0
-    const reg = revealedRegular.filter(
-      (e) => e.type === 'goal' && e.teamCode === awayTeam.code,
-    ).length
-    const extra = inExtraTime ? (simResult?.extraTime?.awayGoals ?? 0) : 0
-    return reg + extra
-  }, [revealedRegular, awayTeam, inExtraTime, simResult])
+    return revealedRegular.filter((e) => e.type === 'goal' && e.teamCode === awayTeam.code).length
+  }, [revealedRegular, awayTeam])
 
   const home = useMemo<SideTeam | null>(
     () =>
@@ -774,6 +818,24 @@ function KnockoutMatchRunner({
     return <Loading />
 
   const phaseLabel = `${ROUND_LABEL[match.round].toUpperCase()} · COPA 2026`
+  // Pênaltis: visível assim que entramos na fase 'penalties' / 'done'.
+  const penaltiesVisible =
+    (revealedPhase === 'penalties' || revealedPhase === 'done') && !!simResult.penalties
+  const penaltiesCard = penaltiesVisible ? (
+    <PenaltiesCard
+      penalties={simResult.penalties!}
+      kicksRevealed={shootoutActive ? shootoutKicksRevealed : simResult.penalties!.sequence.length}
+      home={{
+        label: home.isUser ? 'SEU XI' : match.homeCode!.toUpperCase(),
+        isUser: home.isUser,
+      }}
+      away={{
+        label: away.isUser ? 'SEU XI' : match.awayCode!.toUpperCase(),
+        isUser: away.isUser,
+      }}
+      active={shootoutActive}
+    />
+  ) : null
 
   return (
     <PartidaShell
@@ -789,8 +851,20 @@ function KnockoutMatchRunner({
       shootoutActive={shootoutActive}
       shootoutKicksRevealed={shootoutKicksRevealed}
       goalAndRedEvents={goalEvents}
+      belowScoreboard={penaltyPlacement === 'hero' ? penaltiesCard : undefined}
     >
-      <LancesFeed events={revealed} home={home} away={away} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          flex: '5 1 360px',
+          minWidth: 0,
+        }}
+      >
+        {penaltyPlacement === 'top' && penaltiesCard}
+        <LancesFeed events={revealed} home={home} away={away} />
+      </div>
       <RightColumn
         playing={playing}
         finished={finalShowing}
@@ -803,10 +877,11 @@ function KnockoutMatchRunner({
         onSkipToEnd={onSkipToEnd}
         onShowOutcome={onShowOutcome}
         outcome={outcome}
+        // Card de pênaltis fica no aside só no modo default; nos outros
+        // modos vai pro topo do main column (`top`) ou subheader do
+        // scoreboard (`hero`).
         penalties={
-          revealedPhase === 'penalties' || revealedPhase === 'done'
-            ? simResult.penalties
-            : undefined
+          penaltyPlacement === 'aside' && penaltiesVisible ? simResult.penalties : undefined
         }
         penaltyHomeCode={match.homeCode!}
         penaltyAwayCode={match.awayCode!}
@@ -816,7 +891,9 @@ function KnockoutMatchRunner({
         userTeamCode={bracket.userCode}
         revealedEvents={revealed}
       />
-      {outcome && <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />}
+      {outcome && outcomeOpen && (
+        <OutcomeDrawer outcome={outcome} ctx={outcomeContext} onClose={onCloseOutcome} />
+      )}
     </PartidaShell>
   )
 }
@@ -1062,6 +1139,32 @@ const LancesFeed = memo(function LancesFeed({
 })
 
 function LanceRow({ ev, home, away }: { ev: MatchEvent; home: SideTeam; away: SideTeam }) {
+  // Marcador de fase: render minimalista — só uma linha com o texto entre
+  // duas réguas, sem chip nem narração nem ícone. Quebra o feed em
+  // capítulos cronológicos.
+  if (ev.type === 'phase') {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '6px 12px',
+          color: 'var(--color-d-mut)',
+          fontFamily: 'Space Mono',
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+        }}
+      >
+        <span style={{ flex: 1, height: 1, background: 'var(--color-d-line)' }} />
+        <span>{ev.text}</span>
+        <span style={{ flex: 1, height: 1, background: 'var(--color-d-line)' }} />
+      </div>
+    )
+  }
+
   const eventIsUser =
     (home.isUser && ev.teamCode === home.code) || (away.isUser && ev.teamCode === away.code)
   const teamTag =
@@ -1181,19 +1284,21 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
         chip: { label: 'GOL', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
       }
     }
-    // 🔴 gol adversário — tom apagado, sem destaque lima
+    // Gol do adversário — tom neutro/cinza pra não tomar atenção visual
+    // (a celebração lima fica reservada pros nossos).
     return {
-      bg: 'rgba(255,59,59,0.04)',
-      bd: 'rgba(255,59,59,0.18)',
-      minColor: 'var(--color-d-red)',
-      emoji: '🔴',
+      bg: 'rgba(255,255,255,0.03)',
+      bd: 'var(--color-d-line)',
+      minColor: 'var(--color-d-mut)',
+      emoji: '⚽',
       textColor: 'var(--color-d-mut)',
-      nameColor: 'var(--color-d-mut)',
-      chip: { label: 'GOL', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+      nameColor: 'var(--color-d-ink)',
+      chip: { label: 'GOL DELES', bg: 'rgba(255,255,255,0.06)', fg: 'var(--color-d-mut)' },
     }
   }
   if (type === 'pen-scored') {
     if (byUser) {
+      // Nosso pênalti convertido — celebração lima, chip explícito.
       return {
         bg: 'rgba(212,255,61,0.07)',
         bd: 'rgba(212,255,61,0.3)',
@@ -1201,41 +1306,43 @@ function lanceStyle(type: MatchEvent['type'], byUser: boolean): LanceStyle {
         emoji: '⚽',
         textColor: 'var(--color-d-ink)',
         nameColor: 'var(--color-d-ink)',
-        chip: { label: 'PÊNALTI', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
+        chip: { label: 'GOL DE PÊNALTI', bg: 'var(--color-d-lime)', fg: 'var(--color-d-bg)' },
       }
     }
+    // Pênalti do adversário convertido — tom neutro/cinza pra não competir
+    // com a celebração lima nem com a frustração vermelha dos meus erros.
     return {
-      bg: 'rgba(255,59,59,0.04)',
-      bd: 'rgba(255,59,59,0.18)',
-      minColor: 'var(--color-d-red)',
+      bg: 'rgba(255,255,255,0.03)',
+      bd: 'var(--color-d-line)',
+      minColor: 'var(--color-d-mut)',
       emoji: '⚽',
       textColor: 'var(--color-d-mut)',
-      nameColor: 'var(--color-d-mut)',
-      chip: { label: 'PÊNALTI', bg: 'rgba(255,59,59,0.18)', fg: 'var(--color-d-red)' },
+      nameColor: 'var(--color-d-ink)',
+      chip: { label: 'PÊNALTI DELES', bg: 'rgba(255,255,255,0.06)', fg: 'var(--color-d-mut)' },
     }
   }
   if (type === 'pen-missed') {
     if (byUser) {
-      // Nossa cobrança perdida — vermelho apagado (frustrante)
+      // Nossa cobrança perdida — vermelho destacado, chip "PERDI".
       return {
         bg: 'rgba(255,59,59,0.08)',
         bd: 'rgba(255,59,59,0.3)',
         minColor: 'var(--color-d-red)',
-        emoji: '🧤',
+        emoji: '❌',
         textColor: 'var(--color-d-ink)',
         nameColor: 'var(--color-d-ink)',
-        chip: { label: 'PERDEU', bg: 'var(--color-d-red)', fg: '#fff' },
+        chip: { label: 'PERDI', bg: 'var(--color-d-red)', fg: '#fff' },
       }
     }
-    // Adversário perdeu — alívio lima
+    // Adversário perdeu — âmbar quente (alívio), chip "DEFENDIDA".
     return {
-      bg: 'rgba(212,255,61,0.06)',
-      bd: 'rgba(212,255,61,0.24)',
-      minColor: 'var(--color-d-lime)',
+      bg: 'rgba(255,138,59,0.07)',
+      bd: 'rgba(255,138,59,0.3)',
+      minColor: 'var(--color-d-warn)',
       emoji: '🧤',
       textColor: 'var(--color-d-ink)',
       nameColor: 'var(--color-d-ink)',
-      chip: { label: 'PERDEU', bg: 'rgba(212,255,61,0.22)', fg: 'var(--color-d-lime)' },
+      chip: { label: 'DEFENDIDA', bg: 'rgba(255,138,59,0.22)', fg: 'var(--color-d-warn)' },
     }
   }
   // Fallback — qualquer tipo desconhecido cai numa linha neutra.

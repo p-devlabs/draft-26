@@ -27,6 +27,10 @@ const MataMata = lazy(() => import('./routes/MataMata').then((m) => ({ default: 
 const PenaltiesDev = lazy(() =>
   import('./routes/PenaltiesDev').then((m) => ({ default: m.PenaltiesDev })),
 )
+const OutcomeDev = lazy(() =>
+  import('./routes/OutcomeDev').then((m) => ({ default: m.OutcomeDev })),
+)
+const KoJump = lazy(() => import('./routes/KoJump').then((m) => ({ default: m.KoJump })))
 
 initAnalytics()
 trackSessionOnce()
@@ -70,6 +74,8 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/bracket" element={<MataMata />} />
               <Route path="/match" element={<Match />} />
               <Route path="/dev/penalties" element={<PenaltiesDev />} />
+              <Route path="/dev/outcomes" element={<OutcomeDev />} />
+              <Route path="/dev/ko-jump" element={<KoJump />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
