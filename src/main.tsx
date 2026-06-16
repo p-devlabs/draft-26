@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import './index.css'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { NotFoundPage } from './components/ErrorPages'
 import { SquadsGate } from './components/SquadsGate'
 import { loadSquads } from './data/squads'
 import { initAnalytics } from './lib/analytics'
@@ -76,6 +77,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/dev/penalties" element={<PenaltiesDev />} />
               <Route path="/dev/outcomes" element={<OutcomeDev />} />
               <Route path="/dev/ko-jump" element={<KoJump />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
