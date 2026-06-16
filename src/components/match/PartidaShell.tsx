@@ -30,6 +30,9 @@ export interface PartidaShellProps {
   shootoutKicksRevealed?: number
   /** Marcadores plotados na timeline do scoreboard (gols). */
   goalAndRedEvents: MatchEvent[]
+  /** Slot opcional entre o scoreboard e o body — usado pra mostrar o
+   *  card de disputa de pênaltis como subheader (toggle ?p=hero). */
+  belowScoreboard?: ReactNode
   /** Conteúdo do body: feed de lances, painel direito, drawer de resultado, etc. */
   children: ReactNode
 }
@@ -54,6 +57,17 @@ export function PartidaShell(p: PartidaShellProps) {
         markers={p.goalAndRedEvents}
       />
       <ScoreAnnouncer home={p.home} away={p.away} homeGoals={p.homeGoals} awayGoals={p.awayGoals} />
+      {p.belowScoreboard && (
+        <div
+          style={{
+            maxWidth: 1080,
+            margin: '0 auto',
+            padding: '0 clamp(16px, 4vw, 28px)',
+          }}
+        >
+          {p.belowScoreboard}
+        </div>
+      )}
       <Body>{p.children}</Body>
     </div>
   )
