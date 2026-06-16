@@ -138,7 +138,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ctaLabel: 'IR PRO MATA-MATA →',
         ctaTo: '/bracket',
         secondaries: [
-          { label: 'VER TIME', to: '/draft' },
+          { label: 'VER TIME', to: '/draft?view=1' },
           { label: 'VER GRUPO', to: '/groups' },
         ],
         primaryIsLime: true,
@@ -156,9 +156,9 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
         decoration: { kind: 'none' },
         ctaLabel: 'TENTAR DE NOVO →',
-        ctaTo: '/draft',
+        ctaTo: '/draft?fresh=1',
         secondaries: [
-          { label: 'VER TIME', to: '/draft' },
+          { label: 'VER TIME', to: '/draft?view=1' },
           { label: 'VER GRUPO', to: '/groups' },
         ],
         primaryIsLime: false,
@@ -179,7 +179,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
           ? `VER ${ctx.extras.nextRoundLabel} →`
           : 'VOLTAR PRO CHAVEAMENTO →',
         ctaTo: '/bracket',
-        secondaries: [{ label: 'VER TIME', to: '/draft' }],
+        secondaries: [{ label: 'VER TIME', to: '/draft?view=1' }],
         primaryIsLime: true,
         champion: false,
         showShare: true,
@@ -195,9 +195,9 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         bannerBg: 'linear-gradient(180deg, #1a1012, #141613)',
         decoration: { kind: 'none' },
         ctaLabel: 'TENTAR DE NOVO →',
-        ctaTo: '/draft',
+        ctaTo: '/draft?fresh=1',
         secondaries: [
-          { label: 'VER TIME', to: '/draft' },
+          { label: 'VER TIME', to: '/draft?view=1' },
           { label: 'VER CAMPANHA', to: '/bracket' },
         ],
         primaryIsLime: false,
@@ -215,9 +215,9 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         bannerBg: 'radial-gradient(130% 100% at 50% 0%, #d4ff3d, #a9d11e)',
         decoration: { kind: 'emoji', char: '🏆' },
         ctaLabel: 'JOGAR DE NOVO →',
-        ctaTo: '/draft',
+        ctaTo: '/draft?fresh=1',
         secondaries: [
-          { label: 'VER TIME CAMPEÃO', to: '/draft' },
+          { label: 'VER TIME CAMPEÃO', to: '/draft?view=1' },
           { label: 'VER CAMPANHA', to: '/bracket' },
         ],
         primaryIsLime: true,

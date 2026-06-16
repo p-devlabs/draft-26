@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Field } from '../components/Field'
 import { PickDrawer } from '../components/PickDrawer'
@@ -7,13 +7,15 @@ import { SetupDrawer } from '../components/SetupDrawer'
 import { autoFillXI } from '../lib/autofill'
 import { averageOverall, createDraft, isComplete, pickPlayer, type DraftState } from '../lib/draft'
 import { features } from '../lib/features'
-import { loadDraft, loadWorldCup, saveDraft, clearWorldCup } from '../lib/persistence'
+import { clearDraft, clearWorldCup, loadDraft, loadWorldCup, saveDraft } from '../lib/persistence'
+import { clearLocalRunId } from '../lib/runs'
 import { track } from '../lib/track'
 
 import type { Difficulty, Style } from '../lib/formations'
 
 export function Draft() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [draft, setDraft] = useState<DraftState | null>(null)
   const [pickingSlot, setPickingSlot] = useState<number | null>(null)
   // Modo "review": chegou aqui via CTA "VER TIME" de uma modal de outcome
@@ -24,12 +26,29 @@ export function Draft() {
 
   useEffect(() => {
     void track('draft_started')
-    const saved = loadDraft()
-    if (saved && isComplete(saved)) {
-      setDraft(saved)
-      setReviewMode(loadWorldCup() != null)
+    // Query params explícitos vencem qualquer auto-detect:
+    //   ?fresh=1 → "TENTAR DE NOVO" / "JOGAR DE NOVO" — limpa tudo e abre setup.
+    //   ?view=1  → "VER TIME" — carrega o XI em modo review.
+    // Sem param: se há campanha em andamento, entra em review pra não
+    // destruir progresso (user pode ter chegado aqui via breadcrumb); caso
+    // contrário abre setup pra montar XI novo.
+    const intent =
+      params.get('fresh') === '1' ? 'fresh' : params.get('view') === '1' ? 'view' : null
+    if (intent === 'fresh') {
+      clearWorldCup()
+      clearDraft()
+      clearLocalRunId()
+      return
     }
-  }, [])
+    const hasCampaign = loadWorldCup() != null
+    if (hasCampaign || intent === 'view') {
+      const saved = loadDraft()
+      if (saved && isComplete(saved)) {
+        setDraft(saved)
+        setReviewMode(hasCampaign)
+      }
+    }
+  }, [params])
 
   const handleStart = (formationName: string, style: Style, difficulty: Difficulty) => {
     setDraft(createDraft(formationName, style, difficulty))
