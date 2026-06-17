@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 
 import { track } from '../../lib/track'
 
+import { CampaignModal } from './CampaignModal'
+import { LineupModal } from './LineupModal'
+
 import type { DraftState } from '../../lib/draft'
 import type { UserFate } from '../../lib/groups'
 
@@ -59,10 +62,16 @@ export interface OutcomeContext {
  */
 type BannerDecoration = { kind: 'check' } | { kind: 'emoji'; char: string } | { kind: 'none' }
 
-/** CTA secundária — label + destino. */
+/**
+ * CTA secundária. `to` é a rota canônica (fallback se a modal não conseguir
+ * carregar dados). `kind` opcional indica que o click deve abrir uma modal
+ * aninhada em vez de navegar — usado pelos atalhos "VER TIME" / "VER CAMPANHA"
+ * que ganharam uma versão in-place no PR atual.
+ */
 interface SecondaryCta {
   label: string
   to: string
+  kind?: 'team' | 'campaign'
 }
 
 /**
@@ -138,8 +147,8 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ctaLabel: 'IR PRO MATA-MATA →',
         ctaTo: '/bracket',
         secondaries: [
-          { label: 'VER TIME', to: '/draft?view=1' },
-          { label: 'VER GRUPO', to: '/groups' },
+          { label: 'VER TIME', to: '/draft?view=1', kind: 'team' },
+          { label: 'VER GRUPO', to: '/groups', kind: 'campaign' },
         ],
         primaryIsLime: true,
         champion: false,
@@ -158,8 +167,8 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft?fresh=1',
         secondaries: [
-          { label: 'VER TIME', to: '/draft?view=1' },
-          { label: 'VER GRUPO', to: '/groups' },
+          { label: 'VER TIME', to: '/draft?view=1', kind: 'team' },
+          { label: 'VER GRUPO', to: '/groups', kind: 'campaign' },
         ],
         primaryIsLime: false,
         champion: false,
@@ -179,7 +188,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
           ? `VER ${ctx.extras.nextRoundLabel} →`
           : 'VOLTAR PRO CHAVEAMENTO →',
         ctaTo: '/bracket',
-        secondaries: [{ label: 'VER TIME', to: '/draft?view=1' }],
+        secondaries: [{ label: 'VER TIME', to: '/draft?view=1', kind: 'team' }],
         primaryIsLime: true,
         champion: false,
         showShare: true,
@@ -197,8 +206,8 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ctaLabel: 'TENTAR DE NOVO →',
         ctaTo: '/draft?fresh=1',
         secondaries: [
-          { label: 'VER TIME', to: '/draft?view=1' },
-          { label: 'VER CAMPANHA', to: '/bracket' },
+          { label: 'VER TIME', to: '/draft?view=1', kind: 'team' },
+          { label: 'VER CAMPANHA', to: '/bracket', kind: 'campaign' },
         ],
         primaryIsLime: false,
         champion: false,
@@ -217,8 +226,8 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ctaLabel: 'JOGAR DE NOVO →',
         ctaTo: '/draft?fresh=1',
         secondaries: [
-          { label: 'VER TIME CAMPEÃO', to: '/draft?view=1' },
-          { label: 'VER CAMPANHA', to: '/bracket' },
+          { label: 'VER TIME CAMPEÃO', to: '/draft?view=1', kind: 'team' },
+          { label: 'VER CAMPANHA', to: '/bracket', kind: 'campaign' },
         ],
         primaryIsLime: true,
         champion: true,
@@ -274,8 +283,13 @@ export function OutcomeDrawer({
   onClose: () => void
 }) {
   const cfg = outcomeConfig(outcome, ctx)
+  // Modal aninhada sobre o drawer: 'team' (VER TIME) ou 'campaign' (VER GRUPO/
+  // CAMPANHA). null = nenhuma aberta, drawer principal recebe interação.
+  const [openModal, setOpenModal] = useState<'team' | 'campaign' | null>(null)
   // ESC fecha o drawer — drawer só monta quando outcome != null, então
-  // o listener fica ativo só enquanto está visível.
+  // o listener fica ativo só enquanto está visível. Quando uma modal aninhada
+  // está aberta, ela registra um handler em capture com stopPropagation, então
+  // o ESC fecha primeiro a modal e o drawer só fecha no ESC seguinte.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -283,6 +297,11 @@ export function OutcomeDrawer({
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
+
+  const handleSecondaryClick = (kind: 'team' | 'campaign') => {
+    setOpenModal(kind)
+    void track('outcome_secondary_modal_open', { kind, outcome })
+  }
   return (
     <>
       <div
@@ -329,7 +348,7 @@ export function OutcomeDrawer({
         >
           <OutcomeBanner cfg={cfg} />
           <div style={{ padding: '18px clamp(18px, 5vw, 28px) 30px' }}>
-            <OutcomeActions cfg={cfg} />
+            <OutcomeActions cfg={cfg} onSecondaryModal={handleSecondaryClick} />
             <div style={{ marginTop: 22 }}>
               <MatchResultCard phase={ctx.phase} result={ctx.matchResult} />
               <TeamChosenCard draft={ctx.draft} />
@@ -343,8 +362,53 @@ export function OutcomeDrawer({
           </div>
         </div>
       </div>
+      {openModal === 'team' && (
+        <LineupModal
+          title={cfg.champion ? 'SEU TIME CAMPEÃO' : 'SEU XI'}
+          draft={ctx.draft}
+          fallbackTo="/draft?view=1"
+          onClose={() => setOpenModal(null)}
+        />
+      )}
+      {openModal === 'campaign' && (
+        <CampaignModal
+          title={campaignModalTitle(outcome)}
+          fallbackTo={campaignModalFallback(outcome)}
+          onClose={() => setOpenModal(null)}
+        />
+      )}
     </>
   )
+}
+
+/** Título da modal de campanha varia pelo momento — grupos vs mata-mata. */
+function campaignModalTitle(outcome: OutcomeKind): string {
+  switch (outcome) {
+    case 'classificado':
+    case 'fora-grupos':
+      return 'SEU GRUPO'
+    case 'avancou':
+    case 'elim':
+    case 'champ':
+      return 'SUA CAMPANHA'
+    default:
+      return 'SUA CAMPANHA'
+  }
+}
+
+/** Rota de fallback equivalente à CTA original (mantém comportamento legado). */
+function campaignModalFallback(outcome: OutcomeKind): string {
+  switch (outcome) {
+    case 'classificado':
+    case 'fora-grupos':
+      return '/groups'
+    case 'avancou':
+    case 'elim':
+    case 'champ':
+      return '/bracket'
+    default:
+      return '/bracket'
+  }
 }
 
 // ---------- Subcomponentes ----------
@@ -1060,9 +1124,36 @@ function ShareGrid({ surface }: { surface: string }) {
   )
 }
 
-function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
+function OutcomeActions({
+  cfg,
+  onSecondaryModal,
+}: {
+  cfg: OutcomeConfig
+  /** Dispatched quando uma CTA secundária com `kind` é clicada — abre modal aninhada. */
+  onSecondaryModal: (kind: 'team' | 'campaign') => void
+}) {
   // 2+ secundárias entram em grid 2-col pra caber direitinho no mobile.
   const secondariesUseGrid = cfg.secondaries.length >= 2
+  // Estilo compartilhado entre Link (rota) e button (modal aninhada) — mantém
+  // a mesma silhueta visual independente do trigger.
+  const secondaryStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    background: 'transparent',
+    color: 'var(--color-d-mut)',
+    border: '1px solid var(--color-d-line)',
+    borderRadius: 11,
+    padding: 12,
+    fontFamily: 'Space Mono',
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: '0.04em',
+    cursor: 'pointer',
+    textAlign: 'center',
+    width: '100%',
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <Link
@@ -1094,31 +1185,26 @@ function OutcomeActions({ cfg }: { cfg: OutcomeConfig }) {
             gap: 10,
           }}
         >
-          {cfg.secondaries.map((s) => (
-            <Link
-              key={`${s.label}-${s.to}`}
-              to={s.to}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                background: 'transparent',
-                color: 'var(--color-d-mut)',
-                border: '1px solid var(--color-d-line)',
-                borderRadius: 11,
-                padding: 12,
-                fontFamily: 'Space Mono',
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
-            >
-              {s.label}
-            </Link>
-          ))}
+          {cfg.secondaries.map((s) => {
+            if (s.kind) {
+              const kind = s.kind
+              return (
+                <button
+                  key={`${s.label}-${s.to}`}
+                  type="button"
+                  onClick={() => onSecondaryModal(kind)}
+                  style={secondaryStyle}
+                >
+                  {s.label}
+                </button>
+              )
+            }
+            return (
+              <Link key={`${s.label}-${s.to}`} to={s.to} style={secondaryStyle}>
+                {s.label}
+              </Link>
+            )
+          })}
         </div>
       )}
     </div>
