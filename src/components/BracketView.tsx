@@ -266,6 +266,14 @@ function BracketCell({
     <div
       style={{
         flex: 1,
+        // `minHeight: 0` é o que faz o flexbox redistribuir o espaço de
+        // forma uniforme entre todas as cells do round mesmo quando uma
+        // delas (a do user) tem conteúdo extra (botão JOGAR como overlay
+        // — ver abaixo). Sem isso o `flex: 1` se rendia à altura natural
+        // da cell maior e os centros dos pares R32 desalinhavam dos
+        // centros dos matches R16, deixando a ponta final do conector
+        // pendurada no vazio.
+        minHeight: 0,
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
@@ -353,34 +361,115 @@ function BracketCell({
           }}
         />
       )}
-      <div
+      {/*
+       * No desktop o card mantém altura uniforme em todas as cells do
+       * round — sem botão JOGAR inflando a célula do user. O CTA fica
+       * como chip overlay no canto e o card inteiro vira clicável.
+       * Manter altura uniforme é o que mantém o centro de cada par R32
+       * alinhado com o centro do match destino no R16; sem isso a ponta
+       * final do conector vertical "perdia" o stub horizontal de entrada
+       * no próximo round.
+       */}
+      {playable ? (
+        <PlayableCardDesktop match={match} bracket={bracket} border={border} shadow={shadow} />
+      ) : (
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            width: '100%',
+            background: 'var(--color-d-surface)',
+            border: `1px solid ${border}`,
+            borderRadius: 10,
+            overflow: 'hidden',
+            boxShadow: shadow,
+          }}
+        >
+          <CellSide
+            team={match.homeCode ? bracket.teams[match.homeCode] : null}
+            score={cellScore(match, 'home')}
+            won={winnerSide(match) === 'home'}
+            compact
+          />
+          <div style={{ borderTop: '1px solid var(--color-d-line)' }} />
+          <CellSide
+            team={match.awayCode ? bracket.teams[match.awayCode] : null}
+            score={cellScore(match, 'away')}
+            won={winnerSide(match) === 'away'}
+            compact
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PlayableCardDesktop({
+  match,
+  bracket,
+  border,
+  shadow,
+}: {
+  match: BracketMatch
+  bracket: KnockoutBracket
+  border: string
+  shadow: string
+}) {
+  const navigate = useNavigate()
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(`/match?kind=knockout&id=${match.id}`)}
+      style={{
+        position: 'relative',
+        zIndex: 1,
+        width: '100%',
+        background: 'var(--color-d-surface)',
+        border: `1px solid ${border}`,
+        borderRadius: 10,
+        overflow: 'hidden',
+        boxShadow: shadow,
+        padding: 0,
+        cursor: 'pointer',
+        textAlign: 'left',
+        font: 'inherit',
+        color: 'inherit',
+        display: 'block',
+        animation: 'd26-pulse 2.2s infinite',
+      }}
+      aria-label={`Jogar ${match.homeCode ?? ''} vs ${match.awayCode ?? ''}`}
+    >
+      <CellSide
+        team={match.homeCode ? bracket.teams[match.homeCode] : null}
+        score={cellScore(match, 'home')}
+        won={winnerSide(match) === 'home'}
+        compact
+      />
+      <div style={{ borderTop: '1px solid var(--color-d-line)' }} />
+      <CellSide
+        team={match.awayCode ? bracket.teams[match.awayCode] : null}
+        score={cellScore(match, 'away')}
+        won={winnerSide(match) === 'away'}
+        compact
+      />
+      <span
         style={{
-          position: 'relative',
-          zIndex: 1,
-          width: '100%',
-          background: 'var(--color-d-surface)',
-          border: `1px solid ${border}`,
-          borderRadius: 10,
-          overflow: 'hidden',
-          boxShadow: shadow,
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          fontFamily: 'Anton',
+          fontSize: 9,
+          letterSpacing: '0.06em',
+          background: 'var(--color-d-lime)',
+          color: 'var(--color-d-bg)',
+          padding: '2px 6px',
+          borderRadius: 4,
+          pointerEvents: 'none',
         }}
       >
-        <CellSide
-          team={match.homeCode ? bracket.teams[match.homeCode] : null}
-          score={cellScore(match, 'home')}
-          won={winnerSide(match) === 'home'}
-          compact
-        />
-        <div style={{ borderTop: '1px solid var(--color-d-line)' }} />
-        <CellSide
-          team={match.awayCode ? bracket.teams[match.awayCode] : null}
-          score={cellScore(match, 'away')}
-          won={winnerSide(match) === 'away'}
-          compact
-        />
-        {playable && <PlayButton matchId={match.id} compact />}
-      </div>
-    </div>
+        JOGAR →
+      </span>
+    </button>
   )
 }
 
