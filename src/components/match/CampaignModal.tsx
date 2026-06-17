@@ -85,12 +85,12 @@ export function CampaignModal({ title, fallbackTo, onClose }: Props) {
   return (
     <NestedModalShell title={title} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {groupRows.map((row) => (
-          <Row key={row.id} row={row} />
-        ))}
         {data.standings.length > 0 && (
           <StandingsBlock standings={data.standings} groupLetter={data.groupLetter} />
         )}
+        {groupRows.map((row) => (
+          <Row key={row.id} row={row} />
+        ))}
         {koRows.map((row) => (
           <Row key={row.id} row={row} />
         ))}

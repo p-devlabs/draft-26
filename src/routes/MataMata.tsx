@@ -151,7 +151,7 @@ export function MataMata() {
 
   return (
     <div className="d26-scope" style={{ overflowX: 'hidden' }}>
-      <AppBar phaseLabel={phaseLabel} onReset={handleReset} />
+      <AppBar phaseLabel={phaseLabel} onReset={handleReset} partidaEnabled={!!next} />
       <Masthead />
       <PathStrip bracket={bracket} />
       <BracketView bracket={bracket} />
@@ -191,7 +191,16 @@ function computePhaseLabel(
 // App bar
 // ============================================================
 
-function AppBar({ phaseLabel, onReset }: { phaseLabel: string; onReset?: () => void }) {
+function AppBar({
+  phaseLabel,
+  onReset,
+  partidaEnabled = true,
+}: {
+  phaseLabel: string
+  onReset?: () => void
+  /** PARTIDA disabled quando user já caiu ou venceu o torneio. */
+  partidaEnabled?: boolean
+}) {
   return (
     <div
       style={{
@@ -244,7 +253,11 @@ function AppBar({ phaseLabel, onReset }: { phaseLabel: string; onReset?: () => v
         <NavPill disabled label="ESCALAÇÃO" />
         <NavPill disabled label="GRUPOS" />
         <NavPill active label="CHAVEAMENTO" />
-        <NavPill to="/match" label="PARTIDA" />
+        <NavPill
+          to={partidaEnabled ? '/match' : undefined}
+          disabled={!partidaEnabled}
+          label="PARTIDA"
+        />
       </nav>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <div
