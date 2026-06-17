@@ -13,22 +13,28 @@
 import { deliverShareImage, htmlToPngBlob, type ShareImageResult } from '../share-image'
 
 import { loadEmbeddedFontCss } from './fonts'
-import { cardHtml, type ShareCardData, type ShareCardKind } from './templates'
+import {
+  cardDimensions,
+  cardHtml,
+  type ShareCardData,
+  type ShareCardFormat,
+  type ShareCardKind,
+} from './templates'
 
 import type { OutcomeContext, OutcomeKind } from '../../components/match/OutcomeDrawer'
 import type { DraftState } from '../draft'
 import type { Style } from '../formations'
 
-export type { ShareCardData, ShareCardKind }
+export type { ShareCardData, ShareCardFormat, ShareCardKind }
 export { cardHtml }
 
 const CARD_KINDS: Record<OutcomeKind, ShareCardKind | null> = {
   grupo: 'grupo',
   'grupo-resultado': null,
   classificado: 'classificado',
-  'fora-grupos': null,
+  'fora-grupos': 'eliminado',
   avancou: 'avancou',
-  elim: null,
+  elim: 'eliminado',
   champ: 'champ',
 }
 
@@ -46,20 +52,29 @@ function avgOvr(draft: DraftState): number {
   return ovrs.reduce((a, b) => a + b, 0) / ovrs.length
 }
 
-function buildKicker(kind: ShareCardKind, ctx: OutcomeContext): string {
-  switch (kind) {
+// ctx.phase no KO = "QUARTAS DE FINAL · COPA 2026" → "QUARTAS DE FINAL"
+function koRoundLabel(ctx: OutcomeContext): string {
+  return ctx.phase.replace(/\s*·\s*COPA 2026\s*$/i, '').toUpperCase()
+}
+
+function buildKicker(kind: OutcomeKind, cardKind: ShareCardKind, ctx: OutcomeContext): string {
+  switch (cardKind) {
     case 'champ':
       return 'CAMPEÃO MUNDIAL · COPA 2026'
     case 'classificado':
       return 'FASE DE GRUPOS · CLASSIFICADO'
     case 'avancou':
-      // ctx.phase no KO = "QUARTAS DE FINAL · COPA 2026" → "MATA-MATA · QUARTAS DE FINAL"
-      return `MATA-MATA · ${ctx.phase.replace(/\s*·\s*COPA 2026\s*$/i, '').toUpperCase()}`
+      return `MATA-MATA · ${koRoundLabel(ctx)}`
     case 'grupo': {
       // ctx.phase no grupo = "FASE DE GRUPOS · 2/3" → "FASE DE GRUPOS · RODADA 2"
       const m = ctx.phase.match(/(\d)\s*\/\s*3/)
       return m ? `FASE DE GRUPOS · RODADA ${m[1]}` : 'FASE DE GRUPOS'
     }
+    case 'eliminado':
+      // 'fora-grupos' = caiu na fase de grupos; 'elim' = caiu no mata-mata.
+      return kind === 'fora-grupos'
+        ? 'FIM DE LINHA · FASE DE GRUPOS'
+        : `FIM DE LINHA · ${koRoundLabel(ctx)}`
   }
 }
 
@@ -97,7 +112,7 @@ export function buildShareCardData(ctx: OutcomeContext, kind: OutcomeKind): Shar
 
   return {
     kind: cardKind,
-    kicker: buildKicker(cardKind, ctx),
+    kicker: buildKicker(kind, cardKind, ctx),
     headlineText:
       cardKind === 'avancou' ? `NA ${(ctx.extras.nextRoundLabel ?? '').toUpperCase()}!` : '',
     positionLine: cardKind === 'classificado' ? buildPositionLine(ctx) : '',
@@ -119,28 +134,30 @@ export function buildShareCardData(ctx: OutcomeContext, kind: OutcomeKind): Shar
 }
 
 /** HTML completo (com fontes embutidas + reset) pronto pra rasterizar. */
-async function composeCardHtml(data: ShareCardData): Promise<string> {
+async function composeCardHtml(data: ShareCardData, format: ShareCardFormat): Promise<string> {
   const fontCss = await loadEmbeddedFontCss()
-  return `<style>*{box-sizing:border-box;margin:0;padding:0}${fontCss}</style>${cardHtml(data)}`
+  return `<style>*{box-sizing:border-box;margin:0;padding:0}${fontCss}</style>${cardHtml(data, format)}`
 }
 
-/** Gera o PNG do card (1080×1920) sem entregar — útil pra preview/teste. */
+/** Gera o PNG do card sem entregar — útil pra preview/teste. */
 export async function generateOutcomeCardBlob(
   ctx: OutcomeContext,
   kind: OutcomeKind,
+  format: ShareCardFormat,
 ): Promise<Blob> {
   const data = buildShareCardData(ctx, kind)
   if (!data) throw new Error(`outcome "${kind}" não tem share card`)
-  const html = await composeCardHtml(data)
-  return htmlToPngBlob(html, { width: 1080, height: 1920 })
+  const html = await composeCardHtml(data, format)
+  return htmlToPngBlob(html, cardDimensions(format))
 }
 
 /** Gera e entrega o card. Lança se o outcome não tiver card (caller deve guardar). */
 export async function generateAndShareOutcomeCard(
   ctx: OutcomeContext,
   kind: OutcomeKind,
+  format: ShareCardFormat,
   meta: { filename: string; text?: string; url?: string },
 ): Promise<ShareImageResult> {
-  const blob = await generateOutcomeCardBlob(ctx, kind)
+  const blob = await generateOutcomeCardBlob(ctx, kind, format)
   return deliverShareImage(blob, meta)
 }

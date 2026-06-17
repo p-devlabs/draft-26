@@ -218,7 +218,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ],
         primaryTone: 'red',
         champion: false,
-        showShare: false,
+        showShare: true,
       }
     case 'avancou': {
       const nextLabel = ctx.extras.nextRoundLabel
@@ -273,7 +273,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ],
         primaryTone: 'red',
         champion: false,
-        showShare: false,
+        showShare: true,
       }
     case 'champ':
       return {
@@ -1301,6 +1301,9 @@ function buildShareText(surface: string): string {
       return 'Mais uma fase no Draft 26 ⚄ Simulador da Copa 2026.'
     case 'grupo':
       return 'Vitória no grupo no Draft 26 ⚄ Simulador da Copa 2026.'
+    case 'elim':
+    case 'fora-grupos':
+      return 'Minha campanha no Draft 26 ⚄ Simulador da Copa 2026.'
     default:
       return 'Jogando o Draft 26 ⚄ Simulador da Copa 2026.'
   }
@@ -1350,7 +1353,21 @@ const SHARE_ARIA_LABELS: Record<ShareMethod, string> = {
 
 // Outcomes com card de imagem desenhado — guard barato e estático (o módulo
 // pesado de geração só é importado sob demanda no clique do STORIES).
-const IMAGE_CARD_KINDS = new Set<OutcomeKind>(['grupo', 'classificado', 'avancou', 'champ'])
+const IMAGE_CARD_KINDS = new Set<OutcomeKind>([
+  'grupo',
+  'classificado',
+  'avancou',
+  'champ',
+  'elim',
+  'fora-grupos',
+])
+
+// Botões que geram imagem e em qual formato: STORIES → vertical 9:16,
+// WHATS → quadrado 1:1 (feed/WhatsApp). X e COPIAR seguem texto+link.
+const IMAGE_FORMATS: Partial<Record<ShareMethod, 'stories' | 'square'>> = {
+  stories: 'stories',
+  whats: 'square',
+}
 
 function ShareGrid({
   surface,
@@ -1390,22 +1407,24 @@ function ShareGrid({
 
   const handleClick = async (method: ShareMethod) => {
     if (busy) return
-    // STORIES com card desenhado → gera a imagem; senão, share de texto.
-    if (method === 'stories' && ctx && kind && IMAGE_CARD_KINDS.has(kind)) {
-      setBusy('stories')
+    // STORIES/WHATS com card desenhado → gera a imagem no formato do botão;
+    // senão (ou em falha), share de texto.
+    const format = IMAGE_FORMATS[method]
+    if (format && ctx && kind && IMAGE_CARD_KINDS.has(kind)) {
+      setBusy(method)
       try {
-        void track('share_card_generate', { kind, surface })
+        void track('share_card_generate', { kind, surface, format })
         const mod = await import('../../lib/share-cards')
-        const result = await mod.generateAndShareOutcomeCard(ctx, kind, {
-          filename: `draft26-${kind}.png`,
+        const result = await mod.generateAndShareOutcomeCard(ctx, kind, format, {
+          filename: `draft26-${kind}-${format}.png`,
           text: buildShareText(surface),
-          url: buildShareUrl('stories', surface),
+          url: buildShareUrl(method, surface),
         })
-        if (result === 'downloaded') flash('stories', 'BAIXADO ✓')
-        else if (result === 'failed') await shareTextFallback('stories')
+        if (result === 'downloaded') flash(method, 'BAIXADO ✓')
+        else if (result === 'failed') await shareTextFallback(method)
       } catch {
         // Falha de rede/fontes/canvas — cai pro share de texto, botão nunca trava.
-        await shareTextFallback('stories')
+        await shareTextFallback(method)
       } finally {
         setBusy(null)
       }
