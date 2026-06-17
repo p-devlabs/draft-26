@@ -60,8 +60,19 @@ export interface SimOptions {
    * Dificuldade do draft do usuário. Quando presente E um dos times é o XI
    * (isUser:true), aplica o rubber-band. Quando omitida, sim segue o modelo
    * calibrado puro (sem assimetria).
+   *
+   * Produção NÃO passa mais esse campo — easy/medium/hard hoje só controla
+   * os skips da escalação. Mantido aqui pra os stats tests de regressão do
+   * rubber-band (`simulate.stats.test.ts`).
    */
   difficulty?: Difficulty
+  /**
+   * Pressão de match em [0, ~0.10] — soma aditiva de fase + tier do
+   * adversário, calculada em `match-pressure.ts`. Quando passada e um dos
+   * times é o XI, multiplica o overall do user por `(1 - matchPressure)`
+   * APÓS o rubber-band (eles compõem caso ambos estejam ativos).
+   */
+  matchPressure?: number
 }
 
 /** RNG seedeável (Mulberry32). Padrão é Math.random. */
@@ -119,6 +130,13 @@ function rates(home: Team, away: Team, opts?: SimOptions): { lambda: number; mu:
   if (opts?.difficulty) {
     if (home.isUser) homeBase = rubberBandOverall(homeBase, awayBase, opts.difficulty)
     if (away.isUser) awayBase = rubberBandOverall(awayBase, homeBase, opts.difficulty)
+  }
+  // Match pressure: damp do user APÓS rubber-band (eles compõem). Não fire
+  // em CPU vs CPU porque o multiplicador só atinge o lado isUser.
+  if (opts?.matchPressure && opts.matchPressure > 0) {
+    const damp = 1 - opts.matchPressure
+    if (home.isUser) homeBase = homeBase * damp
+    if (away.isUser) awayBase = awayBase * damp
   }
   // Mando: só pra países-sede. Pares neutros não recebem bônus. Quando os
   // dois são hosts (caso de borda), o bônus cancela e o jogo vira neutro.
