@@ -5,10 +5,12 @@
  * em vez de reler do localStorage — o drawer só monta em fim de partida e
  * o ctx daquela jogada é mais autoritativo do que o save.
  */
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 
+import { USER_TEAM_CODE, userGroup, userMatches } from '../../lib/groups'
 import { nationGradient } from '../../lib/nation-colors'
+import { loadBracket, loadWorldCup } from '../../lib/persistence'
 import { SLOT_LABEL } from '../../lib/positions'
 
 import type { DraftSlot, DraftState } from '../../lib/draft'
@@ -40,6 +42,48 @@ const POS_BUCKET: Record<string, number> = {
   ST: 3,
 }
 
+/**
+ * Conta gols por NOME do jogador acumulando os match events salvos no
+ * worldcup + bracket do localStorage. Considera goals de tempo regulamentar
+ * e ET; pênaltis de shootout NÃO contam (estatística pessoal não absorve
+ * cobrança decisiva).
+ */
+function collectUserGoalsByPlayer(): Map<string, number> {
+  const map = new Map<string, number>()
+  let wc, br
+  try {
+    wc = loadWorldCup()
+  } catch {
+    /* noop */
+  }
+  try {
+    br = loadBracket()
+  } catch {
+    /* noop */
+  }
+  if (wc) {
+    const stage = userGroup(wc.worldCup)
+    for (const m of userMatches(stage)) {
+      for (const e of m.events ?? []) {
+        if (e.type === 'goal' && e.teamCode === USER_TEAM_CODE) {
+          map.set(e.player, (map.get(e.player) ?? 0) + 1)
+        }
+      }
+    }
+  }
+  if (br) {
+    for (const m of br.matches) {
+      if (m.homeCode !== br.userCode && m.awayCode !== br.userCode) continue
+      for (const e of m.events ?? []) {
+        if (e.type === 'goal' && e.teamCode === br.userCode) {
+          map.set(e.player, (map.get(e.player) ?? 0) + 1)
+        }
+      }
+    }
+  }
+  return map
+}
+
 export function LineupModal({ draft, title, fallbackTo, onClose }: Props) {
   // ESC fecha a modal aninhada — drawer pai mantém seu próprio listener,
   // mas o React já roda os listeners do filho antes (mounted depois → roda
@@ -54,6 +98,8 @@ export function LineupModal({ draft, title, fallbackTo, onClose }: Props) {
     document.addEventListener('keydown', handler, true)
     return () => document.removeEventListener('keydown', handler, true)
   }, [onClose])
+
+  const goalsByPlayer = useMemo(() => collectUserGoalsByPlayer(), [])
 
   const filledSlots = draft.slots.filter((s) => s.player)
   // Sem dados: cai pra rota clássica /draft?view=1 igual ao comportamento antigo.
@@ -71,14 +117,18 @@ export function LineupModal({ draft, title, fallbackTo, onClose }: Props) {
     <NestedModalShell title={title} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {ordered.map((slot, i) => (
-          <LineupRow key={`${slot.pos}-${i}`} slot={slot} />
+          <LineupRow
+            key={`${slot.pos}-${i}`}
+            slot={slot}
+            goals={goalsByPlayer.get(slot.player!.player.name) ?? 0}
+          />
         ))}
       </div>
     </NestedModalShell>
   )
 }
 
-function LineupRow({ slot }: { slot: DraftSlot }) {
+function LineupRow({ slot, goals }: { slot: DraftSlot; goals: number }) {
   const player = slot.player!
   const posLabel = SLOT_LABEL[slot.pos]?.toUpperCase() ?? slot.pos
   const isGK = slot.pos === 'GK'
@@ -107,9 +157,27 @@ function LineupRow({ slot }: { slot: DraftSlot }) {
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
-          {player.player.name}
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{player.player.name}</span>
+          {goals > 0 && (
+            <span
+              aria-label={`${goals} gol${goals > 1 ? 's' : ''} marcado${goals > 1 ? 's' : ''}`}
+              style={{
+                fontFamily: 'Space Mono',
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--color-d-lime)',
+                letterSpacing: '0.02em',
+                flex: '0 0 auto',
+              }}
+            >
+              ⚽ ({goals})
+            </span>
+          )}
         </div>
         <div
           style={{
