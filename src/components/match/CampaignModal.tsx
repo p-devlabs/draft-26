@@ -10,7 +10,7 @@ import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ROUND_LABEL, userPath, type BracketMatch, type KnockoutBracket } from '../../lib/bracket'
-import { USER_TEAM_CODE, userGroup, userMatches, type GroupTeam } from '../../lib/groups'
+import { USER_TEAM_CODE, standings, userGroup, userMatches, type GroupTeam } from '../../lib/groups'
 import { nationGradient } from '../../lib/nation-colors'
 import { loadBracket, loadWorldCup } from '../../lib/persistence'
 
@@ -27,6 +27,8 @@ type Outcome = 'W' | 'D' | 'L' | 'P'
 
 interface MatchRow {
   id: string
+  /** 'group' antes da classificação, 'ko' depois. Drive o separador "standings". */
+  section: 'group' | 'ko'
   roundLabel: string
   oppCode: string
   oppName: string
@@ -37,6 +39,23 @@ interface MatchRow {
   /** Placar da disputa de pênaltis na perspectiva do user, se houve. */
   pens: { userScored: number; oppScored: number } | null
   outcome: Outcome
+}
+
+interface StandingsRow {
+  code: string
+  name: string
+  isUser: boolean
+  position: number
+  played: number
+  points: number
+  goalDiff: number
+}
+
+interface CollectedCampaign {
+  rows: MatchRow[]
+  /** Top 4 do grupo do user. Inserido entre group e ko na render. */
+  standings: StandingsRow[]
+  groupLetter: string
 }
 
 export function CampaignModal({ title, fallbackTo, onClose }: Props) {
@@ -50,9 +69,9 @@ export function CampaignModal({ title, fallbackTo, onClose }: Props) {
     return () => document.removeEventListener('keydown', handler, true)
   }, [onClose])
 
-  const rows = useMemo(() => collectMatches(), [])
+  const data = useMemo(() => collectMatches(), [])
 
-  if (rows.length === 0) {
+  if (data.rows.length === 0) {
     return (
       <NestedModalShell title={title} onClose={onClose}>
         <FallbackBody fallbackTo={fallbackTo} onClose={onClose} />
@@ -60,10 +79,19 @@ export function CampaignModal({ title, fallbackTo, onClose }: Props) {
     )
   }
 
+  const groupRows = data.rows.filter((r) => r.section === 'group')
+  const koRows = data.rows.filter((r) => r.section === 'ko')
+
   return (
     <NestedModalShell title={title} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {rows.map((row) => (
+        {groupRows.map((row) => (
+          <Row key={row.id} row={row} />
+        ))}
+        {data.standings.length > 0 && (
+          <StandingsBlock standings={data.standings} groupLetter={data.groupLetter} />
+        )}
+        {koRows.map((row) => (
           <Row key={row.id} row={row} />
         ))}
       </div>
@@ -75,13 +103,16 @@ export function CampaignModal({ title, fallbackTo, onClose }: Props) {
 // Coleta dos jogos do user
 // ────────────────────────────────────────────────────────────────────────
 
-function collectMatches(): MatchRow[] {
+function collectMatches(): CollectedCampaign {
   const wc = safeLoadWorldCup()
   const br = safeLoadBracket()
   const rows: MatchRow[] = []
+  let groupStandings: StandingsRow[] = []
+  let groupLetter = ''
 
   if (wc) {
     const stage = userGroup(wc.worldCup)
+    groupLetter = stage.letter
     const teamByCode = new Map<string, GroupTeam>(stage.teams.map((t) => [t.code, t]))
     const groupMatches = userMatches(stage)
     for (const m of groupMatches) {
@@ -95,6 +126,7 @@ function collectMatches(): MatchRow[] {
         : null
       rows.push({
         id: `G-R${m.round}-${oppCode}`,
+        section: 'group',
         roundLabel: `RODADA ${m.round}`,
         oppCode,
         oppName: opp?.name ?? oppCode,
@@ -103,6 +135,20 @@ function collectMatches(): MatchRow[] {
         pens: null,
         outcome: groupOutcome(score),
       })
+    }
+    // Snapshot da classificação atual — só faz sentido se pelo menos 1 jogo foi
+    // jogado (senão a tabela é só zeros).
+    const anyPlayed = stage.matches.some((m) => m.result != null)
+    if (anyPlayed) {
+      groupStandings = standings(stage).map((s, idx) => ({
+        code: s.team.code,
+        name: s.team.name,
+        isUser: s.team.code === USER_TEAM_CODE,
+        position: idx + 1,
+        played: s.played,
+        points: s.points,
+        goalDiff: s.goalsFor - s.goalsAgainst,
+      }))
     }
   }
 
@@ -120,6 +166,7 @@ function collectMatches(): MatchRow[] {
         : null
       rows.push({
         id: m.id,
+        section: 'ko',
         roundLabel: ROUND_LABEL[m.round].toUpperCase(),
         oppCode,
         oppName,
@@ -131,7 +178,7 @@ function collectMatches(): MatchRow[] {
     }
   }
 
-  return rows
+  return { rows, standings: groupStandings, groupLetter }
 }
 
 function safeLoadWorldCup() {
@@ -176,6 +223,135 @@ function koOutcome(m: BracketMatch, br: KnockoutBracket): Outcome {
 // ────────────────────────────────────────────────────────────────────────
 // Render
 // ────────────────────────────────────────────────────────────────────────
+
+function StandingsBlock({
+  standings,
+  groupLetter,
+}: {
+  standings: StandingsRow[]
+  groupLetter: string
+}) {
+  return (
+    <div
+      style={{
+        marginTop: 6,
+        marginBottom: 6,
+        background: 'var(--color-d-surface)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 13,
+        padding: '14px 14px 6px',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 10,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            color: 'var(--color-d-mut)',
+          }}
+        >
+          {groupLetter ? `GRUPO ${groupLetter} · CLASSIFICAÇÃO` : 'CLASSIFICAÇÃO DO GRUPO'}
+        </span>
+        <span
+          style={{
+            display: 'flex',
+            gap: 14,
+            fontFamily: 'Space Mono',
+            fontSize: 9,
+            letterSpacing: '0.1em',
+            color: 'var(--color-d-mut)',
+          }}
+        >
+          <span style={{ width: 22, textAlign: 'right' }}>J</span>
+          <span style={{ width: 28, textAlign: 'right' }}>SG</span>
+          <span style={{ width: 24, textAlign: 'right' }}>PTS</span>
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {standings.map((row) => (
+          <StandingsRowView key={row.code} row={row} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StandingsRowView({ row }: { row: StandingsRow }) {
+  const accent = row.isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)'
+  const muted = row.isUser ? 'rgba(212,255,61,0.65)' : 'var(--color-d-mut)'
+  const diffColor =
+    row.goalDiff > 0
+      ? 'var(--color-d-lime)'
+      : row.goalDiff < 0
+        ? 'var(--color-d-red)'
+        : 'var(--color-d-mut)'
+  const diffText = row.goalDiff > 0 ? `+${row.goalDiff}` : `${row.goalDiff}`
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '8px 0',
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+        background: row.isUser ? 'rgba(212,255,61,0.06)' : 'transparent',
+        marginInline: -6,
+        paddingInline: 6,
+        borderRadius: 8,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <span
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 14,
+            color: muted,
+            width: 14,
+            textAlign: 'center',
+          }}
+        >
+          {row.position}
+        </span>
+        <span
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 14,
+            color: accent,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            letterSpacing: '0.02em',
+          }}
+        >
+          {row.isUser ? 'SEU XI' : row.name.toUpperCase()}
+        </span>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          gap: 14,
+          fontFamily: 'Anton',
+          fontSize: 14,
+          alignItems: 'baseline',
+        }}
+      >
+        <span style={{ width: 22, textAlign: 'right', color: muted }}>{row.played}</span>
+        <span style={{ width: 28, textAlign: 'right', color: diffColor }}>{diffText}</span>
+        <span style={{ width: 24, textAlign: 'right', color: accent, fontSize: 16 }}>
+          {row.points}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 function Row({ row }: { row: MatchRow }) {
   return (
