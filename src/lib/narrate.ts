@@ -89,13 +89,18 @@ function pick<T>(arr: T[], rng: () => number): T {
 }
 
 function pickScorer(roster: NarrationRoster, rng: () => number): Player | null {
-  // pesos: ataque 60%, meio 30%, defesa 9%, goleiro 1%
+  // pesos: ataque ~60%, meio ~30%, defesa ~10%. Goleiro nunca marca — a
+  // simulação não modela pênalti no tempo corrido nem cobranças de falta,
+  // então gol de GK só viraria "loucura" narrativa (Mathew Ryan 2x num
+  // jogo). Quando uma das faixas tá vazia, cai pra próxima disponível.
   const r = rng()
-  let pool: Player[]
-  if (r < 0.6 && roster.attackers.length) pool = roster.attackers
-  else if (r < 0.9 && roster.midfielders.length) pool = roster.midfielders
-  else if (r < 0.99 && roster.defenders.length) pool = roster.defenders
-  else pool = roster.goalkeeper ? [roster.goalkeeper] : roster.attackers
+  let pool: Player[] = []
+  if (r < 0.6) pool = roster.attackers
+  else if (r < 0.9) pool = roster.midfielders
+  else pool = roster.defenders
+  if (pool.length === 0) pool = roster.attackers
+  if (pool.length === 0) pool = roster.midfielders
+  if (pool.length === 0) pool = roster.defenders
   if (pool.length === 0) return null
   // ponderado por overall: jogador melhor tem mais chance
   const weights = pool.map((p) => p.overall)
