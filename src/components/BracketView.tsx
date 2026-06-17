@@ -224,8 +224,22 @@ function BracketCell({
   // Connectors
   const sLeft = side === 'L' ? !isFirst : side === 'R' ? true : true
   const sRight = side === 'L' ? true : side === 'R' ? !isFirst : true
-  const vLeft = side === 'R' && merges && indexInCol % 2 === 0
-  const vRight = side === 'L' && merges && indexInCol % 2 === 0
+  // Para cada par de partidas que vira UMA na fase seguinte, o conector
+  // vertical é desenhado em DUAS metades — uma descendo do centro da
+  // partida ímpar até a borda inferior dela (= meio do par), outra
+  // subindo desse mesmo meio até o centro da partida par. Assim a linha
+  // sempre fica contida dentro das duas células do par e nunca invade a
+  // região do próximo par (o que acontecia quando a célula do usuário
+  // ficava mais alta por causa do botão JOGAR).
+  // `topOfPair` = primeira partida do par (indexInCol par, desce do
+  // meio até a base). `bottomOfPair` = segunda partida (indexInCol ímpar,
+  // desce do topo até o meio).
+  const topOfPair = merges && indexInCol % 2 === 0
+  const bottomOfPair = merges && indexInCol % 2 === 1
+  const vLeftDown = side === 'R' && topOfPair
+  const vLeftUp = side === 'R' && bottomOfPair
+  const vRightDown = side === 'L' && topOfPair
+  const vRightUp = side === 'L' && bottomOfPair
   // Conector verde só DEPOIS do user vencer essa partida — o glow do
   // border lime no card já marca o jogo pendente; estender o conector
   // antes de jogar dava ilusão de avanço garantido.
@@ -281,27 +295,53 @@ function BracketCell({
           }}
         />
       )}
-      {vRight && (
+      {vRightDown && (
         <span
           style={{
             position: 'absolute',
             right: 0,
             top: '50%',
+            bottom: 0,
             width: 2,
-            height: '100%',
             background: connectorColor,
             zIndex: 0,
           }}
         />
       )}
-      {vLeft && (
+      {vRightUp && (
+        <span
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            bottom: '50%',
+            width: 2,
+            background: connectorColor,
+            zIndex: 0,
+          }}
+        />
+      )}
+      {vLeftDown && (
         <span
           style={{
             position: 'absolute',
             left: 0,
             top: '50%',
+            bottom: 0,
             width: 2,
-            height: '100%',
+            background: connectorColor,
+            zIndex: 0,
+          }}
+        />
+      )}
+      {vLeftUp && (
+        <span
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: '50%',
+            width: 2,
             background: connectorColor,
             zIndex: 0,
           }}
