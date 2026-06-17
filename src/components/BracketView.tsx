@@ -47,7 +47,7 @@ export function BracketView({ bracket }: BracketViewProps) {
 // ============================================================
 
 const DESKTOP_COLS: { round: KORound; side: 'L' | 'R' | 'C'; label: string }[] = [
-  { round: 'R32', side: 'L', label: '32-AVOS' },
+  { round: 'R32', side: 'L', label: '16-AVOS' },
   { round: 'R16', side: 'L', label: 'OITAVAS' },
   { round: 'QF', side: 'L', label: 'QUARTAS' },
   { round: 'SF', side: 'L', label: 'SEMIFINAL' },
@@ -55,7 +55,7 @@ const DESKTOP_COLS: { round: KORound; side: 'L' | 'R' | 'C'; label: string }[] =
   { round: 'SF', side: 'R', label: 'SEMIFINAL' },
   { round: 'QF', side: 'R', label: 'QUARTAS' },
   { round: 'R16', side: 'R', label: 'OITAVAS' },
-  { round: 'R32', side: 'R', label: '32-AVOS' },
+  { round: 'R32', side: 'R', label: '16-AVOS' },
 ]
 
 function BracketDesktop({ bracket }: { bracket: KnockoutBracket }) {
@@ -513,7 +513,7 @@ function winnerSide(match: BracketMatch): 'home' | 'away' | null {
 // ============================================================
 
 const MOBILE_ROUNDS: { key: KORound; label: string }[] = [
-  { key: 'R32', label: '32-AVOS' },
+  { key: 'R32', label: '16-AVOS' },
   { key: 'R16', label: 'OITAVAS' },
   { key: 'QF', label: 'QUARTAS' },
   { key: 'SF', label: 'SEMI' },

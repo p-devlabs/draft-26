@@ -1329,7 +1329,7 @@ function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }
       }
   const note = finished
     ? qualified
-      ? 'Você passou. O mata-mata começa nos 32-avos.'
+      ? 'Você passou. O mata-mata começa nos 16-avos.'
       : 'Sua campanha de grupos acabou. Tente outro draft.'
     : 'Conclua os 3 jogos do grupo para liberar o mata-mata.'
   return (
