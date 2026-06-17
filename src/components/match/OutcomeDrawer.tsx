@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { track } from '../../lib/track'
@@ -218,7 +218,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ],
         primaryTone: 'red',
         champion: false,
-        showShare: false,
+        showShare: true,
       }
     case 'avancou': {
       const nextLabel = ctx.extras.nextRoundLabel
@@ -273,7 +273,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         ],
         primaryTone: 'red',
         champion: false,
-        showShare: false,
+        showShare: true,
       }
     case 'champ':
       return {
@@ -348,6 +348,9 @@ export function OutcomeDrawer({
   // Modal aninhada sobre o drawer: 'team' (VER TIME) ou 'campaign' (VER GRUPO/
   // CAMPANHA). null = nenhuma aberta, drawer principal recebe interação.
   const [openModal, setOpenModal] = useState<'team' | 'campaign' | null>(null)
+  // A11y: ref do diálogo pra mover o foco pra dentro do drawer ao abrir e
+  // devolver pro elemento anterior ao fechar.
+  const dialogRef = useRef<HTMLDivElement>(null)
   // ESC fecha o drawer — drawer só monta quando outcome != null, então
   // o listener fica ativo só enquanto está visível. Quando uma modal aninhada
   // está aberta, ela registra um handler em capture com stopPropagation, então
@@ -359,6 +362,14 @@ export function OutcomeDrawer({
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
+
+  // Foco entra no drawer ao abrir; ao desmontar, volta pro elemento que estava
+  // focado antes (ex.: o botão da tela da partida). Roda só no mount/unmount.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    dialogRef.current?.focus()
+    return () => previouslyFocused?.focus?.()
+  }, [])
 
   const handleSecondaryClick = (kind: 'team' | 'campaign') => {
     setOpenModal(kind)
@@ -392,9 +403,11 @@ export function OutcomeDrawer({
         }}
       >
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={cfg.title}
+          tabIndex={-1}
           style={{
             width: '100%',
             maxWidth: 600,
@@ -406,6 +419,7 @@ export function OutcomeDrawer({
             borderRadius: '22px 22px 0 0',
             boxShadow: '0 -30px 60px -20px rgba(0,0,0,0.7)',
             pointerEvents: 'auto',
+            outline: 'none',
           }}
         >
           <OutcomeBanner cfg={cfg} />
@@ -424,9 +438,15 @@ export function OutcomeDrawer({
               <CampaignStatsRow stats={ctx.stats} />
               {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
               {cfg.champion && (
-                <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />
+                <ChampionShareBlock
+                  resultLine={ctx.resultLine}
+                  topScorer={ctx.scorers[0]}
+                  ctx={ctx}
+                />
               )}
-              {!cfg.champion && cfg.showShare && <CompactShare surface={outcome} />}
+              {!cfg.champion && cfg.showShare && (
+                <CompactShare surface={outcome} ctx={ctx} kind={outcome} />
+              )}
             </div>
           </div>
         </div>
@@ -1117,9 +1137,11 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
 function ChampionShareBlock({
   resultLine,
   topScorer,
+  ctx,
 }: {
   resultLine: string
   topScorer?: ScorerRow
+  ctx: OutcomeContext
 }) {
   return (
     <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 20 }}>
@@ -1205,25 +1227,60 @@ function ChampionShareBlock({
           )}
         </div>
       </div>
-      <ShareGrid surface="champion" />
+      <ShareGrid surface="champion" ctx={ctx} kind="champ" />
     </div>
   )
 }
 
-function CompactShare({ surface }: { surface: string }) {
+function CompactShare({
+  surface,
+  ctx,
+  kind,
+}: {
+  surface: string
+  ctx: OutcomeContext
+  kind: OutcomeKind
+}) {
   return (
     <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 18 }}>
       <SectionLabel>COMPARTILHAR</SectionLabel>
-      <ShareGrid surface={surface} />
+      <ShareGrid surface={surface} ctx={ctx} kind={kind} />
     </div>
   )
 }
 
 type ShareMethod = 'x' | 'whats' | 'stories' | 'copy'
 
+/**
+ * Resultado de um disparo de share — drive o feedback visual no grid:
+ *   - 'opened' → abriu intent externo / sheet nativo (sem feedback in-app)
+ *   - 'shared' → Web Share API resolveu (compartilhou)
+ *   - 'copied' → link foi pro clipboard (mostra "LINK COPIADO")
+ *   - 'failed' → clipboard bloqueado/sem suporte (não trava, só não dá feedback)
+ */
+type ShareResult = 'opened' | 'shared' | 'copied' | 'failed'
+
 // URL canônica de prod — o que viraliza vai pra cá independente de onde o user
 // disparou (dev/preview/prod). UTMs fecham o loop de atribuição em session_init.
 const SHARE_URL_BASE = 'https://draft-26.pages.dev'
+
+/**
+ * Copia texto pro clipboard com guarda. `clipboard.writeText` rejeita em
+ * contexto inseguro (http), sem permissão ou em navegadores antigos — aqui a
+ * rejeição vira `false` em vez de uma promise não tratada, pro caller decidir
+ * o feedback.
+ */
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    // bloqueado — cai no retorno false
+  }
+  return false
+}
 
 function buildShareUrl(method: ShareMethod, surface: string): string {
   const url = new URL(SHARE_URL_BASE)
@@ -1244,28 +1301,31 @@ function buildShareText(surface: string): string {
       return 'Mais uma fase no Draft 26 ⚄ Simulador da Copa 2026.'
     case 'grupo':
       return 'Vitória no grupo no Draft 26 ⚄ Simulador da Copa 2026.'
+    case 'elim':
+    case 'fora-grupos':
+      return 'Minha campanha no Draft 26 ⚄ Simulador da Copa 2026.'
     default:
       return 'Jogando o Draft 26 ⚄ Simulador da Copa 2026.'
   }
 }
 
-async function fireShare(method: ShareMethod, surface: string): Promise<void> {
+async function fireShare(method: ShareMethod, surface: string): Promise<ShareResult> {
   void track('share_clicked', { method, surface })
   const url = buildShareUrl(method, surface)
   const text = buildShareText(surface)
 
   if (method === 'x') {
-    const intent = new URL('https://twitter.com/intent/tweet')
+    const intent = new URL('https://x.com/intent/tweet')
     intent.searchParams.set('text', text)
     intent.searchParams.set('url', url)
     window.open(intent.toString(), '_blank', 'noopener,noreferrer')
-    return
+    return 'opened'
   }
   if (method === 'whats') {
     const intent = new URL('https://wa.me/')
     intent.searchParams.set('text', `${text} ${url}`)
     window.open(intent.toString(), '_blank', 'noopener,noreferrer')
-    return
+    return 'opened'
   }
   if (method === 'stories') {
     // Sem URL direta de IG Stories no web — Web Share API abre o sheet nativo
@@ -1273,32 +1333,104 @@ async function fireShare(method: ShareMethod, surface: string): Promise<void> {
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
         await navigator.share({ text, url })
+        return 'shared'
       } catch {
-        // cancelou ou bloqueou — silencioso
+        // cancelou ou bloqueou — silencioso, sem feedback de cópia
+        return 'opened'
+      }
+    }
+    return (await copyToClipboard(url)) ? 'copied' : 'failed'
+  }
+  return (await copyToClipboard(url)) ? 'copied' : 'failed'
+}
+
+const SHARE_ARIA_LABELS: Record<ShareMethod, string> = {
+  x: 'Compartilhar no X',
+  whats: 'Compartilhar no WhatsApp',
+  stories: 'Compartilhar nos Stories',
+  copy: 'Copiar link',
+}
+
+// Outcomes com card de imagem desenhado — guard barato e estático (o módulo
+// pesado de geração só é importado sob demanda no clique do STORIES).
+const IMAGE_CARD_KINDS = new Set<OutcomeKind>([
+  'grupo',
+  'classificado',
+  'avancou',
+  'champ',
+  'elim',
+  'fora-grupos',
+])
+
+// Botões que geram imagem e em qual formato: STORIES → vertical 9:16,
+// WHATS → quadrado 1:1 (feed/WhatsApp). X e COPIAR seguem texto+link.
+const IMAGE_FORMATS: Partial<Record<ShareMethod, 'stories' | 'square'>> = {
+  stories: 'stories',
+  whats: 'square',
+}
+
+function ShareGrid({
+  surface,
+  ctx,
+  kind,
+}: {
+  surface: string
+  /** Quando presentes e o outcome tem card, o STORIES gera a imagem desenhada. */
+  ctx?: OutcomeContext
+  kind?: OutcomeKind
+}) {
+  // Feedback transitório por botão (cópia/download) + "gerando" durante o render.
+  const [feedback, setFeedback] = useState<{ method: ShareMethod; text: string } | null>(null)
+  const [busy, setBusy] = useState<ShareMethod | null>(null)
+
+  const flash = (method: ShareMethod, text: string) => {
+    setFeedback({ method, text })
+    window.setTimeout(() => setFeedback((f) => (f?.method === method ? null : f)), 2000)
+  }
+
+  const labelFor = (method: ShareMethod, base: string): string => {
+    if (busy === method) return 'GERANDO…'
+    if (feedback?.method === method) return feedback.text
+    return base
+  }
+  const items: { label: string; method: ShareMethod }[] = [
+    { label: labelFor('x', '𝕏'), method: 'x' },
+    { label: labelFor('whats', 'WHATS'), method: 'whats' },
+    { label: labelFor('stories', 'STORIES'), method: 'stories' },
+    { label: labelFor('copy', 'COPIAR'), method: 'copy' },
+  ]
+
+  const shareTextFallback = async (method: ShareMethod) => {
+    const result = await fireShare(method, surface)
+    if (result === 'copied') flash(method, method === 'copy' ? 'COPIADO ✓' : 'LINK COPIADO')
+  }
+
+  const handleClick = async (method: ShareMethod) => {
+    if (busy) return
+    // STORIES/WHATS com card desenhado → gera a imagem no formato do botão;
+    // senão (ou em falha), share de texto.
+    const format = IMAGE_FORMATS[method]
+    if (format && ctx && kind && IMAGE_CARD_KINDS.has(kind)) {
+      setBusy(method)
+      try {
+        void track('share_card_generate', { kind, surface, format })
+        const mod = await import('../../lib/share-cards')
+        const result = await mod.generateAndShareOutcomeCard(ctx, kind, format, {
+          filename: `draft26-${kind}-${format}.png`,
+          text: buildShareText(surface),
+          url: buildShareUrl(method, surface),
+        })
+        if (result === 'downloaded') flash(method, 'BAIXADO ✓')
+        else if (result === 'failed') await shareTextFallback(method)
+      } catch {
+        // Falha de rede/fontes/canvas — cai pro share de texto, botão nunca trava.
+        await shareTextFallback(method)
+      } finally {
+        setBusy(null)
       }
       return
     }
-    await navigator.clipboard.writeText(url)
-    return
-  }
-  await navigator.clipboard.writeText(url)
-}
-
-function ShareGrid({ surface }: { surface: string }) {
-  const [copied, setCopied] = useState(false)
-  const items: { label: string; method: ShareMethod }[] = [
-    { label: '𝕏', method: 'x' },
-    { label: 'WHATS', method: 'whats' },
-    { label: 'STORIES', method: 'stories' },
-    { label: copied ? 'COPIADO ✓' : 'COPIAR', method: 'copy' },
-  ]
-
-  const handleClick = async (method: ShareMethod) => {
-    await fireShare(method, surface)
-    if (method === 'copy') {
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    }
+    await shareTextFallback(method)
   }
 
   return (
@@ -1307,6 +1439,8 @@ function ShareGrid({ surface }: { surface: string }) {
         <button
           key={method}
           onClick={() => void handleClick(method)}
+          aria-label={SHARE_ARIA_LABELS[method]}
+          disabled={busy !== null}
           style={{
             background: 'var(--color-d-surface2)',
             border: '1px solid var(--color-d-line)',
@@ -1316,7 +1450,8 @@ function ShareGrid({ surface }: { surface: string }) {
             fontFamily: 'Space Mono',
             fontSize: 11,
             fontWeight: 700,
-            cursor: 'pointer',
+            cursor: busy ? 'wait' : 'pointer',
+            opacity: busy && busy !== method ? 0.5 : 1,
           }}
         >
           {label}
