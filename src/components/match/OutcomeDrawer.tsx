@@ -50,7 +50,35 @@ export interface OutcomeContext {
   draft: DraftState
   stats: CampaignStats
   scorers: ScorerRow[]
-  extras: { userPos?: number; nextRoundLabel?: string | null; fate?: UserFate | null }
+  extras: {
+    userPos?: number
+    nextRoundLabel?: string | null
+    fate?: UserFate | null
+    /** Próxima rodada de grupo, se houver (1, 2 ou 3). Drive o CTA "JOGAR PRÓXIMO". */
+    nextGroupRound?: 1 | 2 | 3 | null
+    /** Letra do grupo do user, ex: 'G'. Header da mini classificação. */
+    groupLetter?: string | null
+    /** Classificação parcial do grupo do user, top 4. Mostrada inline no outcome. */
+    groupStandings?: GroupStandingRow[] | null
+  }
+}
+
+/**
+ * Linha compacta da classificação do grupo do user — passada pro outcome
+ * drawer e pra CampaignModal pra mostrar a tabela sem precisar de roundtrip
+ * em outra rota.
+ */
+export interface GroupStandingRow {
+  code: string
+  name: string
+  isUser: boolean
+  points: number
+  played: number
+  wins: number
+  draws: number
+  losses: number
+  goalDiff: number
+  position: 1 | 2 | 3 | 4
 }
 
 // ---------- Config interna ----------
@@ -93,47 +121,63 @@ interface OutcomeConfig {
   ctaTo: string
   /** CTAs secundários — renderizados em grid embaixo do primário. */
   secondaries: SecondaryCta[]
-  primaryIsLime: boolean
+  /**
+   * Tom da CTA primária:
+   *   - 'lime' → fundo lime (sucesso: VITÓRIA, CLASSIFICADO, AVANÇOU, CAMPEÃO, JOGAR PRÓXIMO)
+   *   - 'red'  → fundo vermelho (eliminado: TENTAR DE NOVO highlighted pós-derrota)
+   *   - 'neutral' → fundo dim (grupo-resultado sem próximo jogo, fallback)
+   */
+  primaryTone: 'lime' | 'red' | 'neutral'
   champion: boolean
   showShare: boolean
 }
 
 function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
   switch (kind) {
-    case 'grupo':
+    case 'grupo': {
+      const next = ctx.extras.nextGroupRound
       return {
         kind,
         kicker: ctx.phase,
         title: 'VITÓRIA',
         titleColor: 'var(--color-d-ink)',
-        sub: 'Mais três pontos. Falta jogo pra fechar o grupo.',
+        sub: next
+          ? 'Mais três pontos. Vamos pra próxima rodada?'
+          : 'Mais três pontos. Falta jogo pra fechar o grupo.',
         accent: 'var(--color-d-lime)',
         bannerBg: 'linear-gradient(180deg, #12160d, #0a0b09)',
         decoration: { kind: 'check' },
-        ctaLabel: 'VOLTAR PRO GRUPO →',
-        ctaTo: '/groups',
-        secondaries: [{ label: 'VER CHAVEAMENTO', to: '/bracket' }],
-        primaryIsLime: true,
+        ctaLabel: next ? 'JOGAR PRÓXIMO →' : 'VOLTAR PRO GRUPO →',
+        ctaTo: next ? `/match?round=${next}` : '/groups',
+        // Mid-grupos: só VER GRUPO de secondary. CHAVEAMENTO/VOLTAR são ruído
+        // nesse momento — o user quer continuar jogando.
+        secondaries: [{ label: 'VER GRUPO', to: '/groups', kind: 'campaign' }],
+        primaryTone: 'lime',
         champion: false,
         showShare: true,
       }
-    case 'grupo-resultado':
+    }
+    case 'grupo-resultado': {
+      const next = ctx.extras.nextGroupRound
       return {
         kind,
         kicker: ctx.phase,
         title: 'JOGO ENCERRADO',
         titleColor: 'var(--color-d-ink)',
-        sub: 'Ainda falta jogo pra fechar o grupo.',
+        sub: next
+          ? 'Ainda falta jogo. Próxima rodada na manga.'
+          : 'Ainda falta jogo pra fechar o grupo.',
         accent: 'var(--color-d-mut)',
         bannerBg: 'linear-gradient(180deg, #141613, #0a0b09)',
         decoration: { kind: 'none' },
-        ctaLabel: 'VOLTAR PRO GRUPO →',
-        ctaTo: '/groups',
-        secondaries: [],
-        primaryIsLime: false,
+        ctaLabel: next ? 'JOGAR PRÓXIMO →' : 'VOLTAR PRO GRUPO →',
+        ctaTo: next ? `/match?round=${next}` : '/groups',
+        secondaries: [{ label: 'VER GRUPO', to: '/groups', kind: 'campaign' }],
+        primaryTone: next ? 'lime' : 'neutral',
         champion: false,
         showShare: false,
       }
+    }
     case 'classificado':
       return {
         kind,
@@ -150,7 +194,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
           { label: 'VER TIME', to: '/draft?view=1', kind: 'team' },
           { label: 'VER GRUPO', to: '/groups', kind: 'campaign' },
         ],
-        primaryIsLime: true,
+        primaryTone: 'lime',
         champion: false,
         showShare: true,
       }
@@ -170,7 +214,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
           { label: 'VER TIME', to: '/draft?view=1', kind: 'team' },
           { label: 'VER GRUPO', to: '/groups', kind: 'campaign' },
         ],
-        primaryIsLime: false,
+        primaryTone: 'red',
         champion: false,
         showShare: false,
       }
@@ -189,7 +233,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
           : 'VOLTAR PRO CHAVEAMENTO →',
         ctaTo: '/bracket',
         secondaries: [{ label: 'VER TIME', to: '/draft?view=1', kind: 'team' }],
-        primaryIsLime: true,
+        primaryTone: 'lime',
         champion: false,
         showShare: true,
       }
@@ -208,8 +252,9 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         secondaries: [
           { label: 'VER TIME', to: '/draft?view=1', kind: 'team' },
           { label: 'VER CAMPANHA', to: '/bracket', kind: 'campaign' },
+          { label: 'VER CHAVEAMENTO', to: '/bracket' },
         ],
-        primaryIsLime: false,
+        primaryTone: 'red',
         champion: false,
         showShare: false,
       }
@@ -229,7 +274,7 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
           { label: 'VER TIME CAMPEÃO', to: '/draft?view=1', kind: 'team' },
           { label: 'VER CAMPANHA', to: '/bracket', kind: 'campaign' },
         ],
-        primaryIsLime: true,
+        primaryTone: 'lime',
         champion: true,
         showShare: false,
       }
@@ -351,6 +396,13 @@ export function OutcomeDrawer({
             <OutcomeActions cfg={cfg} onSecondaryModal={handleSecondaryClick} />
             <div style={{ marginTop: 22 }}>
               <MatchResultCard phase={ctx.phase} result={ctx.matchResult} />
+              {(cfg.kind === 'grupo' || cfg.kind === 'grupo-resultado') &&
+                ctx.extras.groupStandings && (
+                  <GroupStandingsMini
+                    standings={ctx.extras.groupStandings}
+                    groupLetter={ctx.extras.groupLetter ?? ''}
+                  />
+                )}
               <TeamChosenCard draft={ctx.draft} />
               <CampaignStatsRow stats={ctx.stats} />
               {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
@@ -693,6 +745,139 @@ function PenaltyRow({
             }}
           />
         ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Tabela compacta com a classificação parcial do grupo do user. Aparece
+ * inline no outcome drawer durante a fase de grupos (rodadas 1-3), evitando
+ * navegação pro /groups só pra olhar a tabela.
+ */
+function GroupStandingsMini({
+  standings,
+  groupLetter,
+}: {
+  standings: GroupStandingRow[]
+  groupLetter: string
+}) {
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        background: 'var(--color-d-surface)',
+        border: '1px solid var(--color-d-line)',
+        borderRadius: 13,
+        padding: '14px 14px 6px',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 10,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'Space Mono',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            color: 'var(--color-d-mut)',
+          }}
+        >
+          {groupLetter ? `GRUPO ${groupLetter} · PARCIAL` : 'CLASSIFICAÇÃO PARCIAL'}
+        </span>
+        <span
+          style={{
+            display: 'flex',
+            gap: 14,
+            fontFamily: 'Space Mono',
+            fontSize: 9,
+            letterSpacing: '0.1em',
+            color: 'var(--color-d-mut)',
+          }}
+        >
+          <span style={{ width: 22, textAlign: 'right' }}>J</span>
+          <span style={{ width: 28, textAlign: 'right' }}>SG</span>
+          <span style={{ width: 24, textAlign: 'right' }}>PTS</span>
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {standings.map((row) => (
+          <GroupStandingsRow key={row.code} row={row} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GroupStandingsRow({ row }: { row: GroupStandingRow }) {
+  const accent = row.isUser ? 'var(--color-d-lime)' : 'var(--color-d-ink)'
+  const muted = row.isUser ? 'rgba(212,255,61,0.65)' : 'var(--color-d-mut)'
+  const diffColor =
+    row.goalDiff > 0
+      ? 'var(--color-d-lime)'
+      : row.goalDiff < 0
+        ? 'var(--color-d-red)'
+        : 'var(--color-d-mut)'
+  const diffText = row.goalDiff > 0 ? `+${row.goalDiff}` : `${row.goalDiff}`
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '8px 0',
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+        background: row.isUser ? 'rgba(212,255,61,0.06)' : 'transparent',
+        marginInline: -6,
+        paddingInline: 6,
+        borderRadius: 8,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <span
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 14,
+            color: muted,
+            width: 14,
+            textAlign: 'center',
+          }}
+        >
+          {row.position}
+        </span>
+        <span
+          style={{
+            fontFamily: 'Anton',
+            fontSize: 14,
+            color: accent,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            letterSpacing: '0.02em',
+          }}
+        >
+          {row.isUser ? 'SEU XI' : row.name.toUpperCase()}
+        </span>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          gap: 14,
+          fontFamily: 'Anton',
+          fontSize: 14,
+          alignItems: 'baseline',
+        }}
+      >
+        <span style={{ width: 22, textAlign: 'right', color: muted }}>{row.played}</span>
+        <span style={{ width: 28, textAlign: 'right', color: diffColor }}>{diffText}</span>
+        <span style={{ width: 24, textAlign: 'right', color: accent, fontSize: 16 }}>
+          {row.points}
+        </span>
       </div>
     </div>
   )
@@ -1132,8 +1317,27 @@ function OutcomeActions({
   /** Dispatched quando uma CTA secundária com `kind` é clicada — abre modal aninhada. */
   onSecondaryModal: (kind: 'team' | 'campaign') => void
 }) {
-  // 2+ secundárias entram em grid 2-col pra caber direitinho no mobile.
+  // 2+ secundárias entram em grid auto-fit pra caber em qualquer largura.
+  // 1 → flex column; 2 → 2-col; 3 → 3-col (cada item ~110px mínimo).
   const secondariesUseGrid = cfg.secondaries.length >= 2
+  const primaryBg =
+    cfg.primaryTone === 'lime'
+      ? 'var(--color-d-lime)'
+      : cfg.primaryTone === 'red'
+        ? 'var(--color-d-red)'
+        : 'var(--color-d-surface2)'
+  const primaryFg =
+    cfg.primaryTone === 'lime'
+      ? 'var(--color-d-bg)'
+      : cfg.primaryTone === 'red'
+        ? '#fff'
+        : 'var(--color-d-ink)'
+  const primaryBorder =
+    cfg.primaryTone === 'lime'
+      ? 'var(--color-d-lime)'
+      : cfg.primaryTone === 'red'
+        ? 'var(--color-d-red)'
+        : 'var(--color-d-line)'
   // Estilo compartilhado entre Link (rota) e button (modal aninhada) — mantém
   // a mesma silhueta visual independente do trigger.
   const secondaryStyle: React.CSSProperties = {
@@ -1163,9 +1367,9 @@ function OutcomeActions({
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
-          background: cfg.primaryIsLime ? 'var(--color-d-lime)' : 'var(--color-d-surface2)',
-          color: cfg.primaryIsLime ? 'var(--color-d-bg)' : 'var(--color-d-ink)',
-          border: `1px solid ${cfg.primaryIsLime ? 'var(--color-d-lime)' : 'var(--color-d-line)'}`,
+          background: primaryBg,
+          color: primaryFg,
+          border: `1px solid ${primaryBorder}`,
           borderRadius: 11,
           padding: 15,
           fontFamily: 'Anton',
@@ -1180,7 +1384,9 @@ function OutcomeActions({
         <div
           style={{
             display: secondariesUseGrid ? 'grid' : 'flex',
-            gridTemplateColumns: secondariesUseGrid ? '1fr 1fr' : undefined,
+            gridTemplateColumns: secondariesUseGrid
+              ? `repeat(${cfg.secondaries.length}, minmax(0, 1fr))`
+              : undefined,
             flexDirection: secondariesUseGrid ? undefined : 'column',
             gap: 10,
           }}

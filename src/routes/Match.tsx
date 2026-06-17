@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   OutcomeDrawer,
   type CampaignStats,
+  type GroupStandingRow,
   type OutcomeContext,
   type OutcomeKind,
   type ScorerRow,
@@ -379,6 +380,20 @@ function buildGroupOutcomeContext(
   // Só no jogo final faz sentido falar de fate (no round 3). Nos outros é
   // só posição parcial.
   const fate = round === 3 ? userFate(worldCup) : null
+  // Mini classificação pra exibir inline no outcome drawer + CTA "JOGAR PRÓXIMO".
+  const groupStandings: GroupStandingRow[] = table.map((s, idx) => ({
+    code: s.team.code,
+    name: s.team.name,
+    isUser: s.team.code === USER_TEAM_CODE,
+    points: s.points,
+    played: s.played,
+    wins: s.wins,
+    draws: s.draws,
+    losses: s.losses,
+    goalDiff: s.goalsFor - s.goalsAgainst,
+    position: (idx + 1) as 1 | 2 | 3 | 4,
+  }))
+  const nextGroupRound: 1 | 2 | 3 | null = round < 3 ? ((round + 1) as 2 | 3) : null
   return {
     phase: `FASE DE GRUPOS · ${round}/3`,
     resultLine: `SEU XI ${userGoals}–${oppGoals} ${oppLabel}`,
@@ -386,7 +401,7 @@ function buildGroupOutcomeContext(
     draft,
     stats,
     scorers,
-    extras: { userPos, fate },
+    extras: { userPos, fate, nextGroupRound, groupLetter: stage.letter, groupStandings },
   }
 }
 
