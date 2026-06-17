@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
+import { getPlayerToken } from '../../lib/session'
 import { track } from '../../lib/track'
 
 import { CampaignModal } from './CampaignModal'
@@ -1288,6 +1289,9 @@ function buildShareUrl(method: ShareMethod, surface: string): string {
   url.searchParams.set('utm_medium', method)
   url.searchParams.set('utm_campaign', 'user-share')
   url.searchParams.set('utm_content', surface)
+  // ?r=<token do compartilhador> — fecha o loop p2p (atribuição/K-factor).
+  const ref = getPlayerToken()
+  if (ref) url.searchParams.set('r', ref)
   return url.toString()
 }
 
