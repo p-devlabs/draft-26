@@ -461,8 +461,11 @@ export function setupBracket(
  * só até onde o user ainda não jogou. Se o user já caiu (não tem jogo nessa
  * rodada), continua simulando tudo até a final.
  *
- * Para na primeira rodada onde o user tem jogo pendente. Idempotente —
- * pode ser chamado quantas vezes quiser, só simula o que falta.
+ * Para na rodada pendente do user ANTES de simular os jogos da CPU dela —
+ * assim a entrada em /bracket não "spoila" os outros confrontos antes da
+ * partida. Os outros confrontos da rodada são preenchidos quando essa função
+ * roda de novo depois que o user jogou (chamada em routes/Match.tsx pós
+ * applyResult). Idempotente.
  */
 export function ensureRoundsSimulated(
   bracket: KnockoutBracket,
@@ -470,12 +473,12 @@ export function ensureRoundsSimulated(
 ): KnockoutBracket {
   let next = bracket
   for (const round of ROUND_ORDER) {
-    next = simulateNonUserRound(next, round, rng)
     const userMatch = next.matches.find(
       (m) => m.round === round && (m.homeCode === next.userCode || m.awayCode === next.userCode),
     )
-    // Se o user tem jogo pendente nessa rodada, para — espera ele jogar.
+    // Se o user tem jogo pendente nessa rodada, para ANTES de simular a CPU.
     if (userMatch && !userMatch.winnerCode) break
+    next = simulateNonUserRound(next, round, rng)
   }
   return next
 }

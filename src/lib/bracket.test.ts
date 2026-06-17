@@ -5,7 +5,9 @@ import { squads } from '../data/squads'
 import {
   ROUND_ORDER,
   ROUND_SIZE,
+  applyResult,
   createBracket,
+  ensureRoundsSimulated,
   fullySimulate,
   isHalfMatch,
   nextUserMatch,
@@ -196,17 +198,37 @@ describe('ROUND_ORDER e ROUND_SIZE coerentes', () => {
 })
 
 describe('setupBracket', () => {
-  it('R32 do user existe sem vencedor, lado oposto já tem alguns winners', () => {
+  it('R32 do user existe sem vencedor e nenhum outro R32 foi simulado', () => {
+    // Regressão: antes o setup já simulava todos os outros R32 upfront
+    // e "spoilava" os confrontos antes da partida do user. Agora a CPU
+    // da rodada pendente só roda DEPOIS do user jogar.
     const bracket = setupBracket(makeFinishedWorldCup(), seededRng(1))
     const userR32 = nextUserMatch(bracket)
     expect(userR32).not.toBeNull()
     expect(userR32!.round).toBe('R32')
     expect(userR32!.winnerCode).toBeUndefined()
-    const otherSide = bracket.matches.filter(
+    const otherR32 = bracket.matches.filter(
       (m) => m.round === 'R32' && m.homeCode !== USER_TEAM_CODE && m.awayCode !== USER_TEAM_CODE,
     )
-    const decidedCount = otherSide.filter((m) => m.winnerCode).length
-    expect(decidedCount).toBeGreaterThan(0)
+    const decidedCount = otherR32.filter((m) => m.winnerCode).length
+    expect(decidedCount).toBe(0)
+  })
+
+  it('depois do user jogar R32, ensureRoundsSimulated preenche os outros R32', () => {
+    // O outro lado da regressão: o pipeline pós-jogo precisa preencher
+    // os jogos da CPU da rodada do user. Sem isso, /bracket ficaria preso.
+    let bracket = setupBracket(makeFinishedWorldCup(), seededRng(1))
+    const userR32 = nextUserMatch(bracket)!
+    // Simula o user vencendo (homeCode arbitrário — não importa quem ganha).
+    bracket = applyResult(bracket, userR32.id, {
+      result: { homeGoals: 2, awayGoals: 1 },
+      winnerCode: userR32.homeCode!,
+    })
+    bracket = ensureRoundsSimulated(bracket, seededRng(2))
+    const otherR32 = bracket.matches.filter(
+      (m) => m.round === 'R32' && m.homeCode !== USER_TEAM_CODE && m.awayCode !== USER_TEAM_CODE,
+    )
+    expect(otherR32.every((m) => m.winnerCode)).toBe(true)
   })
 })
 

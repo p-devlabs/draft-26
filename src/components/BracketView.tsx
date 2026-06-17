@@ -226,7 +226,10 @@ function BracketCell({
   const sRight = side === 'L' ? true : side === 'R' ? !isFirst : true
   const vLeft = side === 'R' && merges && indexInCol % 2 === 0
   const vRight = side === 'L' && merges && indexInCol % 2 === 0
-  const connectorColor = isUserMatch || userWon ? lime : line
+  // Conector verde só DEPOIS do user vencer essa partida — o glow do
+  // border lime no card já marca o jogo pendente; estender o conector
+  // antes de jogar dava ilusão de avanço garantido.
+  const connectorColor = userWon ? lime : line
 
   const border = playable
     ? 'var(--color-d-lime)'
