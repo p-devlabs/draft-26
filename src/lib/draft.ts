@@ -267,17 +267,22 @@ export type DraftStartupAction =
  * clicava "TENTAR DE NOVO". Agora `?fresh=1` força clear e `?view=1`
  * força load — o default sem param só entra em review quando há
  * campanha em andamento (proteção pra breadcrumb).
+ *
+ * `hasInProgressCampaign` precisa filtrar campanhas já concluídas
+ * (campeão definido ou user sem próximo jogo): nesse caso o auto-load
+ * em review prendia o usuário no XI antigo (sem botão "TENTAR DE NOVO"
+ * visível, ele entrava direto pela URL).
  */
 export function resolveDraftStartup(
   params: URLSearchParams,
   loaders: {
     loadDraft: () => DraftState | null
-    hasWorldCup: () => boolean
+    hasInProgressCampaign: () => boolean
   },
 ): DraftStartupAction {
   const intent = params.get('fresh') === '1' ? 'fresh' : params.get('view') === '1' ? 'view' : null
   if (intent === 'fresh') return { kind: 'clear' }
-  const hasCampaign = loaders.hasWorldCup()
+  const hasCampaign = loaders.hasInProgressCampaign()
   if (hasCampaign || intent === 'view') {
     const saved = loaders.loadDraft()
     if (saved && isComplete(saved)) {

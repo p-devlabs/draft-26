@@ -210,7 +210,7 @@ describe('resolveDraftStartup', () => {
   it('?fresh=1 sempre clear, mesmo com draft e campanha salvos', () => {
     const action = resolveDraftStartup(new URLSearchParams('fresh=1'), {
       loadDraft: () => completeBrazilDraft(),
-      hasWorldCup: () => true,
+      hasInProgressCampaign: () => true,
     })
     expect(action.kind).toBe('clear')
   })
@@ -218,7 +218,7 @@ describe('resolveDraftStartup', () => {
   it('?fresh=1 ignora qualquer outro param (sem ambiguidade)', () => {
     const action = resolveDraftStartup(new URLSearchParams('fresh=1&view=1'), {
       loadDraft: () => completeBrazilDraft(),
-      hasWorldCup: () => true,
+      hasInProgressCampaign: () => true,
     })
     expect(action.kind).toBe('clear')
   })
@@ -227,7 +227,7 @@ describe('resolveDraftStartup', () => {
     const saved = completeBrazilDraft()
     const action = resolveDraftStartup(new URLSearchParams('view=1'), {
       loadDraft: () => saved,
-      hasWorldCup: () => true,
+      hasInProgressCampaign: () => true,
     })
     expect(action.kind).toBe('load')
     if (action.kind !== 'load') throw new Error('unreachable')
@@ -239,7 +239,7 @@ describe('resolveDraftStartup', () => {
     const saved = completeBrazilDraft()
     const action = resolveDraftStartup(new URLSearchParams('view=1'), {
       loadDraft: () => saved,
-      hasWorldCup: () => false,
+      hasInProgressCampaign: () => false,
     })
     expect(action.kind).toBe('load')
     if (action.kind !== 'load') throw new Error('unreachable')
@@ -250,7 +250,7 @@ describe('resolveDraftStartup', () => {
     const saved = completeBrazilDraft()
     const action = resolveDraftStartup(new URLSearchParams(), {
       loadDraft: () => saved,
-      hasWorldCup: () => true,
+      hasInProgressCampaign: () => true,
     })
     expect(action.kind).toBe('load')
     if (action.kind !== 'load') throw new Error('unreachable')
@@ -264,7 +264,7 @@ describe('resolveDraftStartup', () => {
     const saved = completeBrazilDraft()
     const action = resolveDraftStartup(new URLSearchParams(), {
       loadDraft: () => saved,
-      hasWorldCup: () => false,
+      hasInProgressCampaign: () => false,
     })
     expect(action.kind).toBe('setup')
   })
@@ -272,7 +272,7 @@ describe('resolveDraftStartup', () => {
   it('?view=1 mas sem draft salvo → setup (não trava em load vazio)', () => {
     const action = resolveDraftStartup(new URLSearchParams('view=1'), {
       loadDraft: () => null,
-      hasWorldCup: () => true,
+      hasInProgressCampaign: () => true,
     })
     expect(action.kind).toBe('setup')
   })
@@ -283,7 +283,20 @@ describe('resolveDraftStartup', () => {
     const incomplete = createDraft('4-3-3', 'equilibrado', 'easy')
     const action = resolveDraftStartup(new URLSearchParams('view=1'), {
       loadDraft: () => incomplete,
-      hasWorldCup: () => true,
+      hasInProgressCampaign: () => true,
+    })
+    expect(action.kind).toBe('setup')
+  })
+
+  it('campanha concluída + sem param → setup (não trava em review do XI antigo)', () => {
+    // Regressão: ao entrar em /draft direto pela URL depois de uma campanha
+    // já terminada (campeão definido ou user eliminado), o auto-load prendia
+    // o usuário no XI antigo. hasInProgressCampaign deve retornar false nesse
+    // caso, e a rota cai no setup.
+    const saved = completeBrazilDraft()
+    const action = resolveDraftStartup(new URLSearchParams(), {
+      loadDraft: () => saved,
+      hasInProgressCampaign: () => false,
     })
     expect(action.kind).toBe('setup')
   })
