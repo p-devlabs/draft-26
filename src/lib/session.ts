@@ -21,6 +21,8 @@ export interface FirstTouch {
   referrer: string | null
   /** Token do jogador que compartilhou o link que trouxe este usuário (?r=). */
   ref: string | null
+  /** Run que trouxe este usuário (?run=), se o link foi um deep link de run. */
+  run: string | null
   utm: UtmParams
 }
 
@@ -31,6 +33,8 @@ export interface SessionContext {
   playerToken: string
   /** Token do compartilhador que trouxe este usuário nesta sessão (?r=), se houver. */
   ref: string | null
+  /** Run deep-linkada nesta sessão (?run=), se houver. */
+  sharedRun: string | null
   /** Origem persistida do jogador (capturada na 1ª visita). */
   firstTouch: FirstTouch | null
   referrer: string | null
@@ -79,6 +83,7 @@ export function collectSessionContext(): SessionContext {
   const params = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search)
   const utm = readUtm(params)
   const ref = params.get('r')
+  const sharedRun = params.get('run')
   const referrer = (typeof document !== 'undefined' && document.referrer) || null
 
   // First-touch: grava a origem na 1ª visita e nunca sobrescreve. Define isNew.
@@ -90,6 +95,7 @@ export function collectSessionContext(): SessionContext {
       landing: window.location.pathname,
       referrer,
       ref: ref ?? null,
+      run: sharedRun ?? null,
       utm,
     }
     try {
@@ -103,6 +109,7 @@ export function collectSessionContext(): SessionContext {
     isNew,
     playerToken: getPlayerToken(),
     ref: ref ?? null,
+    sharedRun: sharedRun ?? null,
     firstTouch,
     referrer,
     utm,

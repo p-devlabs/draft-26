@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
+import { getLocalRunId, markRunShared } from '../../lib/runs'
 import { getPlayerToken } from '../../lib/session'
 import { track } from '../../lib/track'
 
@@ -1292,6 +1293,9 @@ function buildShareUrl(method: ShareMethod, surface: string): string {
   // ?r=<token do compartilhador> — fecha o loop p2p (atribuição/K-factor).
   const ref = getPlayerToken()
   if (ref) url.searchParams.set('r', ref)
+  // ?run=<id> — aponta pra run real. Vira o path /r/<id> quando o viewer existir.
+  const runId = getLocalRunId()
+  if (runId) url.searchParams.set('run', runId)
   return url.toString()
 }
 
@@ -1411,6 +1415,8 @@ function ShareGrid({
 
   const handleClick = async (method: ShareMethod) => {
     if (busy) return
+    // Compartilhou → a run vira pública pro deep link /r/<id> abrir pra terceiros.
+    void markRunShared()
     // STORIES/WHATS com card desenhado → gera a imagem no formato do botão;
     // senão (ou em falha), share de texto.
     const format = IMAGE_FORMATS[method]

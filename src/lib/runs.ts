@@ -17,6 +17,21 @@ export function clearLocalRunId(): void {
 }
 
 /**
+ * Marca a run atual como pública (`is_public`) — chamado ao compartilhar, pra o
+ * deep link /r/<id> abrir pra terceiros mesmo em meio de campanha. Fire-and-forget.
+ */
+export async function markRunShared(): Promise<void> {
+  const id = getLocalRunId()
+  if (!id || !isSupabaseConfigured) return
+  try {
+    const { error } = await supabase.from('runs').update({ is_public: true }).eq('id', id)
+    if (error) console.warn('[runs] mark shared falhou:', error.message)
+  } catch (err) {
+    console.warn('[runs] mark shared jogou exceção:', err)
+  }
+}
+
+/**
  * Garante sessão anônima no Supabase. Se anonymous sign-ins não estiver habilitado
  * no projeto, devolve null e a app segue só com localStorage.
  */
