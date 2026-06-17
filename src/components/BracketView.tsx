@@ -16,7 +16,12 @@ interface BracketViewProps {
   bracket: KnockoutBracket
 }
 
-const NARROW_BREAKPOINT = 960
+// Bracket horizontal só faz sentido em viewports realmente largas: 9 columns
+// + chip de campeão central. Abaixo de 1280 (laptops "small" / janelas
+// resizeadas / tablets paisagem) a leitura fica apertada e o conector
+// fica cosmético — `BracketMobile` mostra só o lado do user e dá um
+// scroll vertical limpo.
+const NARROW_BREAKPOINT = 1280
 
 export function BracketView({ bracket }: BracketViewProps) {
   const [isNarrow, setIsNarrow] = useState(false)
@@ -275,6 +280,12 @@ function BracketCell({
         // pendurada no vazio.
         minHeight: 0,
         position: 'relative',
+        // Cell playable sobe pro topo do stacking context da coluna pra
+        // garantir que o botão JOGAR (position:absolute, top:100% do card)
+        // fique VISÍVEL acima da próxima cell. Sem isso, em colunas com
+        // múltiplas cells, o botão era pintado mas a próxima cell o
+        // cobria por causa da ordem do DOM.
+        zIndex: playable ? 5 : undefined,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
