@@ -7,6 +7,13 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Dados sem hash no nome (squads-enriched.json, etc) — must-revalidate pra
+# que o browser pegue novas calibrações de rating na próxima visita. O fetch
+# no app já usa `cache: 'no-cache'` (src/data/squads.ts), então o conditional
+# GET retorna 304 quase sempre (custo mínimo) e 200 quando rolou data:rebuild.
+/data/*
+  Cache-Control: public, max-age=0, must-revalidate
+
 # Headers aplicados a TODO request. No Cloudflare Pages as regras do _headers
 # são aditivas — se colocássemos Cache-Control aqui também, o /assets/* receberia
 # os dois (joined com vírgula) e o browser cairia na diretiva mais restritiva,
