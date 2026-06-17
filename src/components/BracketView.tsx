@@ -363,12 +363,13 @@ function BracketCell({
       )}
       {/*
        * No desktop o card mantém altura uniforme em todas as cells do
-       * round — sem botão JOGAR inflando a célula do user. O CTA fica
-       * como chip overlay no canto e o card inteiro vira clicável.
-       * Manter altura uniforme é o que mantém o centro de cada par R32
-       * alinhado com o centro do match destino no R16; sem isso a ponta
-       * final do conector vertical "perdia" o stub horizontal de entrada
-       * no próximo round.
+       * round — incluindo a do user. O botão JOGAR fica posicionado
+       * absolutamente logo abaixo do card (`top: 100%`), portanto NÃO
+       * contribui para a altura intrínseca da célula. Assim o flex:1
+       * com `minHeight: 0` continua distribuindo o espaço de forma
+       * uniforme entre todas as cells do round, mantendo o centro de
+       * cada par alinhado com o centro do match destino no round
+       * seguinte (e a ponta final do conector vertical no lugar certo).
        */}
       {playable ? (
         <PlayableCardDesktop match={match} bracket={bracket} border={border} shadow={shadow} />
@@ -416,60 +417,70 @@ function PlayableCardDesktop({
   shadow: string
 }) {
   const navigate = useNavigate()
+  // Wrapper relativo só pra ancorar o botão JOGAR como overlay logo
+  // abaixo do card (`top: 100%`). O botão sai do fluxo de layout, então
+  // a altura intrínseca da célula = altura do card (igual às outras
+  // cells da coluna). Isso preserva o alinhamento dos centros dos pares
+  // com os centros das partidas do round seguinte — sem isso o conector
+  // vertical "perde" o stub horizontal do próximo round.
   return (
-    <button
-      type="button"
-      onClick={() => navigate(`/match?kind=knockout&id=${match.id}`)}
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        width: '100%',
-        background: 'var(--color-d-surface)',
-        border: `1px solid ${border}`,
-        borderRadius: 10,
-        overflow: 'hidden',
-        boxShadow: shadow,
-        padding: 0,
-        cursor: 'pointer',
-        textAlign: 'left',
-        font: 'inherit',
-        color: 'inherit',
-        display: 'block',
-        animation: 'd26-pulse 2.2s infinite',
-      }}
-      aria-label={`Jogar ${match.homeCode ?? ''} vs ${match.awayCode ?? ''}`}
-    >
-      <CellSide
-        team={match.homeCode ? bracket.teams[match.homeCode] : null}
-        score={cellScore(match, 'home')}
-        won={winnerSide(match) === 'home'}
-        compact
-      />
-      <div style={{ borderTop: '1px solid var(--color-d-line)' }} />
-      <CellSide
-        team={match.awayCode ? bracket.teams[match.awayCode] : null}
-        score={cellScore(match, 'away')}
-        won={winnerSide(match) === 'away'}
-        compact
-      />
-      <span
+    <div style={{ position: 'relative', width: '100%', zIndex: 1 }}>
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          background: 'var(--color-d-surface)',
+          border: `1px solid ${border}`,
+          borderRadius: 10,
+          overflow: 'hidden',
+          boxShadow: shadow,
+          animation: 'd26-pulse 2.2s infinite',
+        }}
+      >
+        <CellSide
+          team={match.homeCode ? bracket.teams[match.homeCode] : null}
+          score={cellScore(match, 'home')}
+          won={winnerSide(match) === 'home'}
+          compact
+        />
+        <div style={{ borderTop: '1px solid var(--color-d-line)' }} />
+        <CellSide
+          team={match.awayCode ? bracket.teams[match.awayCode] : null}
+          score={cellScore(match, 'away')}
+          won={winnerSide(match) === 'away'}
+          compact
+        />
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate(`/match?kind=knockout&id=${match.id}`)}
+        aria-label={`Jogar ${match.homeCode ?? ''} vs ${match.awayCode ?? ''}`}
         style={{
           position: 'absolute',
-          top: 4,
-          right: 4,
-          fontFamily: 'Anton',
-          fontSize: 9,
-          letterSpacing: '0.06em',
+          top: '100%',
+          left: 0,
+          right: 0,
+          marginTop: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
           background: 'var(--color-d-lime)',
           color: 'var(--color-d-bg)',
-          padding: '2px 6px',
-          borderRadius: 4,
-          pointerEvents: 'none',
+          padding: '7px 9px',
+          fontFamily: 'Anton',
+          fontSize: 12,
+          letterSpacing: '0.02em',
+          border: 'none',
+          borderRadius: 6,
+          cursor: 'pointer',
+          animation: 'd26-pulse 2.2s infinite',
+          zIndex: 2,
         }}
       >
         JOGAR →
-      </span>
-    </button>
+      </button>
+    </div>
   )
 }
 
