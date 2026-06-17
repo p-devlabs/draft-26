@@ -491,7 +491,7 @@ function ComoFuncionaSection() {
         <StepCard
           num="03"
           title="Mata-mata"
-          body="32 classificados, 5 fases sem volta: 32-avos, oitavas, quartas, semis e final. Uma derrota e acabou."
+          body="32 classificados, 5 fases sem volta: 16-avos, oitavas, quartas, semis e final. Uma derrota e acabou."
           icon={<MiniBadge label="×5" />}
         />
         <StepCard
