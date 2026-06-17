@@ -155,7 +155,13 @@ async function fetchSquads(): Promise<Squad[]> {
   // Browser-only. Em testes Node, o vitest setup (`src/lib/test-setup.ts`)
   // chama `hydrateSquads()` diretamente do filesystem antes desta função ser
   // alcançada.
-  const res = await fetch(SQUADS_URL, { cache: 'force-cache' })
+  //
+  // `cache: 'no-cache'` força revalidação com o origin via conditional GET
+  // (If-Modified-Since / ETag). Custo: um RTT por load. Benefício: quando
+  // a gente publica nova calibração de ratings, o usuário recebe na próxima
+  // visita sem precisar limpar cache manualmente. `force-cache` (versão
+  // antiga) prendia o JSON velho pra sempre no browser do retornante.
+  const res = await fetch(SQUADS_URL, { cache: 'no-cache' })
   if (!res.ok) {
     throw new Error(`Falha ao carregar squads (${res.status}): ${SQUADS_URL}`)
   }
