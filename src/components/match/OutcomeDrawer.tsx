@@ -438,9 +438,15 @@ export function OutcomeDrawer({
               <CampaignStatsRow stats={ctx.stats} />
               {ctx.scorers.length > 0 && <ScorersList scorers={ctx.scorers} />}
               {cfg.champion && (
-                <ChampionShareBlock resultLine={ctx.resultLine} topScorer={ctx.scorers[0]} />
+                <ChampionShareBlock
+                  resultLine={ctx.resultLine}
+                  topScorer={ctx.scorers[0]}
+                  ctx={ctx}
+                />
               )}
-              {!cfg.champion && cfg.showShare && <CompactShare surface={outcome} />}
+              {!cfg.champion && cfg.showShare && (
+                <CompactShare surface={outcome} ctx={ctx} kind={outcome} />
+              )}
             </div>
           </div>
         </div>
@@ -1131,9 +1137,11 @@ function ScorersList({ scorers }: { scorers: ScorerRow[] }) {
 function ChampionShareBlock({
   resultLine,
   topScorer,
+  ctx,
 }: {
   resultLine: string
   topScorer?: ScorerRow
+  ctx: OutcomeContext
 }) {
   return (
     <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 20 }}>
@@ -1219,16 +1227,24 @@ function ChampionShareBlock({
           )}
         </div>
       </div>
-      <ShareGrid surface="champion" />
+      <ShareGrid surface="champion" ctx={ctx} kind="champ" />
     </div>
   )
 }
 
-function CompactShare({ surface }: { surface: string }) {
+function CompactShare({
+  surface,
+  ctx,
+  kind,
+}: {
+  surface: string
+  ctx: OutcomeContext
+  kind: OutcomeKind
+}) {
   return (
     <div style={{ marginTop: 22, borderTop: '1px solid var(--color-d-line)', paddingTop: 18 }}>
       <SectionLabel>COMPARTILHAR</SectionLabel>
-      <ShareGrid surface={surface} />
+      <ShareGrid surface={surface} ctx={ctx} kind={kind} />
     </div>
   )
 }
@@ -1332,14 +1348,33 @@ const SHARE_ARIA_LABELS: Record<ShareMethod, string> = {
   copy: 'Copiar link',
 }
 
-function ShareGrid({ surface }: { surface: string }) {
-  // Qual botão acabou de copiar o link — null = nenhum. Por-método porque tanto
-  // COPIAR quanto STORIES (fallback desktop) podem cair no clipboard.
-  const [copiedMethod, setCopiedMethod] = useState<ShareMethod | null>(null)
+// Outcomes com card de imagem desenhado — guard barato e estático (o módulo
+// pesado de geração só é importado sob demanda no clique do STORIES).
+const IMAGE_CARD_KINDS = new Set<OutcomeKind>(['grupo', 'classificado', 'avancou', 'champ'])
+
+function ShareGrid({
+  surface,
+  ctx,
+  kind,
+}: {
+  surface: string
+  /** Quando presentes e o outcome tem card, o STORIES gera a imagem desenhada. */
+  ctx?: OutcomeContext
+  kind?: OutcomeKind
+}) {
+  // Feedback transitório por botão (cópia/download) + "gerando" durante o render.
+  const [feedback, setFeedback] = useState<{ method: ShareMethod; text: string } | null>(null)
+  const [busy, setBusy] = useState<ShareMethod | null>(null)
+
+  const flash = (method: ShareMethod, text: string) => {
+    setFeedback({ method, text })
+    window.setTimeout(() => setFeedback((f) => (f?.method === method ? null : f)), 2000)
+  }
 
   const labelFor = (method: ShareMethod, base: string): string => {
-    if (copiedMethod !== method) return base
-    return method === 'copy' ? 'COPIADO ✓' : 'LINK COPIADO'
+    if (busy === method) return 'GERANDO…'
+    if (feedback?.method === method) return feedback.text
+    return base
   }
   const items: { label: string; method: ShareMethod }[] = [
     { label: labelFor('x', '𝕏'), method: 'x' },
@@ -1348,12 +1383,35 @@ function ShareGrid({ surface }: { surface: string }) {
     { label: labelFor('copy', 'COPIAR'), method: 'copy' },
   ]
 
-  const handleClick = async (method: ShareMethod) => {
+  const shareTextFallback = async (method: ShareMethod) => {
     const result = await fireShare(method, surface)
-    if (result === 'copied') {
-      setCopiedMethod(method)
-      window.setTimeout(() => setCopiedMethod((m) => (m === method ? null : m)), 2000)
+    if (result === 'copied') flash(method, method === 'copy' ? 'COPIADO ✓' : 'LINK COPIADO')
+  }
+
+  const handleClick = async (method: ShareMethod) => {
+    if (busy) return
+    // STORIES com card desenhado → gera a imagem; senão, share de texto.
+    if (method === 'stories' && ctx && kind && IMAGE_CARD_KINDS.has(kind)) {
+      setBusy('stories')
+      try {
+        void track('share_card_generate', { kind, surface })
+        const mod = await import('../../lib/share-cards')
+        const result = await mod.generateAndShareOutcomeCard(ctx, kind, {
+          filename: `draft26-${kind}.png`,
+          text: buildShareText(surface),
+          url: buildShareUrl('stories', surface),
+        })
+        if (result === 'downloaded') flash('stories', 'BAIXADO ✓')
+        else if (result === 'failed') await shareTextFallback('stories')
+      } catch {
+        // Falha de rede/fontes/canvas — cai pro share de texto, botão nunca trava.
+        await shareTextFallback('stories')
+      } finally {
+        setBusy(null)
+      }
+      return
     }
+    await shareTextFallback(method)
   }
 
   return (
@@ -1363,6 +1421,7 @@ function ShareGrid({ surface }: { surface: string }) {
           key={method}
           onClick={() => void handleClick(method)}
           aria-label={SHARE_ARIA_LABELS[method]}
+          disabled={busy !== null}
           style={{
             background: 'var(--color-d-surface2)',
             border: '1px solid var(--color-d-line)',
@@ -1372,7 +1431,8 @@ function ShareGrid({ surface }: { surface: string }) {
             fontFamily: 'Space Mono',
             fontSize: 11,
             fontWeight: 700,
-            cursor: 'pointer',
+            cursor: busy ? 'wait' : 'pointer',
+            opacity: busy && busy !== method ? 0.5 : 1,
           }}
         >
           {label}
