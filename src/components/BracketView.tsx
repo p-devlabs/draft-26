@@ -219,7 +219,11 @@ function BracketCell({
   const playable = isUserMatch && !match.winnerCode && match.homeCode && match.awayCode
 
   const lime = 'var(--color-d-lime)'
-  const line = 'var(--color-d-line)'
+  // `--color-d-line` (#2a2e26) é quase imperceptível contra `--color-d-bg`
+  // (#0a0b09) — fica invisível como conector. Usamos um branco translúcido
+  // para a metade neutra do par (CPU vs CPU ou user já perdeu), bem mais
+  // contrastante que a `line` original sem competir com o lime do user.
+  const neutralConnector = 'rgba(255,255,255,0.22)'
 
   // Connectors
   const sLeft = side === 'L' ? !isFirst : side === 'R' ? true : true
@@ -242,8 +246,10 @@ function BracketCell({
   const vRightUp = side === 'L' && bottomOfPair
   // Conector verde só DEPOIS do user vencer essa partida — o glow do
   // border lime no card já marca o jogo pendente; estender o conector
-  // antes de jogar dava ilusão de avanço garantido.
-  const connectorColor = userWon ? lime : line
+  // antes de jogar dava ilusão de avanço garantido. A metade neutra (CPU
+  // vs CPU ou user perdeu) usa um branco translúcido visível contra o
+  // fundo escuro, em vez do token `line` que sumia.
+  const connectorColor = userWon ? lime : neutralConnector
 
   const border = playable
     ? 'var(--color-d-lime)'
