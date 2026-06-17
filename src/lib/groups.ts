@@ -12,7 +12,7 @@
 import { groupedSquads, squads, type Player, type Squad } from '../data/squads'
 
 import { averageOverall, type DraftState } from './draft'
-import { matchPressure, type MatchPhase } from './match-pressure'
+import { matchPressure, playerSynergy, type MatchPhase } from './match-pressure'
 import { narrateMatch, type MatchEvent, type NarrationRoster } from './narrate'
 import { simulateMatch, type MatchResult, type Team } from './simulate'
 
@@ -390,26 +390,33 @@ export function playRound(
   draft: DraftState,
   rng: () => number = Math.random,
 ): GroupStage {
-  // `draft` mantido na assinatura pra rosters + futura composição de pressure.
-  // Today só usa pra rosterFor — difficulty (easy/medium/hard) não vai mais
-  // pro simulateMatch (só pros skips do draft).
+  // `draft` mantido na assinatura pra rosters + composição de pressure/boost.
+  // Today só usa pra rosterFor e synergy — difficulty (easy/medium/hard) não
+  // vai mais pro simulateMatch (só pros skips do draft).
   void draft.difficulty
   const teamByCode = new Map(stage.teams.map((t) => [t.code, t as Team]))
+  // Synergy é função só do XI — mesmo bônus em todos os jogos da rodada.
+  const synergy = playerSynergy(draft.slots.map((s) => s.player!.player))
   const newMatches = stage.matches.map((m) => {
     if (m.round !== round || m.result) return m
     const home = teamByCode.get(m.homeCode)!
     const away = teamByCode.get(m.awayCode)!
-    // Pressure: só calcula pro jogo do user; outros matches CPU vs CPU
-    // ficam neutros (matchPressure não atinge quem não tem isUser).
+    // Pressure + boost só aplicam no jogo do user; outros matches CPU vs CPU
+    // ficam neutros (gate isUser em simulate.ts:rates).
     let pressure = 0
+    let boost = 0
     const userIsHome = m.homeCode === USER_TEAM_CODE
     const userIsAway = m.awayCode === USER_TEAM_CODE
     if (userIsHome || userIsAway) {
       const phase: MatchPhase = round === 1 ? 'group-debut' : 'group-other'
       const opponentCode = userIsHome ? m.awayCode : m.homeCode
       pressure = matchPressure(phase, opponentCode)
+      boost = synergy.bonus
     }
-    const result = simulateMatch(home, away, rng, { matchPressure: pressure })
+    const result = simulateMatch(home, away, rng, {
+      matchPressure: pressure,
+      userBoost: boost,
+    })
     const homeRoster = rosterFor(m.homeCode, stage, draft)
     const awayRoster = rosterFor(m.awayCode, stage, draft)
     const events = narrateMatch({ home: homeRoster, away: awayRoster, result }, rng)

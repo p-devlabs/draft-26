@@ -44,7 +44,7 @@ import {
   type GroupStage,
   type WorldCupGroups,
 } from '../lib/groups'
-import { matchPressure } from '../lib/match-pressure'
+import { matchPressure, playerSynergy } from '../lib/match-pressure'
 import { narrateMatch, type MatchEvent } from '../lib/narrate'
 import {
   loadBracket,
@@ -552,8 +552,11 @@ function KnockoutMatchRunner({
     // adversário (S +3, A +2, B +1). Composição aditiva.
     const opponentCode = userIsHome ? match.awayCode : match.homeCode
     const pressure = matchPressure(match.round, opponentCode)
+    // Synergy: stars no XI bumpam o time (top 3 com pesos 100/50/25%).
+    const boost = playerSynergy(persisted.draft.slots.map((s) => s.player!.player)).bonus
     const sim = fullySimulate(home, away, Math.random, {
       matchPressure: pressure,
+      userBoost: boost,
       homeRoster,
       awayRoster,
     })
