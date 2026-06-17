@@ -1,0 +1,54 @@
+{
+  "version": "elite-2026",
+  "_doc": "Lista curada de estrelas que ficam ACIMA do bump natural por % (scripts/recalibrate-elite.ts). Match por (name, countryCode). Aplicado como Math.max(rating após bump, rating do overlay) — então define o piso. Edite à vontade.",
+  "stars": [
+    {
+      "name": "Lionel Messi",
+      "countryCode": "ARG",
+      "rating": 95,
+      "note": "icon"
+    },
+    {
+      "name": "Kylian Mbappé",
+      "countryCode": "FRA",
+      "rating": 95,
+      "note": "icon"
+    },
+    {
+      "name": "Erling Haaland",
+      "countryCode": "NOR",
+      "rating": 95,
+      "note": "icon"
+    },
+    {
+      "name": "Cristiano Ronaldo",
+      "countryCode": "POR",
+      "rating": 94,
+      "note": "legend"
+    },
+    {
+      "name": "Ousmane Dembélé",
+      "countryCode": "FRA",
+      "rating": 94,
+      "note": "Ballon d'Or 2024"
+    },
+    {
+      "name": "Rodri",
+      "countryCode": "ESP",
+      "rating": 94,
+      "note": "Ballon d'Or 2023"
+    },
+    {
+      "name": "Vinícius Júnior",
+      "countryCode": "BRA",
+      "rating": 93,
+      "note": "Best FIFA 2024"
+    },
+    {
+      "name": "Mohamed Salah",
+      "countryCode": "EGY",
+      "rating": 93,
+      "note": "icon"
+    }
+  ]
+}

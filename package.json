@@ -25,6 +25,7 @@
     "postinstall": "simple-git-hooks",
     "lint": "eslint . --max-warnings=15",
     "preview": "vite preview",
+    "recalibrate:elite": "tsx scripts/recalibrate-elite.ts",
     "recalibrate:heuristic": "tsx scripts/recalibrate-heuristic.ts",
     "scrape:squads": "tsx scripts/scrape-squads.ts",
     "setup:e2e": "playwright install chromium",
