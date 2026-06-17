@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { track } from '../../lib/track'
@@ -348,6 +348,9 @@ export function OutcomeDrawer({
   // Modal aninhada sobre o drawer: 'team' (VER TIME) ou 'campaign' (VER GRUPO/
   // CAMPANHA). null = nenhuma aberta, drawer principal recebe interação.
   const [openModal, setOpenModal] = useState<'team' | 'campaign' | null>(null)
+  // A11y: ref do diálogo pra mover o foco pra dentro do drawer ao abrir e
+  // devolver pro elemento anterior ao fechar.
+  const dialogRef = useRef<HTMLDivElement>(null)
   // ESC fecha o drawer — drawer só monta quando outcome != null, então
   // o listener fica ativo só enquanto está visível. Quando uma modal aninhada
   // está aberta, ela registra um handler em capture com stopPropagation, então
@@ -359,6 +362,14 @@ export function OutcomeDrawer({
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
+
+  // Foco entra no drawer ao abrir; ao desmontar, volta pro elemento que estava
+  // focado antes (ex.: o botão da tela da partida). Roda só no mount/unmount.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    dialogRef.current?.focus()
+    return () => previouslyFocused?.focus?.()
+  }, [])
 
   const handleSecondaryClick = (kind: 'team' | 'campaign') => {
     setOpenModal(kind)
@@ -392,9 +403,11 @@ export function OutcomeDrawer({
         }}
       >
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={cfg.title}
+          tabIndex={-1}
           style={{
             width: '100%',
             maxWidth: 600,
@@ -406,6 +419,7 @@ export function OutcomeDrawer({
             borderRadius: '22px 22px 0 0',
             boxShadow: '0 -30px 60px -20px rgba(0,0,0,0.7)',
             pointerEvents: 'auto',
+            outline: 'none',
           }}
         >
           <OutcomeBanner cfg={cfg} />
@@ -1221,9 +1235,36 @@ function CompactShare({ surface }: { surface: string }) {
 
 type ShareMethod = 'x' | 'whats' | 'stories' | 'copy'
 
+/**
+ * Resultado de um disparo de share — drive o feedback visual no grid:
+ *   - 'opened' → abriu intent externo / sheet nativo (sem feedback in-app)
+ *   - 'shared' → Web Share API resolveu (compartilhou)
+ *   - 'copied' → link foi pro clipboard (mostra "LINK COPIADO")
+ *   - 'failed' → clipboard bloqueado/sem suporte (não trava, só não dá feedback)
+ */
+type ShareResult = 'opened' | 'shared' | 'copied' | 'failed'
+
 // URL canônica de prod — o que viraliza vai pra cá independente de onde o user
 // disparou (dev/preview/prod). UTMs fecham o loop de atribuição em session_init.
 const SHARE_URL_BASE = 'https://draft-26.pages.dev'
+
+/**
+ * Copia texto pro clipboard com guarda. `clipboard.writeText` rejeita em
+ * contexto inseguro (http), sem permissão ou em navegadores antigos — aqui a
+ * rejeição vira `false` em vez de uma promise não tratada, pro caller decidir
+ * o feedback.
+ */
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    // bloqueado — cai no retorno false
+  }
+  return false
+}
 
 function buildShareUrl(method: ShareMethod, surface: string): string {
   const url = new URL(SHARE_URL_BASE)
@@ -1249,23 +1290,23 @@ function buildShareText(surface: string): string {
   }
 }
 
-async function fireShare(method: ShareMethod, surface: string): Promise<void> {
+async function fireShare(method: ShareMethod, surface: string): Promise<ShareResult> {
   void track('share_clicked', { method, surface })
   const url = buildShareUrl(method, surface)
   const text = buildShareText(surface)
 
   if (method === 'x') {
-    const intent = new URL('https://twitter.com/intent/tweet')
+    const intent = new URL('https://x.com/intent/tweet')
     intent.searchParams.set('text', text)
     intent.searchParams.set('url', url)
     window.open(intent.toString(), '_blank', 'noopener,noreferrer')
-    return
+    return 'opened'
   }
   if (method === 'whats') {
     const intent = new URL('https://wa.me/')
     intent.searchParams.set('text', `${text} ${url}`)
     window.open(intent.toString(), '_blank', 'noopener,noreferrer')
-    return
+    return 'opened'
   }
   if (method === 'stories') {
     // Sem URL direta de IG Stories no web — Web Share API abre o sheet nativo
@@ -1273,31 +1314,45 @@ async function fireShare(method: ShareMethod, surface: string): Promise<void> {
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
         await navigator.share({ text, url })
+        return 'shared'
       } catch {
-        // cancelou ou bloqueou — silencioso
+        // cancelou ou bloqueou — silencioso, sem feedback de cópia
+        return 'opened'
       }
-      return
     }
-    await navigator.clipboard.writeText(url)
-    return
+    return (await copyToClipboard(url)) ? 'copied' : 'failed'
   }
-  await navigator.clipboard.writeText(url)
+  return (await copyToClipboard(url)) ? 'copied' : 'failed'
+}
+
+const SHARE_ARIA_LABELS: Record<ShareMethod, string> = {
+  x: 'Compartilhar no X',
+  whats: 'Compartilhar no WhatsApp',
+  stories: 'Compartilhar nos Stories',
+  copy: 'Copiar link',
 }
 
 function ShareGrid({ surface }: { surface: string }) {
-  const [copied, setCopied] = useState(false)
+  // Qual botão acabou de copiar o link — null = nenhum. Por-método porque tanto
+  // COPIAR quanto STORIES (fallback desktop) podem cair no clipboard.
+  const [copiedMethod, setCopiedMethod] = useState<ShareMethod | null>(null)
+
+  const labelFor = (method: ShareMethod, base: string): string => {
+    if (copiedMethod !== method) return base
+    return method === 'copy' ? 'COPIADO ✓' : 'LINK COPIADO'
+  }
   const items: { label: string; method: ShareMethod }[] = [
-    { label: '𝕏', method: 'x' },
-    { label: 'WHATS', method: 'whats' },
-    { label: 'STORIES', method: 'stories' },
-    { label: copied ? 'COPIADO ✓' : 'COPIAR', method: 'copy' },
+    { label: labelFor('x', '𝕏'), method: 'x' },
+    { label: labelFor('whats', 'WHATS'), method: 'whats' },
+    { label: labelFor('stories', 'STORIES'), method: 'stories' },
+    { label: labelFor('copy', 'COPIAR'), method: 'copy' },
   ]
 
   const handleClick = async (method: ShareMethod) => {
-    await fireShare(method, surface)
-    if (method === 'copy') {
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
+    const result = await fireShare(method, surface)
+    if (result === 'copied') {
+      setCopiedMethod(method)
+      window.setTimeout(() => setCopiedMethod((m) => (m === method ? null : m)), 2000)
     }
   }
 
@@ -1307,6 +1362,7 @@ function ShareGrid({ surface }: { surface: string }) {
         <button
           key={method}
           onClick={() => void handleClick(method)}
+          aria-label={SHARE_ARIA_LABELS[method]}
           style={{
             background: 'var(--color-d-surface2)',
             border: '1px solid var(--color-d-line)',
