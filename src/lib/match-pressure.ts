@@ -87,3 +87,91 @@ export function opponentModifier(code: string): number {
 export function matchPressure(phase: MatchPhase, opponentCode: string): number {
   return phaseModifier(phase) + opponentModifier(opponentCode)
 }
+
+// ============================================================
+// Player synergy — estrelas no XI bumpam o time todo.
+//
+// Mecânica oposta ao matchPressure: cada player do XI que se qualifica
+// como estrela contribui com um bônus aditivo no overall do user.
+// Stacking parcial: top 3 da equipe ordenados por tier → overall, com
+// pesos 100% / 50% / 25% das tier bonuses. Demais não contam.
+// ============================================================
+
+export type SynergyTier = 1 | 2 | 3
+
+/** Curado por nome — 4 icons que carregam o time independente do rating. */
+const SYNERGY_TIER1_NAMES = new Set<string>([
+  'Lionel Messi',
+  'Kylian Mbappé',
+  'Erling Haaland',
+  'Cristiano Ronaldo',
+])
+
+const SYNERGY_TIER_BONUS: Record<SynergyTier, number> = {
+  1: 0.04,
+  2: 0.03,
+  3: 0.01,
+}
+
+/** Pesos compostos: top star 100%, 2º 50%, 3º 25%. 4º+ ignorado. */
+export const SYNERGY_STACK_WEIGHTS: readonly number[] = [1.0, 0.5, 0.25]
+
+/**
+ * Classifica um player por tier de sinergia (ou null se não é "estrela"):
+ * - tier 1: nomes curados (icons) — Messi, Mbappé, Haaland, CR7
+ * - tier 2: overall calibrado entre 91 e 94
+ * - tier 3: overall calibrado entre 88 e 90
+ * - 95+ não curado também cai em tier 1 (defesa contra futuras adições)
+ */
+export function synergyTier(name: string, overall: number): SynergyTier | null {
+  if (SYNERGY_TIER1_NAMES.has(name)) return 1
+  if (overall >= 95) return 1
+  if (overall >= 91 && overall <= 94) return 2
+  if (overall >= 88 && overall <= 90) return 3
+  return null
+}
+
+export interface StarPick {
+  name: string
+  overall: number
+  tier: SynergyTier
+  /** Bônus base do tier (sem o peso de stacking). */
+  bonus: number
+}
+
+export interface SynergyResult {
+  /** Top 3 estrelas escolhidas (ordenadas por tier → overall → nome). */
+  stars: StarPick[]
+  /** Bônus total composto, depois do stacking. */
+  bonus: number
+}
+
+/**
+ * Calcula o bônus de sinergia do XI. Recebe players com `{ name, overall }`,
+ * filtra os que se qualificam, ordena por tier (1 primeiro) → overall desc
+ * → nome (estável), pega top 3, aplica pesos 100% / 50% / 25%.
+ *
+ * Bônus aditivo (no formato esperado por `simulate.ts:rates`): 0.0625 = 6.25%.
+ */
+export function playerSynergy(
+  players: ReadonlyArray<{ name: string; overall: number }>,
+): SynergyResult {
+  const stars: StarPick[] = []
+  for (const p of players) {
+    const tier = synergyTier(p.name, p.overall)
+    if (tier != null) {
+      stars.push({ name: p.name, overall: p.overall, tier, bonus: SYNERGY_TIER_BONUS[tier] })
+    }
+  }
+  stars.sort((a, b) => {
+    if (a.tier !== b.tier) return a.tier - b.tier
+    if (b.overall !== a.overall) return b.overall - a.overall
+    return a.name.localeCompare(b.name)
+  })
+  const top = stars.slice(0, SYNERGY_STACK_WEIGHTS.length)
+  let bonus = 0
+  for (let i = 0; i < top.length; i++) {
+    bonus += top[i].bonus * SYNERGY_STACK_WEIGHTS[i]
+  }
+  return { stars: top, bonus }
+}

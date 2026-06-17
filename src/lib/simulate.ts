@@ -73,6 +73,14 @@ export interface SimOptions {
    * APÓS o rubber-band (eles compõem caso ambos estejam ativos).
    */
   matchPressure?: number
+  /**
+   * Bônus por sinergia de estrelas no XI em [0, ~0.07] — calculado em
+   * `match-pressure.ts:playerSynergy`. Compõe aditivamente com
+   * `matchPressure`: o sinal aplicado ao user é
+   * `(1 - matchPressure + userBoost)`. Net pode ser negativo (final vs
+   * tier S com XI sem stars) ou positivo (jogo neutro com Messi).
+   */
+  userBoost?: number
 }
 
 /** RNG seedeável (Mulberry32). Padrão é Math.random. */
@@ -131,12 +139,15 @@ function rates(home: Team, away: Team, opts?: SimOptions): { lambda: number; mu:
     if (home.isUser) homeBase = rubberBandOverall(homeBase, awayBase, opts.difficulty)
     if (away.isUser) awayBase = rubberBandOverall(awayBase, homeBase, opts.difficulty)
   }
-  // Match pressure: damp do user APÓS rubber-band (eles compõem). Não fire
-  // em CPU vs CPU porque o multiplicador só atinge o lado isUser.
-  if (opts?.matchPressure && opts.matchPressure > 0) {
-    const damp = 1 - opts.matchPressure
-    if (home.isUser) homeBase = homeBase * damp
-    if (away.isUser) awayBase = awayBase * damp
+  // Match pressure (damp) + user boost (lift). Compostos aditivamente:
+  // multiplicador = (1 - matchPressure + userBoost). CPU vs CPU não recebe
+  // nada porque o gate é isUser.
+  const pressure = opts?.matchPressure ?? 0
+  const boost = opts?.userBoost ?? 0
+  if (pressure > 0 || boost > 0) {
+    const factor = 1 - pressure + boost
+    if (home.isUser) homeBase = homeBase * factor
+    if (away.isUser) awayBase = awayBase * factor
   }
   // Mando: só pra países-sede. Pares neutros não recebem bônus. Quando os
   // dois são hosts (caso de borda), o bônus cancela e o jogo vira neutro.
