@@ -60,6 +60,8 @@ export interface OutcomeContext {
     groupLetter?: string | null
     /** Classificação parcial do grupo do user, top 4. Mostrada inline no outcome. */
     groupStandings?: GroupStandingRow[] | null
+    /** ID do próximo match KO do user (R16/QF/SF/F). Drive "JOGAR {ROUND_LABEL}". */
+    nextKnockoutMatchId?: string | null
   }
 }
 
@@ -218,25 +220,40 @@ function outcomeConfig(kind: OutcomeKind, ctx: OutcomeContext): OutcomeConfig {
         champion: false,
         showShare: false,
       }
-    case 'avancou':
+    case 'avancou': {
+      const nextLabel = ctx.extras.nextRoundLabel
+      const nextId = ctx.extras.nextKnockoutMatchId
+      // Quando temos a próxima partida do user já preenchida (ensureRoundsSimulated
+      // rodou pós-applyResult), CTA primário vira "JOGAR {ROUND}" e "VER {ROUND}"
+      // vira secondary. Caso contrário (final só pode ser champ; safety):
+      // fallback no antigo "VER {ROUND}".
+      const canJumpToNext = !!(nextLabel && nextId)
       return {
         kind,
         kicker: ctx.phase,
-        title: ctx.extras.nextRoundLabel ? `NA ${ctx.extras.nextRoundLabel}!` : 'AVANÇOU',
+        title: nextLabel ? `NA ${nextLabel}!` : 'AVANÇOU',
         titleColor: 'var(--color-d-ink)',
         sub: 'Seu XI passou pra próxima fase.',
         accent: 'var(--color-d-lime)',
         bannerBg: 'linear-gradient(180deg, #161d0b, #0a0b09)',
         decoration: { kind: 'check' },
-        ctaLabel: ctx.extras.nextRoundLabel
-          ? `VER ${ctx.extras.nextRoundLabel} →`
-          : 'VOLTAR PRO CHAVEAMENTO →',
-        ctaTo: '/bracket',
-        secondaries: [{ label: 'VER TIME', to: '/draft?view=1', kind: 'team' }],
+        ctaLabel: canJumpToNext
+          ? `JOGAR ${nextLabel} →`
+          : nextLabel
+            ? `VER ${nextLabel} →`
+            : 'VOLTAR PRO CHAVEAMENTO →',
+        ctaTo: canJumpToNext ? `/match?kind=knockout&id=${nextId}` : '/bracket',
+        secondaries: canJumpToNext
+          ? [
+              { label: `VER ${nextLabel}`, to: '/bracket' },
+              { label: 'VER TIME', to: '/draft?view=1', kind: 'team' },
+            ]
+          : [{ label: 'VER TIME', to: '/draft?view=1', kind: 'team' }],
         primaryTone: 'lime',
         champion: false,
         showShare: true,
       }
+    }
     case 'elim':
       return {
         kind,

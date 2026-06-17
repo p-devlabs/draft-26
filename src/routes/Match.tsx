@@ -23,6 +23,7 @@ import {
   ensureRoundsSimulated,
   findMatch as findKnockoutMatch,
   fullySimulate,
+  nextUserMatch,
   ROUND_LABEL,
   ROUND_ORDER,
   simulatePenalties,
@@ -971,6 +972,11 @@ function buildKnockoutOutcomeContext(
       })),
     }
   }
+  // Próxima partida KO do user — `ensureRoundsSimulated` já rodou antes de
+  // chegar aqui, então o oponente da próxima rodada está preenchido (a menos
+  // que o user tenha sido o último a vencer e a próxima ainda esteja vazia,
+  // mas isso só rola na final).
+  const next = nextUserMatch(bracket)
   return {
     phase: `${roundLabel} · COPA 2026`,
     resultLine,
@@ -978,7 +984,10 @@ function buildKnockoutOutcomeContext(
     draft,
     stats,
     scorers,
-    extras: { nextRoundLabel: nextRoundOfLabel(match.round) },
+    extras: {
+      nextRoundLabel: nextRoundOfLabel(match.round),
+      nextKnockoutMatchId: next?.id ?? null,
+    },
   }
 }
 
