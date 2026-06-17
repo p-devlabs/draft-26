@@ -44,6 +44,7 @@ import {
   type GroupStage,
   type WorldCupGroups,
 } from '../lib/groups'
+import { matchPressure } from '../lib/match-pressure'
 import { narrateMatch, type MatchEvent } from '../lib/narrate'
 import {
   loadBracket,
@@ -547,8 +548,12 @@ function KnockoutMatchRunner({
       return
     }
 
+    // Pressure: fase (R32 +1, R16 +2, QF +3, SF +4, F +5) + tier do
+    // adversário (S +3, A +2, B +1). Composição aditiva.
+    const opponentCode = userIsHome ? match.awayCode : match.homeCode
+    const pressure = matchPressure(match.round, opponentCode)
     const sim = fullySimulate(home, away, Math.random, {
-      difficulty: persisted.draft.difficulty,
+      matchPressure: pressure,
       homeRoster,
       awayRoster,
     })
