@@ -1314,6 +1314,7 @@ function ScoreCell({
 
 function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }) {
   const qualified = finished && userPos > 0 && userPos <= 2
+  const eliminated = finished && !qualified
   const ctaLabel = qualified ? 'IR PRO MATA-MATA →' : 'VER MATA-MATA →'
   const ctaStyle: CSSProperties = qualified
     ? {
@@ -1357,24 +1358,51 @@ function FooterNav({ finished, userPos }: { finished: boolean; userPos: number }
         {note}
       </span>
       {finished ? (
-        <Link
-          to="/bracket"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 9,
-            padding: '13px 22px',
-            borderRadius: 11,
-            fontFamily: qualified ? 'Anton' : 'Space Mono',
-            fontSize: qualified ? 17 : 12,
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            textDecoration: 'none',
-            ...ctaStyle,
-          }}
-        >
-          {ctaLabel}
-        </Link>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Eliminação na fase de grupos: TENTAR DE NOVO antes do VER
+              MATA-MATA. Espelha o CTA da OutcomeDrawer (?fresh=1 limpa
+              campanha + draft, ver resolveDraftStartup). */}
+          {eliminated && (
+            <Link
+              to="/draft?fresh=1"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 9,
+                padding: '13px 22px',
+                borderRadius: 11,
+                fontFamily: 'Anton',
+                fontSize: 17,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textDecoration: 'none',
+                background: 'var(--color-d-red)',
+                color: '#fff',
+                border: '1px solid var(--color-d-red)',
+              }}
+            >
+              TENTAR DE NOVO →
+            </Link>
+          )}
+          <Link
+            to="/bracket"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 9,
+              padding: '13px 22px',
+              borderRadius: 11,
+              fontFamily: qualified ? 'Anton' : 'Space Mono',
+              fontSize: qualified ? 17 : 12,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textDecoration: 'none',
+              ...ctaStyle,
+            }}
+          >
+            {ctaLabel}
+          </Link>
+        </div>
       ) : (
         <span
           aria-disabled="true"
