@@ -32,6 +32,7 @@ const OutcomeDev = lazy(() =>
   import('./routes/OutcomeDev').then((m) => ({ default: m.OutcomeDev })),
 )
 const KoJump = lazy(() => import('./routes/KoJump').then((m) => ({ default: m.KoJump })))
+const RunView = lazy(() => import('./routes/RunView').then((m) => ({ default: m.RunView })))
 
 initAnalytics()
 trackSessionOnce()
@@ -74,6 +75,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/groups" element={<Copa />} />
               <Route path="/bracket" element={<MataMata />} />
               <Route path="/match" element={<Match />} />
+              <Route path="/r/:id" element={<RunView />} />
               <Route path="/dev/penalties" element={<PenaltiesDev />} />
               <Route path="/dev/outcomes" element={<OutcomeDev />} />
               <Route path="/dev/ko-jump" element={<KoJump />} />
