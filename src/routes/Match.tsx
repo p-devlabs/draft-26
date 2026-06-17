@@ -76,16 +76,26 @@ export function Match() {
     const forceParam = params.get('dev_force')
     const devForce: 'et' | 'pks' | null =
       features.dev && (forceParam === 'et' || forceParam === 'pks') ? forceParam : null
+    const matchId = params.get('id') ?? ''
+    // key={matchId} força remontagem ao navegar de um match KO pra outro
+    // dentro da mesma rota /match?kind=knockout — senão o useSimPlayback
+    // mantém virtualMinute/outcome do match anterior e o usuário "pula" a
+    // simulação do próximo (mesmo bug do JOGAR PRÓXIMO no grupo).
     return (
       <KnockoutMatchRunner
+        key={`ko-${matchId}`}
         navigate={navigate}
-        matchId={params.get('id') ?? ''}
+        matchId={matchId}
         penaltyPlacement={penaltyPlacement}
         devForce={devForce}
       />
     )
   }
-  return <GroupMatchRunner navigate={navigate} round={Number(params.get('round')) as 1 | 2 | 3} />
+  const round = Number(params.get('round')) as 1 | 2 | 3
+  // key={round} idem: outcome modal de R1 leva pra /match?round=2 e a rota
+  // não muda — sem o key o GroupMatchRunner ficaria com virtualMinute=90 do
+  // round anterior e o playback acharia que já acabou.
+  return <GroupMatchRunner key={`group-${round}`} navigate={navigate} round={round} />
 }
 
 // ============================================================
