@@ -5,6 +5,7 @@ import { Field } from '../components/Field'
 import { PickDrawer } from '../components/PickDrawer'
 import { SetupDrawer } from '../components/SetupDrawer'
 import { autoFillXI } from '../lib/autofill'
+import { nextUserMatch } from '../lib/bracket'
 import {
   averageOverall,
   createDraft,
@@ -14,7 +15,14 @@ import {
   type DraftState,
 } from '../lib/draft'
 import { features } from '../lib/features'
-import { clearDraft, clearWorldCup, loadDraft, loadWorldCup, saveDraft } from '../lib/persistence'
+import {
+  clearDraft,
+  clearWorldCup,
+  loadBracket,
+  loadDraft,
+  loadWorldCup,
+  saveDraft,
+} from '../lib/persistence'
 import { clearLocalRunId } from '../lib/runs'
 import { track } from '../lib/track'
 
@@ -37,7 +45,14 @@ export function Draft() {
     // testar a regressão do "TENTAR DE NOVO renderiza time antigo" (PR #53).
     const action = resolveDraftStartup(params, {
       loadDraft,
-      hasWorldCup: () => loadWorldCup() != null,
+      hasInProgressCampaign: () => {
+        if (loadWorldCup() == null) return false
+        // Campanha concluída (campeão definido ou user sem próximo jogo) não
+        // bloqueia o /draft — entrar pela URL deve cair no setup.
+        const bracket = loadBracket()
+        if (bracket && nextUserMatch(bracket) == null) return false
+        return true
+      },
     })
     if (action.kind === 'clear') {
       clearWorldCup()
