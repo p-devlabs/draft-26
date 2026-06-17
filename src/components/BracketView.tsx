@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
@@ -417,6 +417,25 @@ function PlayableCardDesktop({
   shadow: string
 }) {
   const navigate = useNavigate()
+  // Auto-scroll: ao montar (= o user entra no /bracket numa rodada
+  // onde tem partida pendente), traz o card pro centro da viewport. Cobre
+  // o edge case do user cair no último slot do R32 da metade de baixo,
+  // que ficava fora do viewport inicial em desktop. `block: 'center'` +
+  // `inline: 'center'` resolve scroll vertical (página) e horizontal
+  // (overflowX do BracketDesktop) numa chamada só. `behavior: 'instant'`
+  // pra não animar mid-render (efeito jarring); 'smooth' seria menos
+  // perceptivo na carga.
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    // requestAnimationFrame pra rodar depois do layout — sem isso o
+    // scrollIntoView pode disparar antes do bracket ter altura final.
+    const handle = requestAnimationFrame(() => {
+      el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' })
+    })
+    return () => cancelAnimationFrame(handle)
+  }, [])
   // Wrapper relativo só pra ancorar o botão JOGAR como overlay logo
   // abaixo do card (`top: 100%`). O botão sai do fluxo de layout, então
   // a altura intrínseca da célula = altura do card (igual às outras
@@ -424,7 +443,7 @@ function PlayableCardDesktop({
   // com os centros das partidas do round seguinte — sem isso o conector
   // vertical "perde" o stub horizontal do próximo round.
   return (
-    <div style={{ position: 'relative', width: '100%', zIndex: 1 }}>
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%', zIndex: 1 }}>
       <div
         style={{
           position: 'relative',
