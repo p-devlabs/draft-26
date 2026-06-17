@@ -475,12 +475,18 @@ function TeamChip({ code, compact }: { code: string; compact?: boolean }) {
   return (
     <span
       style={{
+        // Em badges pequenas, gradient stops em % caem em sub-pixel
+        // (ex: 33% de 19px = 6.27px). Sem padding-box clip + overflow:hidden,
+        // o gradient "vaza" pela borda translúcida e cria halo lateral/top.
         width: compact ? 16 : 28,
         height: compact ? 11 : 19,
         borderRadius: compact ? 3 : 5,
         background: nationGradient(code),
+        backgroundClip: 'padding-box',
         flex: '0 0 auto',
         border: '1px solid rgba(255,255,255,0.12)',
+        overflow: 'hidden',
+        display: 'inline-block',
       }}
     />
   )

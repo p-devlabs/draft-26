@@ -788,7 +788,9 @@ function BadgeChip({
         height,
         borderRadius: 6,
         background: nationGradient(c),
+        backgroundClip: 'padding-box',
         border: '1px solid rgba(255,255,255,0.14)',
+        overflow: 'hidden',
         flex: '0 0 auto',
       }}
     />
