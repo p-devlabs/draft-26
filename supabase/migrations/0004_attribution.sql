@@ -18,27 +18,37 @@ with first_init as (
   from public.events
   where event_type = 'session_init'
   order by user_id, created_at asc
+),
+-- O playerToken pode não existir no 1º session_init (usuários anteriores a este
+-- deploy). Pega o token do session_init mais recente que tiver um, senão o
+-- referral p2p desses usuários nunca casaria em v_referral_edges.
+latest_token as (
+  select distinct on (user_id) user_id, props->>'playerToken' as player_token
+  from public.events
+  where event_type = 'session_init' and props->>'playerToken' is not null
+  order by user_id, created_at desc
 )
 select
-  user_id,
-  acquired_at,
-  coalesce((props->>'isNew')::boolean, false)         as is_new,
-  props->>'playerToken'                               as player_token,
-  props->'firstTouch'->'utm'->>'utm_source'           as utm_source,
-  props->'firstTouch'->'utm'->>'utm_medium'           as utm_medium,
-  props->'firstTouch'->'utm'->>'utm_campaign'         as utm_campaign,
-  props->'firstTouch'->'utm'->>'utm_content'          as utm_content,
-  nullif(props->'firstTouch'->>'ref', '')             as ref_token,
-  nullif(props->'firstTouch'->>'referrer', '')        as referrer,
-  props->'firstTouch'->>'landing'                     as landing,
+  fi.user_id,
+  fi.acquired_at,
+  coalesce((fi.props->>'isNew')::boolean, false)         as is_new,
+  lt.player_token                                        as player_token,
+  fi.props->'firstTouch'->'utm'->>'utm_source'           as utm_source,
+  fi.props->'firstTouch'->'utm'->>'utm_medium'           as utm_medium,
+  fi.props->'firstTouch'->'utm'->>'utm_campaign'         as utm_campaign,
+  fi.props->'firstTouch'->'utm'->>'utm_content'          as utm_content,
+  nullif(fi.props->'firstTouch'->>'ref', '')             as ref_token,
+  nullif(fi.props->'firstTouch'->>'referrer', '')        as referrer,
+  fi.props->'firstTouch'->>'landing'                     as landing,
   case
-    when props->'firstTouch'->'utm'->>'utm_source' = 'share'
-      then 'share:' || coalesce(props->'firstTouch'->'utm'->>'utm_medium', '?')
-    when nullif(props->'firstTouch'->>'ref', '') is not null then 'share:p2p'
-    when nullif(props->'firstTouch'->>'referrer', '') is not null then 'referral'
+    when fi.props->'firstTouch'->'utm'->>'utm_source' = 'share'
+      then 'share:' || coalesce(fi.props->'firstTouch'->'utm'->>'utm_medium', '?')
+    when nullif(fi.props->'firstTouch'->>'ref', '') is not null then 'share:p2p'
+    when nullif(fi.props->'firstTouch'->>'referrer', '') is not null then 'referral'
     else 'direct'
-  end                                                 as channel
-from first_init;
+  end                                                    as channel
+from first_init fi
+left join latest_token lt on lt.user_id = fi.user_id;
 
 -- ============================================================
 -- v_referral_edges — grafo de indicação p2p: liga o recém-chegado (ref_token)

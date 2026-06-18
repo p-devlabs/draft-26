@@ -83,7 +83,9 @@ export function collectSessionContext(): SessionContext {
   const params = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search)
   const utm = readUtm(params)
   const ref = params.get('r')
-  const sharedRun = params.get('run')
+  // Run que trouxe o usuário: do path /r/<id> (deep link) ou do legado ?run=.
+  const pathRun = window.location.pathname.match(/^\/r\/([^/?#]+)/)?.[1] ?? null
+  const sharedRun = pathRun ?? params.get('run')
   const referrer = (typeof document !== 'undefined' && document.referrer) || null
 
   // First-touch: grava a origem na 1ª visita e nunca sobrescreve. Define isNew.

@@ -1285,7 +1285,9 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 function buildShareUrl(method: ShareMethod, surface: string): string {
-  const url = new URL(SHARE_URL_BASE)
+  // Deep link pra run real (/r/<id>) quando há run; senão, raiz (share genérico).
+  const runId = getLocalRunId()
+  const url = new URL(runId ? `/r/${runId}` : '/', SHARE_URL_BASE)
   url.searchParams.set('utm_source', 'share')
   url.searchParams.set('utm_medium', method)
   url.searchParams.set('utm_campaign', 'user-share')
@@ -1293,9 +1295,6 @@ function buildShareUrl(method: ShareMethod, surface: string): string {
   // ?r=<token do compartilhador> — fecha o loop p2p (atribuição/K-factor).
   const ref = getPlayerToken()
   if (ref) url.searchParams.set('r', ref)
-  // ?run=<id> — aponta pra run real. Vira o path /r/<id> quando o viewer existir.
-  const runId = getLocalRunId()
-  if (runId) url.searchParams.set('run', runId)
   return url.toString()
 }
 
