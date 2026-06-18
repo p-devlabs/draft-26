@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
+import { getLocalRunId, markRunShared } from '../../lib/runs'
+import { getPlayerToken } from '../../lib/session'
 import { track } from '../../lib/track'
 
 import { CampaignModal } from './CampaignModal'
@@ -1283,11 +1285,16 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 function buildShareUrl(method: ShareMethod, surface: string): string {
-  const url = new URL(SHARE_URL_BASE)
+  // Deep link pra run real (/r/<id>) quando há run; senão, raiz (share genérico).
+  const runId = getLocalRunId()
+  const url = new URL(runId ? `/r/${runId}` : '/', SHARE_URL_BASE)
   url.searchParams.set('utm_source', 'share')
   url.searchParams.set('utm_medium', method)
   url.searchParams.set('utm_campaign', 'user-share')
   url.searchParams.set('utm_content', surface)
+  // ?r=<token do compartilhador> — fecha o loop p2p (atribuição/K-factor).
+  const ref = getPlayerToken()
+  if (ref) url.searchParams.set('r', ref)
   return url.toString()
 }
 
@@ -1407,6 +1414,8 @@ function ShareGrid({
 
   const handleClick = async (method: ShareMethod) => {
     if (busy) return
+    // Compartilhou → a run vira pública pro deep link /r/<id> abrir pra terceiros.
+    void markRunShared()
     // STORIES/WHATS com card desenhado → gera a imagem no formato do botão;
     // senão (ou em falha), share de texto.
     const format = IMAGE_FORMATS[method]

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { ensureAnonUser } from './runs'
+import { ensureAnonUser, getLocalRunId } from './runs'
 import { collectSessionContext } from './session'
 import { supabase, isSupabaseConfigured } from './supabase'
 
@@ -38,6 +38,7 @@ export async function track(eventType: string, props?: Record<string, unknown>):
       event_type: eventType,
       props: props ?? {},
       session_id: sessionId(),
+      run_id: getLocalRunId(),
     })
     if (error) console.warn('[track] insert falhou:', error.message)
   } catch (err) {

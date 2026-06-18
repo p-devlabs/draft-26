@@ -16,6 +16,68 @@ export function clearLocalRunId(): void {
   localStorage.removeItem(LOCAL_RUN_ID_KEY)
 }
 
+/** Run lida pra exibição pública na tela /r/:id (leitura via RLS pública). */
+export interface PublicRun {
+  id: string
+  formation: string
+  difficulty: string
+  averageOverall: number | null
+  championCode: string | null
+  finishedRound: FinishedRound | null
+  completedAt: string | null
+  draft: DraftState
+}
+
+/**
+ * Busca uma run pública por id (RLS libera runs com is_public ou concluídas).
+ * Retorna null se não existir, for privada ou o Supabase não estiver configurado.
+ */
+export async function fetchPublicRun(id: string): Promise<PublicRun | null> {
+  if (!isSupabaseConfigured) return null
+  try {
+    const { data, error } = await supabase
+      .from('runs')
+      .select(
+        'id, formation, difficulty, average_overall, champion_code, finished_round, completed_at, draft_json',
+      )
+      .eq('id', id)
+      .maybeSingle()
+    if (error) {
+      console.warn('[runs] fetch público falhou:', error.message)
+      return null
+    }
+    if (!data) return null
+    return {
+      id: data.id,
+      formation: data.formation,
+      difficulty: data.difficulty,
+      averageOverall: data.average_overall,
+      championCode: data.champion_code,
+      finishedRound: data.finished_round,
+      completedAt: data.completed_at,
+      draft: data.draft_json as DraftState,
+    }
+  } catch (err) {
+    console.warn('[runs] fetch público jogou exceção:', err)
+    return null
+  }
+}
+
+/**
+ * Marca a run atual como pública (`is_public`) — chamado ao compartilhar, pra o
+ * deep link /r/<id> abrir pra terceiros mesmo em meio de campanha. Fire-and-forget.
+ */
+export async function markRunShared(): Promise<void> {
+  const id = getLocalRunId()
+  if (!id || !isSupabaseConfigured) return
+  try {
+    const { error } = await supabase.from('runs').update({ is_public: true }).eq('id', id)
+    if (error) console.warn('[runs] mark shared falhou:', error.message)
+  } catch (err) {
+    console.warn('[runs] mark shared jogou exceção:', err)
+  }
+}
+
 /**
  * Garante sessão anônima no Supabase. Se anonymous sign-ins não estiver habilitado
  * no projeto, devolve null e a app segue só com localStorage.
