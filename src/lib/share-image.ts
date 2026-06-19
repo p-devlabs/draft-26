@@ -93,7 +93,12 @@ export async function deliverShareImage(
     navigator.canShare({ files: [file] })
   ) {
     try {
-      await navigator.share({ files: [file], text: meta.text, url: meta.url })
+      // NÃO passar `url` junto de `files`: WhatsApp/IG tratam o url como um
+      // segundo conteúdo (preview do link) e mandam 2 imagens. A url vai na
+      // legenda (text) — numa mensagem de mídia ela fica clicável e não gera
+      // card de preview separado, então sai 1 imagem só + link + atribuição.
+      const caption = meta.url ? [meta.text, meta.url].filter(Boolean).join(' ') : meta.text
+      await navigator.share({ files: [file], text: caption })
       return 'shared'
     } catch (e) {
       // Usuário cancelou o sheet — não é falha, não dispara download surpresa.
