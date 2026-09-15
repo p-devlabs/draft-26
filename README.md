@@ -6,7 +6,7 @@ A dice-draft simulator for the 2026 FIFA World Cup. You roll one of the 48 natio
 
 Inspired by [7a0](https://7a0.com.br/) and [38a0](https://38a0.com/), scoped **only** to Copa 2026, with a custom UI and ratings merged from several real-world sources.
 
-[Play](https://draft-26.pages.dev) · [Share a run](https://draft-26.pages.dev) · [Feature inventory](./FEATURES.md)
+[Play](https://draft-26.pages.dev) · [Decisions](./docs/decisions.md) · [Features](./FEATURES.md)
 
 ## Product
 
@@ -19,6 +19,14 @@ The loop is the product. Everything else exists to make that loop feel fair, fas
 5. **Share** — a generated image card and an addressable campaign at `/r/:id`.
 
 The game is fully playable with no backend. `localStorage` holds the campaign; Supabase is an optional mirror for analytics and public runs.
+
+## Strategy
+
+Shipped as a **single-player client**. Multiplayer lobbies, betting, and a generic “any tournament” engine were explicit non-goals — they blow up state, RLS, and the UI for a loop that has to work on a phone during a match.
+
+Quality is a **ratchet**, not a freeze. ESLint is `recommended` rather than type-aware (`~800` issues on a lift); `jsx-a11y` exceptions on drawer backdrops are documented with the follow-up (`<dialog>`). `pnpm check` is the gate: format, lint, typecheck, tests, build.
+
+The four calls that actually had alternatives (local-first, Dixon–Coles, fetched squads JSON, opaque share ids) live in [`docs/decisions.md`](./docs/decisions.md). Ratings math is in [`docs/ratings-and-difficulty.md`](./docs/ratings-and-difficulty.md).
 
 ## Architecture
 
@@ -83,15 +91,19 @@ The user’s XI **replaces the weakest side in a drawn group**. The other 11 gro
 
 ### Frontend craft
 
-| Pattern                    | Where                                                                                                                   |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Route-based code splitting | `src/main.tsx` — `React.lazy` + named-export adapters                                                                   |
-| Feature flags              | `?dev=1` persisted to `localStorage` (`src/lib/features.ts`)                                                            |
-| Versioned persistence      | `d26:worldcup` bumped when the schema went from 1 group to 12; old saves are discarded, not migrated half-broken        |
-| Error boundary             | `AppErrorBoundary` around the tree                                                                                      |
-| Cache split                | hashed JS/CSS `immutable` for a year; `/data/*` `must-revalidate` so a ratings rebuild is picked up                     |
-| Share cards                | HTML templates → PNG blob, native share sheet on mobile, download on desktop; loaded only when the user actually shares |
-| Addressable campaigns      | `/r/:id` for a public run without turning the game into a multiplayer app                                               |
+| Pattern                    | Where                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Route-based code splitting | `src/main.tsx` — `React.lazy` + named-export adapters                                                                    |
+| Feature flags              | `?dev=1` persisted to `localStorage` (`src/lib/features.ts`)                                                             |
+| Versioned persistence      | `d26:worldcup` bumped when the schema went from 1 group to 12; old saves are discarded, not migrated half-broken         |
+| Error boundary             | `AppErrorBoundary` around the tree                                                                                       |
+| Cache split                | hashed JS/CSS `immutable` for a year; `/data/*` `must-revalidate` so a ratings rebuild is picked up                      |
+| Share cards                | HTML templates → PNG blob, native share sheet on mobile, download on desktop; loaded only when the user actually shares  |
+| Addressable campaigns      | `/r/:id` for a public run without turning the game into a multiplayer app                                                |
+| Local-first + RLS          | `localStorage` is source of truth; remote upserts never block; RLS = owner write, public **read of completed runs only** |
+| Opaque share identity      | `playerToken` in links, not `auth.uid()`; first-touch UTM captured once (`src/lib/session.ts`)                           |
+| Squads off the JS bundle   | ~570 KB JSON fetched at boot (`SquadsGate`); module bindings stay sync for existing call sites                           |
+| Playback without churn     | `virtualMinute` mirrored on a ref so skip-to-end callbacks do not rebuild every 60 ms tick                               |
 
 ### Testing strategy
 
@@ -116,7 +128,20 @@ pnpm check                   # format, lint, typecheck, tests, build
 pnpm test:e2e
 ```
 
-Env, schema, and the data rebuild: [`docs/operations.md`](./docs/operations.md). Ratings/difficulty decisions: [`docs/ratings-and-difficulty.md`](./docs/ratings-and-difficulty.md). Every shipped screen: [`FEATURES.md`](./FEATURES.md).
+Env, schema, and the data rebuild: [`docs/operations.md`](./docs/operations.md). Why we picked the model: [`docs/decisions.md`](./docs/decisions.md). Ratings curve: [`docs/ratings-and-difficulty.md`](./docs/ratings-and-difficulty.md). Every shipped screen: [`FEATURES.md`](./FEATURES.md).
+
+## Layout
+
+```
+src/routes/          screens (lazy except Home)
+src/components/      UI that is not a route
+src/lib/             domain + persistence + telemetry (no React in the engine)
+src/data/            squads loader / types
+scripts/             scrape, enrich, calibrate — not the runtime
+supabase/migrations  RLS + attribution views
+docs/                operations, decisions, ratings
+e2e/                 Playwright + distortion batch
+```
 
 ## License
 
