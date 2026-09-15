@@ -11,7 +11,7 @@ a PR, or is dropped with a note.
 
 ### Draft system
 
-- [ ] **3 options per roll instead of 1** — anonymous (+351 910 603 982)
+- [ ] **3 options per roll instead of 1** — anonymous playtester
 
   > "Coloca 3 selecoes pra escolha. Ao invés de uma. Daí tu tem mais opcoes.
   > Aqui tu fica entre escolher o vini jr, dembele ou messi por exemplo.

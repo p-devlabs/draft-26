@@ -13,8 +13,10 @@ test-results
 .playwright
 .cache
 
-# claude code runtime state
+# agent / editor runtime
 .claude/
+.codex/
+instagram/
 
 # dataset FIFA cru (10 MB, baixado por script — não comitar)
 data/eafc26-players.csv
